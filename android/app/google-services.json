@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "845922006139",
+    "project_id": "diora-diabetes",
+    "storage_bucket": "diora-diabetes.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845922006139:android:23f868f00c18b5561adede",
+        "android_client_info": {
+          "package_name": "com.example.diora_diabetes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB27mbF-i989bfCack-MEyaEmdavAcuRmI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
