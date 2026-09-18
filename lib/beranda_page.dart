@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'profil_page.dart'; // Wajib di-import agar ProfilPage dapat ditemukan
 
 class BerandaPage extends StatefulWidget {
   final String namaUser;
@@ -12,6 +13,15 @@ class BerandaPage extends StatefulWidget {
 class _BerandaPageState extends State<BerandaPage> {
   int _selectedIndex = 0;
 
+  void _navigateToProfil() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProfilPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,59 +33,72 @@ class _BerandaPageState extends State<BerandaPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BANNER SALAM / GREETING
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E7FF),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Color(0xFFFFE5D9),
-                      // Ganti dengan Image.asset atau Icon jika ada avatar
-                      child: Icon(Icons.person, size: 40, color: Colors.orange),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Halo, ${widget.namaUser}!',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          RichText(
-                            text: const TextSpan(
-                              style: TextStyle(fontSize: 13, color: Colors.black87),
-                              children: [
-                                TextSpan(text: 'Selamat Datang di '),
-                                TextSpan(
-                                  text: 'Diora 👋',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6679F4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+              GestureDetector(
+                onTap: _navigateToProfil,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E7FF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Color(0xFFFFE5D9),
+                        child: Icon(
+                          Icons.person,
+                          size: 40,
+                          color: Colors.orange,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Halo, ${widget.namaUser}!',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            RichText(
+                              text: const TextSpan(
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                ),
+                                children: [
+                                  TextSpan(text: 'Selamat Datang di '),
+                                  TextSpan(
+                                    text: 'Diora 👋',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF6679F4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFF6679F4),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // GRID MENU UTAMA (2 KOLOM)
+              // GRID MENU UTAMA
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -95,7 +118,8 @@ class _BerandaPageState extends State<BerandaPage> {
                   ),
                   _buildMenuCard(
                     title: 'Konsultasi',
-                    subtitle: 'Konsultasi dengan dokter untuk hasil yang lebih akurat.',
+                    subtitle:
+                        'Konsultasi dengan dokter untuk hasil yang lebih akurat.',
                     icon: Icons.help_outline,
                     bgColor: const Color(0xFFFFEBF0),
                     iconBgColor: const Color(0xFFFFC2D1),
@@ -104,7 +128,8 @@ class _BerandaPageState extends State<BerandaPage> {
                   ),
                   _buildMenuCard(
                     title: 'Lokasi Terdekat',
-                    subtitle: 'Temukan fasyankes terdekat yang menyediakan layanan diabetes.',
+                    subtitle:
+                        'Temukan fasyankes terdekat yang menyediakan layanan diabetes.',
                     icon: Icons.location_on_outlined,
                     bgColor: const Color(0xFFE6F4EA),
                     iconBgColor: const Color(0xFFA8E0BA),
@@ -113,7 +138,8 @@ class _BerandaPageState extends State<BerandaPage> {
                   ),
                   _buildMenuCard(
                     title: 'Artikel',
-                    subtitle: 'Baca informasi seputar diabetes, gaya hidup sehat, & pencegahannya.',
+                    subtitle:
+                        'Baca informasi seputar diabetes, gaya hidup sehat, & pencegahannya.',
                     icon: Icons.article_outlined,
                     bgColor: const Color(0xFFE3F2FD),
                     iconBgColor: const Color(0xFFBBDEFB),
@@ -122,7 +148,8 @@ class _BerandaPageState extends State<BerandaPage> {
                   ),
                   _buildMenuCard(
                     title: 'Hasil Tes',
-                    subtitle: 'Lihat rekomendasi dan unduh hasil tes skriningmu.',
+                    subtitle:
+                        'Lihat rekomendasi dan unduh hasil tes skriningmu.',
                     icon: Icons.insert_drive_file_outlined,
                     bgColor: const Color(0xFFFFF8E1),
                     iconBgColor: const Color(0xFFFFE082),
@@ -154,7 +181,6 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
               const SizedBox(height: 10),
 
-              // CARD ARTIKEL
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -169,7 +195,10 @@ class _BerandaPageState extends State<BerandaPage> {
                         width: 70,
                         height: 70,
                         color: Colors.grey.shade200,
-                        child: const Icon(Icons.medical_services, color: Colors.blue),
+                        child: const Icon(
+                          Icons.medical_services,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -208,14 +237,20 @@ class _BerandaPageState extends State<BerandaPage> {
       // BOTTOM NAVIGATION BAR
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
+          border: Border(
+            top: BorderSide(color: Color(0xFF6679F4), width: 1),
+          ),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
+            if (index == 4) {
+              _navigateToProfil();
+            } else {
+              setState(() {
+                _selectedIndex = index;
+              });
+            }
           },
           type: BottomNavigationBarType.fixed,
           selectedItemColor: const Color(0xFF6679F4),
@@ -223,18 +258,32 @@ class _BerandaPageState extends State<BerandaPage> {
           showSelectedLabels: false,
           showUnselectedLabels: false,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.stars_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.help_outline), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.article_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.stars_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.help_outline),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.article_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: '',
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Widget Helper Card Menu
   Widget _buildMenuCard({
     required String title,
     required String subtitle,
