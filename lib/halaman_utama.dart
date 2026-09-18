@@ -1,78 +1,63 @@
 import 'package:flutter/material.dart';
+import 'beranda_page.dart';
+import 'profile_screen.dart';
 
-/// Halaman Utama aplikasi DiOra yang diimplementasikan dengan tata letak
-/// terstruktur menggunakan widget native untuk elemen interaktif sesuai desain Figma.
-class HalamanUtama extends StatelessWidget {
-  const HalamanUtama({super.key});
+class HalamanUtama extends StatefulWidget {
+  final String namaUser;
+
+  const HalamanUtama({super.key, this.namaUser = 'Pian'});
+
+  @override
+  State<HalamanUtama> createState() => _HalamanUtamaState();
+}
+
+class _HalamanUtamaState extends State<HalamanUtama> {
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    // Daftar halaman sesuai urutan ikon di bawah
+    final List<Widget> pages = [
+      BerandaPage(
+        namaUser: widget.namaUser,
+        onTapProfileHeader: () {
+          // Saat banner atas diklik, pindahkan tab ke index 4 (Profil)
+          setState(() {
+            _selectedIndex = 4;
+          });
+        },
+      ),
+      const Center(child: Text('Halaman Fitur 2')),
+      const Center(child: Text('Halaman Fitur 3')),
+      const Center(child: Text('Halaman Fitur 4')),
+      ProfileScreen(namaUser: widget.namaUser), // Index 4: Profil
+    ];
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final screenHeight = constraints.maxHeight;
-
-            return Stack(
-              children: [
-                // Komponen Dasar: Menggunakan asset gambar untuk mereproduksi visual
-                // logo dan ilustrasi secara presisi sesuai proporsi Figma.
-                Positioned.fill(
-                  child: Image.asset(
-                    'assets/HAL UTAMA.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-
-                // Lapisan Komponen Native: Menyediakan teks interaktif dan terstruktur
-                // yang menutupi teks statis pada screenshot dengan rapi.
-                SizedBox.expand(
-                  child: Column(
-                    children: [
-                      // Area atas untuk memberikan ruang bagi Logo DiOra dari gambar latar
-                      SizedBox(height: screenHeight * 0.36),
-
-                      // Kontainer Tagline: Menggunakan latar belakang putih untuk menutup
-                      // teks statis di gambar dan menggantinya dengan widget Text native yang interaktif.
-                      Container(
-                        width: double.infinity,
-                        color: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: const Text(
-                          'Know Your Risk.\nCare For Your Health.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF3B66F5),
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Teks Versi Native di bagian bawah halaman
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 20.0),
-                        child: Text(
-                          'VERSI 1.0',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF7A9AE0),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
+      body: pages[_selectedIndex],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index; // Mengganti tampilan halaman secara langsung
+            });
           },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF6679F4),
+          unselectedItemColor: Colors.blue.shade200,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.stars_outlined), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.help_outline), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.article_outlined), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
+          ],
         ),
       ),
     );

@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'profile_screen.dart';
+import 'konsultasi_page.dart';
+import 'skrining_page.dart';
+import 'lokasi_page.dart';
+import 'progres_kesehatan_page.dart';
+import 'artikel_page.dart';
+import 'hasil_skrining_page.dart';
 
 class BerandaPage extends StatefulWidget {
   final String namaUser;
 
-  const BerandaPage({super.key, this.namaUser = 'Aurelia Prisilla'});
+  const BerandaPage({super.key, this.namaUser = 'Pian'});
 
   @override
   State<BerandaPage> createState() => _BerandaPageState();
@@ -11,6 +18,17 @@ class BerandaPage extends StatefulWidget {
 
 class _BerandaPageState extends State<BerandaPage> {
   int _selectedIndex = 0;
+
+  void _bukaHalamanProfil() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfileScreen(
+          namaUser: widget.namaUser,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,53 +41,55 @@ class _BerandaPageState extends State<BerandaPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // BANNER SALAM / GREETING
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E7FF),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Color(0xFFFFE5D9),
-                      // Ganti dengan Image.asset atau Icon jika ada avatar
-                      child: Icon(Icons.person, size: 40, color: Colors.orange),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Halo, ${widget.namaUser}!',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          RichText(
-                            text: const TextSpan(
-                              style: TextStyle(fontSize: 13, color: Colors.black87),
-                              children: [
-                                TextSpan(text: 'Selamat Datang di '),
-                                TextSpan(
-                                  text: 'Diora 👋',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6679F4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+              GestureDetector(
+                onTap: _bukaHalamanProfil,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E7FF),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Color(0xFFFFE5D9),
+                        child: Icon(Icons.person, size: 40, color: Colors.orange),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Halo, ${widget.namaUser}!',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            RichText(
+                              text: const TextSpan(
+                                style: TextStyle(fontSize: 13, color: Colors.black87),
+                                children: [
+                                  TextSpan(text: 'Selamat Datang di '),
+                                  TextSpan(
+                                    text: 'Diora 👋',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF6679F4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -91,7 +111,14 @@ class _BerandaPageState extends State<BerandaPage> {
                     bgColor: const Color(0xFFECEBFF),
                     iconBgColor: const Color(0xFFC7C2FF),
                     iconColor: const Color(0xFF6679F4),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SkriningPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuCard(
                     title: 'Konsultasi',
@@ -100,7 +127,14 @@ class _BerandaPageState extends State<BerandaPage> {
                     bgColor: const Color(0xFFFFEBF0),
                     iconBgColor: const Color(0xFFFFC2D1),
                     iconColor: const Color(0xFFE53E3E),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const KonsultasiPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuCard(
                     title: 'Lokasi Terdekat',
@@ -109,7 +143,14 @@ class _BerandaPageState extends State<BerandaPage> {
                     bgColor: const Color(0xFFE6F4EA),
                     iconBgColor: const Color(0xFFA8E0BA),
                     iconColor: const Color(0xFF2E7D32),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LokasiPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuCard(
                     title: 'Artikel',
@@ -118,16 +159,30 @@ class _BerandaPageState extends State<BerandaPage> {
                     bgColor: const Color(0xFFE3F2FD),
                     iconBgColor: const Color(0xFFBBDEFB),
                     iconColor: const Color(0xFF1976D2),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ArtikelPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuCard(
                     title: 'Hasil Tes',
                     subtitle: 'Lihat rekomendasi dan unduh hasil tes skriningmu.',
                     icon: Icons.insert_drive_file_outlined,
-                    bgColor: const Color(0xFFFFF8E1),
+                    bgColor: const Color(0xFFFFE8E1),
                     iconBgColor: const Color(0xFFFFE082),
                     iconColor: const Color(0xFFF57F17),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HasilSkriningPage(), // <--- Ganti jadi HasilSkriningPage()
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuCard(
                     title: 'Progres\nKesehatan',
@@ -136,7 +191,14 @@ class _BerandaPageState extends State<BerandaPage> {
                     bgColor: const Color(0xFFFBE9E7),
                     iconBgColor: const Color(0xFFFFCCBC),
                     iconColor: const Color(0xFFD84315),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProgresKesehatanPage(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -216,6 +278,10 @@ class _BerandaPageState extends State<BerandaPage> {
             setState(() {
               _selectedIndex = index;
             });
+
+            if (index == 4) {
+              _bukaHalamanProfil();
+            }
           },
           type: BottomNavigationBarType.fixed,
           selectedItemColor: const Color(0xFF6679F4),
@@ -234,7 +300,6 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // Widget Helper Card Menu
   Widget _buildMenuCard({
     required String title,
     required String subtitle,
