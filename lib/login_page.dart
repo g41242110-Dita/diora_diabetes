@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'beranda_page.dart';
 import 'daftar_akun.dart';
@@ -24,7 +25,13 @@ class _LoginPageState extends State<LoginPage> {
   bool passwordError = false;
   bool captchaError = false;
 
-  String captcha = '7KG2B';
+  String captcha = '';
+
+  @override
+  void initState() {
+    super.initState();
+    refreshCaptcha(); // Bikin Captcha acak saat halaman pertama dibuka
+  }
 
   @override
   void dispose() {
@@ -34,14 +41,20 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // Fungsi acak Captcha dinamis
   void refreshCaptcha() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    Random random = Random();
+    String newCaptcha = String.fromCharCodes(
+      Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
+    );
+
     setState(() {
-      captcha = '7KG2B';
+      captcha = newCaptcha;
       captchaController.clear();
       captchaError = false;
     });
   }
-
   void login() {
     setState(() {
       // Cek field kosong
@@ -60,12 +73,13 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     // 2. Validasi Captcha
-    if (captchaController.text.toUpperCase() != captcha) {
+    if (captchaController.text.trim().toUpperCase() != captcha) {
       setState(() {
         showErrorBanner = true;
         captchaError = true;
         errorMessage = 'Kode Captcha tidak sesuai.';
       });
+      refreshCaptcha(); // <--- Ditambahkan agar Captcha langsung teracak otomatis saat user salah input
       return;
     }
 
@@ -181,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     decoration: inputDecoration(
                       icon: Icons.email_outlined,
-                      hint: 'Aurelia.Prisilla@gmail.com',
+                      hint: 'Masukkan Email Anda', // <--- Ganti di sini
                       isError: emailError,
                     ),
                   ),
@@ -197,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     decoration: inputDecoration(
                       icon: Icons.lock_outline,
-                      hint: '1234Abcd',
+                      hint: 'Masukkan Kata Sandi', // <--- Ganti di sini
                       isError: passwordError,
                       suffixIcon: IconButton(
                         icon: Icon(
