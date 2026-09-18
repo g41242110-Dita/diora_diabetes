@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'onboarding_page.dart';
+import 'profil_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Sudah diperbaiki dari Fi1rebase ke Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -37,6 +39,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
   void initState() {
     super.initState();
 
+    // Berpindah otomatis ke OnboardingPage setelah 3 detik
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
 
