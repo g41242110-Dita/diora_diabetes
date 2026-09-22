@@ -5,18 +5,12 @@ import 'onboarding_page.dart'; // Sesuaikan jika nama filenya berbeda
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-<<<<<<< HEAD
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
 
-=======
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
->>>>>>> 256e32af9216bdeeee236dc87b46730dc631dfff
   runApp(const MyApp());
 }
 
