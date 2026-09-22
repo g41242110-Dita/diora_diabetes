@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'detail_klinik_page.dart';
 
-// Import halaman navigasi bottom bar Anda
-import 'beranda_page.dart';
-import 'skrining_page.dart';
-import 'konsultasi_page.dart';
-import 'artikel_page.dart';
-import 'profile_screen.dart';
-
 class DaftarKlinikPage extends StatefulWidget {
   final bool isLocationGranted;
 
@@ -18,40 +11,48 @@ class DaftarKlinikPage extends StatefulWidget {
 }
 
 class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
-  final int _selectedIndex = 0;
   final TextEditingController _searchController = TextEditingController();
 
-  // Data klinik sesuai dengan daftar di UI Figma
   final List<Map<String, String>> _allKlinikList = [
     {
       'nama': 'Klinik Sehat Sentosa',
       'alamat': 'Jl. Merdeka No. 15',
       'jarak': '1.2 KM',
       'telp': '081296738118',
+      'jam': '08.00 - 20.00',
+      'status': 'Buka',
     },
     {
       'nama': 'Pratama Medika',
       'alamat': 'Jl. Cempaka No. 28',
       'jarak': '2.1 KM',
       'telp': '081234567890',
+      'jam': '07.30 - 21.00',
+      'status': 'Buka',
     },
     {
       'nama': 'Klinik Harmoni',
       'alamat': 'Jl. Anggrek No. 7',
       'jarak': '2.8 KM',
       'telp': '089876543210',
+      'jam': 'Libur hari ini',
+      'status': 'Tutup',
     },
     {
       'nama': 'Sentra Kesehatan Utama',
       'alamat': 'Jl. Diponegoro No. 42',
       'jarak': '3.4 KM',
       'telp': '081122334455',
+      'jam': '24 Jam',
+      'status': 'Buka',
     },
     {
       'nama': 'Klinik Bina Sehat',
       'alamat': 'Jl. Sukajadi No. 19',
       'jarak': '4.1 KM',
       'telp': '085566778899',
+      'jam': '08.00 - 17.00',
+      'status': 'Buka',
     },
   ];
 
@@ -61,6 +62,12 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
   void initState() {
     super.initState();
     _filteredKlinikList = List.from(_allKlinikList);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _filterKlinik(String query) {
@@ -76,36 +83,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
         }).toList();
       }
     });
-  }
-
-  void _onBottomNavTapped(int index) {
-    if (index == _selectedIndex) return;
-
-    Widget targetPage;
-    switch (index) {
-      case 0:
-        targetPage = const BerandaPage();
-        break;
-      case 1:
-        targetPage = const SkriningPage();
-        break;
-      case 2:
-        targetPage = const KonsultasiPage();
-        break;
-      case 3:
-        targetPage = const ArtikelPage();
-        break;
-      case 4:
-        targetPage = const ProfileScreen();
-        break;
-      default:
-        return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => targetPage),
-    );
   }
 
   @override
@@ -128,7 +105,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // 1. Judul & Subtitle
+                    // Header
                     const Text(
                       'Lokasi Klinik',
                       style: TextStyle(
@@ -147,7 +124,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. Search Bar (Cari Klinik atau Area . . .)
+                    // Search Bar
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: SizedBox(
@@ -181,42 +158,111 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 3. Peta Banner / Map Header
+                    // TAMPILAN PETA GMAPS
                     Container(
-                      height: 130,
+                      height: 160,
                       width: double.infinity,
-                      color: const Color(0xFFE2E8F0),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE5E3DF),
+                      ),
                       child: Stack(
                         children: [
                           Positioned.fill(
                             child: Image.network(
-                              'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=800',
+                              'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000',
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                return Container(color: const Color(0xFFCBD5E1));
+                                return Container(
+                                  color: const Color(0xFFE5E3DF),
+                                  child: const Center(
+                                    child: Icon(Icons.map, size: 40, color: Colors.grey),
+                                  ),
+                                );
                               },
                             ),
                           ),
-                          // Pin Lokasi Hijau di Peta
-                          const Center(
-                            child: Icon(
-                              Icons.location_on,
-                              size: 36,
-                              color: Color(0xFF436058),
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.05),
+                            ),
+                          ),
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.my_location, size: 12, color: Color(0xFF1A73E8)),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Lokasi Anda',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                const Icon(
+                                  Icons.location_on,
+                                  size: 38,
+                                  color: Color(0xFFEA4335),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 10,
+                            right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  )
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.my_location,
+                                color: Color(0xFF1A73E8),
+                                size: 18,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
 
-                    // 4. Daftar Item Klinik
+                    // LIST KLINIK DENGAN JAM OPERASIONAL RATA KANAN
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _filteredKlinikList.length,
                       itemBuilder: (context, index) {
                         final klinik = _filteredKlinikList[index];
+                        final isTutup = klinik['status'] == 'Tutup';
 
                         return Column(
                           children: [
@@ -227,7 +273,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                             ),
                             InkWell(
                               onTap: () {
-                                // Pindah ke Detail Klinik
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -250,7 +295,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Icon Avatar Bulat Teal
+                                    // Icon Klinik
                                     Container(
                                       width: 42,
                                       height: 42,
@@ -264,9 +309,9 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                         size: 22,
                                       ),
                                     ),
-                                    const SizedBox(width: 14),
+                                    const SizedBox(width: 12),
 
-                                    // Nama dan Alamat Klinik
+                                    // Detail Informasi Klinik (Kiri)
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,16 +335,36 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                         ],
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
 
-                                    // Jarak Klinik
-                                    Text(
-                                      widget.isLocationGranted
-                                          ? klinik['jarak']!
-                                          : 'N/A',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.black54,
-                                      ),
+                                    // Info Jarak & Jam Pelayanan (Kanan, Tidak Mentok Tepi)
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          widget.isLocationGranted
+                                              ? klinik['jarak']!
+                                              : 'N/A',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          klinik['jam']!,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: isTutup
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
+                                            color: isTutup
+                                                ? Colors.red.shade700
+                                                : Colors.black54,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -317,45 +382,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-
-      // Bottom Navigation Bar Sesuai Figma
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFF8FAFC),
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          onTap: _onBottomNavTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: 'Skrining',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: 'Konsultasi',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              label: 'Artikel',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: 'Profil',
             ),
           ],
         ),
