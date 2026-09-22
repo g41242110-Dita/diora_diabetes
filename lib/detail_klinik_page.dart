@@ -29,7 +29,6 @@ class DetailKlinikPage extends StatefulWidget {
 class _DetailKlinikPageState extends State<DetailKlinikPage> {
   final int _selectedIndex = 0;
 
-  // Data Dokter Spesialis Tersedia
   final List<Map<String, String>> _dokterList = [
     {
       'nama': 'dr. Muhammad Iqbal, Sp. DV',
@@ -45,7 +44,6 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
     },
   ];
 
-  // Fungsi untuk membuka Google Maps (Rute)
   Future<void> _openGoogleMaps() async {
     final String query = Uri.encodeComponent('${widget.namaKlinik}, ${widget.alamatKlinik}');
     final Uri googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
@@ -57,11 +55,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
       );
 
       if (!launched) {
-        // Fallback jika mode external gagal
-        launched = await launchUrl(
-          googleMapsUrl,
-          mode: LaunchMode.platformDefault,
-        );
+        launched = await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
       }
 
       if (!launched && mounted) {
@@ -72,21 +66,18 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membuka Google Maps: $e')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     }
   }
 
-  // Fungsi untuk membuka aplikasi Telepon/Dialer (Telp)
   Future<void> _openDialer() async {
-    // Membersihkan karakter selain angka dari nomor telepon
     final String cleanPhone = widget.nomorTelepon.replaceAll(RegExp(r'[^\d+]'), '');
     final Uri phoneUrl = Uri(scheme: 'tel', path: cleanPhone);
 
     try {
       bool launched = await launchUrl(phoneUrl);
-
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal membuka aplikasi Telepon')),
@@ -95,13 +86,12 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membuka aplikasi Telepon: $e')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     }
   }
 
-  // Navigasi Bottom Bar
   void _onBottomNavTapped(int index) {
     if (index == _selectedIndex) return;
 
@@ -126,9 +116,10 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
         return;
     }
 
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => targetPage),
+          (route) => false,
     );
   }
 
@@ -190,7 +181,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                 ),
                 const SizedBox(height: 10),
 
-                // Jarak dari Lokasi
+                // Jarak Klinik
                 Text(
                   '${widget.jarakKlinik} dari lokasi Anda',
                   style: const TextStyle(
@@ -204,7 +195,6 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Tombol Rute
                     SizedBox(
                       width: 125,
                       height: 38,
@@ -229,8 +219,6 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                       ),
                     ),
                     const SizedBox(width: 14),
-
-                    // Tombol Telp
                     SizedBox(
                       width: 125,
                       height: 38,
@@ -286,7 +274,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                 ),
                 const SizedBox(height: 12),
 
-                // Jam Pelayanan
+                // Jam Pelayanan (Teks Libur Rata Kiri Sejajar Jam)
                 const Divider(height: 1, thickness: 1, color: Color(0xFFB0BEC5)),
                 const SizedBox(height: 12),
                 const Align(
@@ -304,27 +292,29 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                 const Row(
                   children: [
                     SizedBox(
-                      width: 120,
+                      width: 130,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Senin - Kamis', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                          SizedBox(height: 3),
+                          SizedBox(height: 4),
                           Text('Jumat - Sabtu', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                          SizedBox(height: 3),
+                          SizedBox(height: 4),
                           Text('Minggu', style: TextStyle(fontSize: 12, color: Colors.black87)),
                         ],
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('08.00 - 14.00 WIB', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                        SizedBox(height: 3),
-                        Text('07.00 - 13.00 WIB', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                        SizedBox(height: 3),
-                        Text('Libur', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('08.00 - 14.00 WIB', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          SizedBox(height: 4),
+                          Text('07.00 - 13.00 WIB', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          SizedBox(height: 4),
+                          Text('Libur', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -346,7 +336,6 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                 ),
                 const SizedBox(height: 10),
 
-                // List Dokter
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
