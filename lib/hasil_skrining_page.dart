@@ -1,10 +1,40 @@
 import 'package:flutter/material.dart';
 
 class HasilSkriningPage extends StatelessWidget {
-  const HasilSkriningPage({super.key});
+  final String nama;
+  final String umur;
+  final String jenisKelamin;
+  final bool isPositif;
+  final List<Map<String, String>> tableData;
+
+  const HasilSkriningPage({
+    super.key,
+    this.nama = 'Aurelia Prisilla',
+    this.umur = '22',
+    this.jenisKelamin = 'Perempuan',
+    this.isPositif = true,
+    this.tableData = const [
+      {'q': 'Apakah Anda sering merasa haus berlebihan?', 'a': 'Ya'},
+      {'q': 'Apakah Anda sering buang air kecil di malam hari?', 'a': 'Ya'},
+      {'q': 'Apakah ada riwayat diabetes di keluarga?', 'a': 'Tidak'},
+    ],
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Mendapatkan tanggal & jam saat ini secara otomatis
+    final DateTime now = DateTime.now();
+    final String jamSkrining = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final String tanggalSkrining = '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+
+    // Warna & Teks Dinamis sesuai Hasil Skrining
+    final Color statusColor = isPositif ? const Color(0xFFFFA8A8) : const Color(0xFFA8FFA8);
+    final Color textColor = isPositif ? Colors.red.shade900 : Colors.green.shade900;
+    final String statusText = isPositif ? 'Positif' : 'Negatif';
+    final String ringkasanText = isPositif
+        ? 'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.'
+        : 'Berdasarkan hasil skrining, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap jaga pola makan dan gaya hidup sehat.';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -54,7 +84,7 @@ class HasilSkriningPage extends StatelessWidget {
                                 'assets/logo.png', // Pastikan path logo sesuai
                                 height: 50,
                                 errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.favorite, color: Color(0xFF6679F4), size: 40),
+                                    const Icon(Icons.favorite, color: Color(0xFF6679F4), size: 40),
                               ),
                               const SizedBox(width: 8),
                               const Column(
@@ -81,16 +111,16 @@ class HasilSkriningPage extends StatelessWidget {
                             width: 1,
                             color: Colors.grey.shade400,
                           ),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'Hasil Skrining Diabetes',
                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                               ),
-                              SizedBox(height: 4),
-                              Text('Hasil : Positif', style: TextStyle(fontSize: 12)),
-                              Text('Pukul Skrining : 10:30', style: TextStyle(fontSize: 12)),
+                              const SizedBox(height: 4),
+                              Text('Hasil : $statusText', style: const TextStyle(fontSize: 12)),
+                              Text('Pukul Skrining : $jamSkrining', style: const TextStyle(fontSize: 12)),
                             ],
                           ),
                         ],
@@ -116,12 +146,11 @@ class HasilSkriningPage extends StatelessWidget {
                           Expanded(
                             child: _buildInfoCard(
                               title: 'Data Pengguna',
-                              content: const [
-                                'Nama : Aurelia Prisilla',
-                                'Tanggal Lahir : 21 September 2003',
-                                'Usia : 22 Tahun',
-                                'Jenis Kelamin : Perempuan',
-                                'Tanggal Skrining : 01 September 2026',
+                              content: [
+                                'Nama : $nama',
+                                'Usia : $umur Tahun',
+                                'Jenis Kelamin : $jenisKelamin',
+                                'Tanggal Skrining : $tanggalSkrining',
                               ],
                             ),
                           ),
@@ -130,8 +159,7 @@ class HasilSkriningPage extends StatelessWidget {
                           Expanded(
                             child: _buildInfoCard(
                               title: 'Ringkasan Hasil',
-                              bodyText:
-                              'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.',
+                              bodyText: ringkasanText,
                             ),
                           ),
                         ],
@@ -144,40 +172,46 @@ class HasilSkriningPage extends StatelessWidget {
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      _buildQuestionsTable(),
+                      _buildQuestionsTable(tableData),
                       const SizedBox(height: 16),
 
-                      // Banner Hasil Skrining Positif
+                      // Banner Hasil Skrining (Dinamis Positif / Negatif)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFA8A8),
+                          color: statusColor,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'Hasil Skrining : Positif',
+                            'Hasil Skrining : $statusText',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: Colors.black,
+                              color: textColor,
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Rekomendasi
+                      // Rekomendasi (Menyesuaikan Hasil)
                       const Text(
                         'Rekomendasi',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
-                      const Text('• Cek kadar gula darah puasa', style: TextStyle(fontSize: 11)),
-                      const Text('• Cek gula darah 2 jam setelah makan', style: TextStyle(fontSize: 11)),
-                      const Text('• HbA1c (jika diperlukan)', style: TextStyle(fontSize: 11)),
-                      const Text('• Konsultasi dengan dokter spesialis penyakit dalam / endokrin', style: TextStyle(fontSize: 11)),
+                      if (isPositif) ...const [
+                        Text('• Cek kadar gula darah puasa', style: TextStyle(fontSize: 11)),
+                        Text('• Cek gula darah 2 jam setelah makan', style: TextStyle(fontSize: 11)),
+                        Text('• HbA1c (jika diperlukan)', style: TextStyle(fontSize: 11)),
+                        Text('• Konsultasi dengan dokter spesialis penyakit dalam / endokrin', style: TextStyle(fontSize: 11)),
+                      ] else ...const [
+                        Text('• Pertahankan pola makan gizi seimbang', style: TextStyle(fontSize: 11)),
+                        Text('• Rutin melakukan aktivitas fisik/olahraga', style: TextStyle(fontSize: 11)),
+                        Text('• Melakukan tes gula darah secara berkala', style: TextStyle(fontSize: 11)),
+                      ],
                       const SizedBox(height: 16),
 
                       // Box Catatan Penting
@@ -209,7 +243,7 @@ class HasilSkriningPage extends StatelessWidget {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'Hasil skrining ini bukan pemeriksaan terakhir. Untuk hasil yang lebih akurat, harap melakukan pemeriksaan langsung di fasilitas kesehatan.',
+                                    'Hasil skrining ini bukan pemeriksaan medis resmi. Untuk penegakan diagnosis yang akurat, harap berkonsultasi ke fasilitas kesehatan.',
                                     style: TextStyle(fontSize: 10, color: Colors.black87),
                                   ),
                                 ],
@@ -284,7 +318,7 @@ class HasilSkriningPage extends StatelessWidget {
           const SizedBox(height: 6),
           if (content != null)
             ...content.map(
-                  (text) => Padding(
+              (text) => Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(text, style: const TextStyle(fontSize: 9, color: Colors.black87)),
               ),
@@ -299,25 +333,8 @@ class HasilSkriningPage extends StatelessWidget {
     );
   }
 
-  // Helper Widget Tabel Pertanyaan
-  Widget _buildQuestionsTable() {
-    final List<Map<String, String>> data = [
-      {'q': '1. Apakah kamu sering buang air kecil (BAK)?', 'a': 'Iya'},
-      {'q': '2. Apakah kamu sering merasa haus?', 'a': 'Iya'},
-      {'q': '3. Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?', 'a': 'Tidak'},
-      {'q': '4. Apakah kamu sering merasa lemas atau mudah lelah?', 'a': 'Iya'},
-      {'q': '5. Apakah kamu sering merasa lapar meskipun sudah makan?', 'a': 'Iya'},
-      {'q': '6. Apakah kamu sering mengalami infeksi jamur, terutama di area genital?', 'a': 'Iya'},
-      {'q': '7. Apakah penglihatan kamu sering terasa kabur?', 'a': 'Tidak'},
-      {'q': '8. Apakah kamu sering mengalami gatal-gatal pada kulit?', 'a': 'Iya'},
-      {'q': '9. Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?', 'a': 'Iya'},
-      {'q': '10. Apakah luka pada tubuh kamu sulit sembuh?', 'a': 'Tidak'},
-      {'q': '11. Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?', 'a': 'Iya'},
-      {'q': '12. Apakah kamu sering mengalami kaku atau tegang pada otot?', 'a': 'Iya'},
-      {'q': '13. Apakah kamu mengalami kerontokan rambut yang tidak biasa?', 'a': 'Tidak'},
-      {'q': '14. Apakah berat badan kamu termasuk berlebih/obesitas?', 'a': 'Iya'},
-    ];
-
+  // Helper Widget Tabel Pertanyaan Dinamis
+  Widget _buildQuestionsTable(List<Map<String, String>> data) {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade400),
@@ -332,7 +349,7 @@ class HasilSkriningPage extends StatelessWidget {
           },
           border: TableBorder(
             horizontalInside: BorderSide(color: Colors.grey.shade300, width: 0.5),
-            verticalInside: BorderSide(color: Colors.black87, width: 1),
+            verticalInside: const BorderSide(color: Colors.black87, width: 1),
             top: const BorderSide(color: Colors.black87, width: 1),
             bottom: const BorderSide(color: Colors.black87, width: 1),
           ),
@@ -358,19 +375,19 @@ class HasilSkriningPage extends StatelessWidget {
               ],
             ),
             ...data.map(
-                  (item) => TableRow(
+              (item) => TableRow(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                     child: Text(
-                      item['q']!,
+                      item['q'] ?? '',
                       style: const TextStyle(fontSize: 8.5),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
                     child: Text(
-                      item['a']!,
+                      item['a'] ?? '',
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 8.5),
                     ),
