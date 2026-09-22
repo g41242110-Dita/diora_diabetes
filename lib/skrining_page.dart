@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'skrining2_page.dart';
 
 class SkriningPage extends StatefulWidget {
   const SkriningPage({super.key});
@@ -165,7 +166,16 @@ class _SkriningPageState extends State<SkriningPage> {
                     elevation: 0,
                   ),
                   onPressed: () {
-                    // Nanti kita isi untuk lanjut ke halaman berikutnya
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Skrining2Page(
+                          nama: _namaController.text,
+                          umur: _umurController.text,
+                          jenisKelamin: _jenisKelamin ?? '',
+                        ),
+                      ),
+                    );
                   },
                   child: const Text(
                     'Lanjutkan',
