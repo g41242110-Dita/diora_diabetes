@@ -21,6 +21,13 @@ class _Skrining2PageState extends State<Skrining2Page> {
   final PageController _pageController = PageController();
   int _currentStep = 0; // 0 = Step 2/4, 1 = Step 3/4, 2 = Step 4/4
 
+  // Pemetaan nomor pertanyaan untuk tiap step
+  final Map<int, List<int>> _stepQuestions = {
+    0: [1, 2, 3, 4, 5],      // Step 2/4
+    1: [6, 7, 8, 9, 10],     // Step 3/4
+    2: [11, 12, 13, 14],     // Step 4/4
+  };
+
   // Map untuk menyimpan semua jawaban pertanyaan 1 sampai 14 (true = Iya, false = Tidak)
   final Map<int, bool?> _jawaban = {
     1: null,
@@ -39,8 +46,83 @@ class _Skrining2PageState extends State<Skrining2Page> {
     14: null,
   };
 
+  // Validasi Data Diri (Nama, Umur, Jenis Kelamin)
+  bool _isDataDiriComplete() {
+    return widget.nama.trim().isNotEmpty &&
+        widget.umur.trim().isNotEmpty &&
+        widget.jenisKelamin.trim().isNotEmpty;
+  }
+
+  // Validasi Pertanyaan Skrining di step aktif
+  bool _isCurrentStepComplete() {
+    List<int>? activeQuestions = _stepQuestions[_currentStep];
+    if (activeQuestions == null) return false;
+
+    for (int qNo in activeQuestions) {
+      if (_jawaban[qNo] == null) {
+        return false; // Ada pertanyaan yang belum dijawab
+      }
+    }
+    return true; // Semua pertanyaan di step ini sudah dijawab
+  }
+
+  // Fungsi untuk menampilkan Pop-up Peringatan
+  void _showWarningDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+              SizedBox(width: 8),
+              Text(
+                'Data Belum Lengkap',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6679F4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Fungsi untuk berpindah ke step berikutnya
   void _nextStep() {
+    // 1. Cek dulu apakah Data Diri sudah terisi semua
+    if (!_isDataDiriComplete()) {
+      _showWarningDialog('Data diri (Nama, Umur, Jenis Kelamin) belum lengkap. Harap lengkapi data diri Anda terlebih dahulu!');
+      return;
+    }
+
+    // 2. Cek apakah semua pertanyaan di step/halaman aktif sudah dijawab
+    if (!_isCurrentStepComplete()) {
+      _showWarningDialog('Harap isi semua pertanyaan pada halaman ini terlebih dahulu sebelum melanjutkan!');
+      return;
+    }
+
+    // Jika data diri dan pertanyaan sudah lengkap, baru berpindah halaman
     if (_currentStep < 2) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
