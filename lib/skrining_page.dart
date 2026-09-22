@@ -20,6 +20,56 @@ class _SkriningPageState extends State<SkriningPage> {
     super.dispose();
   }
 
+  // Fungsi untuk mengecek validasi sebelum pindah halaman
+  void _validateAndNavigate() {
+    String nama = _namaController.text.trim();
+    String umur = _umurController.text.trim();
+
+    // Jika ada salah satu yang belum diisi
+    if (nama.isEmpty || umur.isEmpty || _jenisKelamin == null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+              SizedBox(width: 8),
+              Text(
+                'Data Belum Lengkap',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: const Text('Harap isi Nama, Umur, dan Jenis Kelamin terlebih dahulu!'),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6679F4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      return; // Hentikan alur agar tidak push ke halaman berikutnya
+    }
+
+    // Jika semua data terisi, berpindah ke Skrining2Page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Skrining2Page(
+          nama: nama,
+          umur: umur,
+          jenisKelamin: _jenisKelamin!,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,18 +215,7 @@ class _SkriningPageState extends State<SkriningPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Skrining2Page(
-                          nama: _namaController.text,
-                          umur: _umurController.text,
-                          jenisKelamin: _jenisKelamin ?? '',
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _validateAndNavigate, // Memanggil fungsi validasi
                   child: const Text(
                     'Lanjutkan',
                     style: TextStyle(
