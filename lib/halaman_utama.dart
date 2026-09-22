@@ -20,12 +20,6 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     final List<Widget> pages = [
       BerandaPage(
         namaUser: widget.namaUser,
-        onTapProfileHeader: () {
-          // Saat banner atas diklik, pindahkan tab ke index 4 (Profil)
-          setState(() {
-            _selectedIndex = 4;
-          });
-        },
       ),
       const Center(child: Text('Halaman Fitur 2')),
       const Center(child: Text('Halaman Fitur 3')),
