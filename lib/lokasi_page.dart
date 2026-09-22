@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-// Import file halaman daftar klinik
 import 'daftar_klinik_page.dart';
 
 class LokasiPage extends StatefulWidget {
@@ -11,9 +9,9 @@ class LokasiPage extends StatefulWidget {
 }
 
 class _LokasiPageState extends State<LokasiPage> {
-  bool _isPrecise = true; // State pilihan Lokasi Akurat vs Sekitar
+  // Option 0: Lokasi Akurat, Option 1: Lokasi Sekitar
+  int _selectedOption = 0;
 
-  // Fungsi navigasi ke halaman Daftar Klinik setelah memilih izin
   void _navigateToDaftarKlinik(bool isGranted) {
     Navigator.pushReplacement(
       context,
@@ -38,25 +36,28 @@ class _LokasiPageState extends State<LokasiPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
             child: Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFC8E6C9), width: 1.5),
+                border: Border.all(color: const Color(0xFFA8E0BA), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
+
+                  // Pin Header Icon
                   const Icon(
                     Icons.location_on_outlined,
-                    size: 38,
-                    color: Colors.grey,
+                    size: 36,
+                    color: Colors.black54,
                   ),
                   const SizedBox(height: 16),
 
-                  // Teks Deskripsi (Aplikasi Diora)
+                  // Teks Deskripsi Permission
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: RichText(
@@ -65,208 +66,188 @@ class _LokasiPageState extends State<LokasiPage> {
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black87,
-                          height: 1.4,
+                          height: 1.3,
                         ),
                         children: [
                           TextSpan(text: 'Izinkan '),
                           TextSpan(
-                            text: 'Diora',
-                            style: TextStyle(
-                              color: Color(0xFFE57373),
-                              fontWeight: FontWeight.bold,
-                            ),
+                            text: 'Redera ',
+                            style: TextStyle(color: Color(0xFFC07060), fontWeight: FontWeight.w500),
                           ),
-                          TextSpan(
-                            text:
-                            ' mengakses lokasi kamu untuk menemukan klinik terdekat.',
-                          ),
+                          TextSpan(text: 'mengakses lokasi kamu untuk menemukan klinik terdekat.'),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 28),
 
-                  // Pilihan Opsi Lokasi Akurat & Sekitar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Lokasi Akurat
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isPrecise = true;
-                          });
-                        },
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: const Color(0xFFE8F0FE),
-                                border: Border.all(
-                                  color: _isPrecise
-                                      ? const Color(0xFF3B82F6)
-                                      : Colors.transparent,
-                                  width: 3,
-                                ),
-                              ),
-                              child: Center(
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFFD0E2FF),
-                                  ),
-                                  child: const Icon(
-                                    Icons.location_on,
-                                    color: Color(0xFF2563EB),
-                                    size: 28,
+                  // Pilihan Ilustrasi Lokasi (Akurat vs Sekitar)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Pilihan 1: Lokasi Akurat
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedOption = 0;
+                            });
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 95,
+                                height: 95,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _selectedOption == 0
+                                        ? const Color(0xFF1A73E8)
+                                        : Colors.transparent,
+                                    width: 2.5,
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Lokasi Akurat',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-
-                      // Lokasi Sekitar
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isPrecise = false;
-                          });
-                        },
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: const Color(0xFFFFF7ED),
-                                border: Border.all(
-                                  color: !_isPrecise
-                                      ? const Color(0xFF3B82F6)
-                                      : Colors.transparent,
-                                  width: 3,
+                                padding: const EdgeInsets.all(3),
+                                child: ClipOval(
+                                  child: Image.network(
+                                    'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=300',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: const Color(0xFFE8F0FE),
+                                        child: const Icon(Icons.my_location, color: Color(0xFF1A73E8)),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.map_outlined,
-                                  color: Colors.orange,
-                                  size: 40,
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Lokasi Akurat',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Lokasi Sekitar',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
+                            ],
+                          ),
+                        ),
+
+                        // Pilihan 2: Lokasi Sekitar
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedOption = 1;
+                            });
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 95,
+                                height: 95,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: _selectedOption == 1
+                                        ? const Color(0xFF1A73E8)
+                                        : Colors.transparent,
+                                    width: 2.5,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.all(3),
+                                child: ClipOval(
+                                  child: Image.network(
+                                    'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=300',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: const Color(0xFFFFF3E0),
+                                        child: const Icon(Icons.map, color: Colors.orange),
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Lokasi Sekitar',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Divider Pembatas Atas Tombol Pilihan
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFD1D5DB)),
+
+                  // Tombol 1: Izinkan
+                  InkWell(
+                    onTap: () => _navigateToDaftarKlinik(true),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Izinkan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 32),
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFD1D5DB)),
 
-                  // Tombol Opsi Izin
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
-                  _buildOptionButton(
-                    text: 'Izinkan',
+                  // Tombol 2: Izinkan saat aplikasi digunakan
+                  InkWell(
                     onTap: () => _navigateToDaftarKlinik(true),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Izinkan saat aplikasi digunakan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
                   ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
-                  _buildOptionButton(
-                    text: 'Izinkan saat aplikasi digunakan',
-                    onTap: () => _navigateToDaftarKlinik(true),
-                  ),
-                  const Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
-                  _buildOptionButton(
-                    text: 'Jangan izinkan',
+                  const Divider(height: 1, thickness: 1, color: Color(0xFFD1D5DB)),
+
+                  // Tombol 3: Jangan izinkan
+                  InkWell(
                     onTap: () => _navigateToDaftarKlinik(false),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Jangan izinkan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: 0,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFF8FAFC),
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: '',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOptionButton({
-    required String text,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
           ),
         ),
       ),
