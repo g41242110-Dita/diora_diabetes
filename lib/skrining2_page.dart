@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'hasil_skrining_page.dart'; // Import file Hasil Skrining kamu
 
 class Skrining2Page extends StatefulWidget {
   final String nama;
@@ -25,7 +26,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
   final Map<int, List<int>> _stepQuestions = {
     0: [1, 2, 3, 4, 5],      // Step 2/4
     1: [6, 7, 8, 9, 10],     // Step 3/4
-    2: [11, 12, 13, 14],     // Step 4/4
+    2: [11, 12, 13, 14],     // Step 4/4 (Skrining 5/Selesai)
   };
 
   // Map untuk menyimpan semua jawaban pertanyaan 1 sampai 14 (true = Iya, false = Tidak)
@@ -44,6 +45,24 @@ class _Skrining2PageState extends State<Skrining2Page> {
     12: null,
     13: null,
     14: null,
+  };
+
+  // Teks pertanyaan lengkap untuk dipassing ke halaman hasil
+  final Map<int, String> _pertanyaanText = {
+    1: '1. Apakah kamu sering buang air kecil (BAK)?',
+    2: '2. Apakah kamu sering merasa haus?',
+    3: '3. Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?',
+    4: '4. Apakah kamu sering merasa lemas atau mudah lelah?',
+    5: '5. Apakah kamu sering merasa lapar meskipun sudah makan?',
+    6: '6. Apakah kamu sering mengalami infeksi jamur, terutama di area genital?',
+    7: '7. Apakah penglihatan kamu sering terasa kabur?',
+    8: '8. Apakah kamu sering mengalami gatal-gatal pada kulit?',
+    9: '9. Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?',
+    10: '10. Apakah luka pada tubuh kamu sulit sembuh?',
+    11: '11. Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?',
+    12: '12. Apakah kamu sering mengalami kaku atau tegang pada otot?',
+    13: '13. Apakah kamu mengalami kerontokan rambut yang tidak biasa?',
+    14: '14. Apakah berat badan kamu termasuk berlebih/obesitas?',
   };
 
   // Validasi Data Diri (Nama, Umur, Jenis Kelamin)
@@ -66,7 +85,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
     return true; // Semua pertanyaan di step ini sudah dijawab
   }
 
-  // Fungsi untuk menampilkan Pop-up Peringatan
+  // Fungsi Pop-up Peringatan
   void _showWarningDialog(String message) {
     showDialog(
       context: context,
@@ -97,9 +116,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -108,37 +125,64 @@ class _Skrining2PageState extends State<Skrining2Page> {
     );
   }
 
-  // Fungsi untuk berpindah ke step berikutnya
+  // Fungsi Berpindah Step atau Memproses Hasil Akhir
   void _nextStep() {
-    // 1. Cek dulu apakah Data Diri sudah terisi semua
+    // 1. Cek Data Diri
     if (!_isDataDiriComplete()) {
-      _showWarningDialog('Data diri (Nama, Umur, Jenis Kelamin) belum lengkap. Harap lengkapi data diri Anda terlebih dahulu!');
+      _showWarningDialog('Data diri belum lengkap. Harap isi data diri terlebih dahulu!');
       return;
     }
 
-    // 2. Cek apakah semua pertanyaan di step/halaman aktif sudah dijawab
+    // 2. Cek Jawaban Pertanyaan di Step Aktif
     if (!_isCurrentStepComplete()) {
-      _showWarningDialog('Harap isi semua pertanyaan pada halaman ini terlebih dahulu sebelum melanjutkan!');
+      _showWarningDialog('Harap isi semua pertanyaan pada halaman ini sebelum melanjutkan!');
       return;
     }
 
-    // Jika data diri dan pertanyaan sudah lengkap, baru berpindah halaman
+    // 3. Jika belum di step terakhir, geser ke step berikutnya
     if (_currentStep < 2) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      // AKSI AKHIR: Navigasi ke halaman Hasil / Akhir Skrining
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Skrining Selesai! Memproses hasil...')),
-      );
-      // Contoh jika mau pindah halaman ke HasilPage:
-      // Navigator.push(context, MaterialPageRoute(builder: (context) => HasilPage(jawaban: _jawaban)));
+      // 4. STEP AKHIR (Skrining 5 / Selesai): Hitung & Pindah ke HasilSkriningPage
+      _finishSkrining();
     }
   }
 
-  // Fungsi untuk kembali ke step sebelumnya
+  void _finishSkrining() {
+    // Menghitung jumlah jawaban "Iya"
+    int totalIya = _jawaban.values.where((val) => val == true).length;
+    
+    // Penentuan hasil ringkas (contoh: jika jawaban 'Iya' >= 5 dianggap Risiko Tinggi / Positif)
+    bool isPositif = totalIya >= 5;
+
+    // Menyiapkan daftar data pertanyaan dan jawaban untuk tabel hasil
+    List<Map<String, String>> formattedTableData = [];
+    _pertanyaanText.forEach((no, qText) {
+      formattedTableData.add({
+        'q': qText,
+        'a': _jawaban[no] == true ? 'Iya' : 'Tidak',
+      });
+    });
+
+    // Pindah Langsung Ke HasilSkriningPage
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HasilSkriningPage(
+          nama: widget.nama,
+          umur: widget.umur,
+          jenisKelamin: widget.jenisKelamin,
+          isPositif: isPositif,
+          tableData: formattedTableData,
+        ),
+      ),
+    );
+  }
+
+  // Fungsi Kembali ke Step Sebelumnya
   void _prevStep() {
     if (_currentStep > 0) {
       _pageController.previousPage(
@@ -146,14 +190,12 @@ class _Skrining2PageState extends State<Skrining2Page> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Jika di step pertama (2/4), tombol kembali akan menutup halaman ini
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Menentukan teks indikator progress (2/4, 3/4, 4/4) dan nilainya
     final String progressText = '${_currentStep + 2}/4';
     final double progressValue = (_currentStep + 2) / 4;
 
@@ -162,7 +204,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header Fixed (Tombol Back, Judul, Progress Indicator)
+            // Header Fixed
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
@@ -206,36 +248,39 @@ class _Skrining2PageState extends State<Skrining2Page> {
               ),
             ),
 
-            // PageView untuk Pertanyaan (Swipeable / Navigable)
+            // PageView Pertanyaan
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // Mematikan geser manual agar harus lewat tombol
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (index) {
                   setState(() {
                     _currentStep = index;
                   });
                 },
                 children: [
+                  // Step 2/4 (Pertanyaan 1-5)
                   _buildStepLayout([
-                    _buildQuestionItem(1, '1. Apakah kamu sering buang air kecil (BAK)?'),
-                    _buildQuestionItem(2, '2. Apakah kamu sering merasa haus?'),
-                    _buildQuestionItem(3, '3. Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?'),
-                    _buildQuestionItem(4, '4. Apakah kamu sering merasa lemas atau mudah lelah?'),
-                    _buildQuestionItem(5, '5. Apakah kamu sering merasa lapar meskipun sudah makan?'),
+                    _buildQuestionItem(1, _pertanyaanText[1]!),
+                    _buildQuestionItem(2, _pertanyaanText[2]!),
+                    _buildQuestionItem(3, _pertanyaanText[3]!),
+                    _buildQuestionItem(4, _pertanyaanText[4]!),
+                    _buildQuestionItem(5, _pertanyaanText[5]!),
                   ]),
+                  // Step 3/4 (Pertanyaan 6-10)
                   _buildStepLayout([
-                    _buildQuestionItem(6, '6. Apakah kamu sering mengalami infeksi jamur, terutama di area genital?'),
-                    _buildQuestionItem(7, '7. Apakah penglihatan kamu sering terasa kabur?'),
-                    _buildQuestionItem(8, '8. Apakah kamu sering mengalami gatal-gatal pada kulit?'),
-                    _buildQuestionItem(9, '9. Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?'),
-                    _buildQuestionItem(10, '10. Apakah luka pada tubuh kamu sulit sembuh?'),
+                    _buildQuestionItem(6, _pertanyaanText[6]!),
+                    _buildQuestionItem(7, _pertanyaanText[7]!),
+                    _buildQuestionItem(8, _pertanyaanText[8]!),
+                    _buildQuestionItem(9, _pertanyaanText[9]!),
+                    _buildQuestionItem(10, _pertanyaanText[10]!),
                   ]),
+                  // Step 4/4 / Skrining 5 (Pertanyaan 11-14)
                   _buildStepLayout([
-                    _buildQuestionItem(11, '11. Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?'),
-                    _buildQuestionItem(12, '12. Apakah kamu sering mengalami kaku atau tegang pada otot?'),
-                    _buildQuestionItem(13, '13. Apakah kamu mengalami kerontokan rambut yang tidak biasa?'),
-                    _buildQuestionItem(14, '14. Apakah berat badan kamu termasuk berlebih/obesitas?'),
+                    _buildQuestionItem(11, _pertanyaanText[11]!),
+                    _buildQuestionItem(12, _pertanyaanText[12]!),
+                    _buildQuestionItem(13, _pertanyaanText[13]!),
+                    _buildQuestionItem(14, _pertanyaanText[14]!),
                   ]),
                 ],
               ),
@@ -294,7 +339,6 @@ class _Skrining2PageState extends State<Skrining2Page> {
     );
   }
 
-  // Wrapper SingleChildScrollView untuk daftar pertanyaan per step
   Widget _buildStepLayout(List<Widget> questions) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -304,7 +348,6 @@ class _Skrining2PageState extends State<Skrining2Page> {
     );
   }
 
-  // Helper Widget Pertanyaan Radio
   Widget _buildQuestionItem(int no, String pertanyaan) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
