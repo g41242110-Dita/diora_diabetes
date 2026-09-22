@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'detail_dokter_page.dart';
+import 'halaman_utama.dart';
 
 class KonsultasiPage extends StatefulWidget {
-  const KonsultasiPage({super.key});
+  final String namaUser;
+
+  const KonsultasiPage({
+    super.key,
+    this.namaUser = 'Pengguna',
+  });
 
   @override
   State<KonsultasiPage> createState() => _KonsultasiPageState();
 }
 
 class _KonsultasiPageState extends State<KonsultasiPage> {
+  int _selectedIndex = 2; // Default di tab Konsultasi
   final TextEditingController _searchController = TextEditingController();
-  int _selectedIndex = 1;
 
-  // List Data Dokter Dinamis
-  final List<Doctor> _listDokter = [
+  final List<Doctor> doctors = [
     Doctor(
       nama: 'dr. Amanda Putri, Sp. PD',
       spesialis: 'Dokter Spesialis Penyakit Dalam',
@@ -22,9 +27,10 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       ulasan: '324 ulasan',
       statusJam: 'Tersedia hari ini',
       isOnline: true,
-      jadwalPraktik: 'Senin - Jumat 10.00 - 18.00',
+      jadwalPraktik: 'Senin - Jumat, 10.00 - 18.00',
       pasienDitangani: '1152+ Pasien',
-      tentangDokter: 'Berpengalaman dalam menangani penyakit dalam, termasuk diabetes, hipertensi, dan gangguan metabolik lainnya.',
+      tentangDokter:
+      'Berpengalaman dalam menangani penyakit dalam, termasuk diabetes, hipertensi, dan gangguan metabolik lainnya.',
     ),
     Doctor(
       nama: 'dr. Budi Santoso, Sp. PD',
@@ -33,9 +39,10 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       ulasan: '214 ulasan',
       statusJam: 'Tersedia hari ini',
       isOnline: true,
-      jadwalPraktik: 'Senin - Sabtu 08.00 - 15.00',
+      jadwalPraktik: 'Senin - Sabtu, 08.00 - 15.00',
       pasienDitangani: '890+ Pasien',
-      tentangDokter: 'Spesialis penyakit dalam dengan fokus pada kesehatan pencernaan dan penyakit menular.',
+      tentangDokter:
+      'Spesialis penyakit dalam dengan fokus pada kesehatan pencernaan dan penyakit metabolik.',
     ),
     Doctor(
       nama: 'dr. Sari Dewi, Sp. GK',
@@ -44,11 +51,22 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       ulasan: '190 ulasan',
       statusJam: 'Tersedia besok',
       isOnline: false,
-      jadwalPraktik: 'Selasa - Kamis 13.00 - 17.00',
+      jadwalPraktik: 'Selasa - Kamis, 13.00 - 17.00',
       pasienDitangani: '540+ Pasien',
-      tentangDokter: 'Membantu konseling gizi, diet klinis, serta manajemen berat badan untuk gaya hidup sehat.',
+      tentangDokter:
+      'Membantu konseling gizi, diet klinis, serta manajemen pola makan untuk penderita diabetes.',
     ),
   ];
+
+  // List penampung hasil filter pencarian
+  List<Doctor> filteredDoctors = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Default awal menampilkan semua dokter
+    filteredDoctors = doctors;
+  }
 
   @override
   void dispose() {
@@ -56,53 +74,115 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
     super.dispose();
   }
 
+  // Fungsi untuk memfilter list dokter berdasarkan input teks
+  void _filterDoctors(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        filteredDoctors = doctors;
+      } else {
+        filteredDoctors = doctors.where((doctor) {
+          final nameLower = doctor.nama.toLowerCase();
+          final spesialisLower = doctor.spesialis.toLowerCase();
+          final searchLower = query.toLowerCase();
+
+          return nameLower.contains(searchLower) ||
+              spesialisLower.contains(searchLower);
+        }).toList();
+      }
+    });
+  }
+
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HalamanUtama(
+            namaUser: widget.namaUser,
+            initialIndex: 0,
+          ),
+        ),
+            (route) => false,
+      );
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Konsultasi', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const Text(
+                'Konsultasi',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
               const SizedBox(height: 4),
-              const Text('Pilih dokter yang sesuai dengan kebutuhanmu.', style: TextStyle(fontSize: 13, color: Colors.grey)),
-              const SizedBox(height: 16),
-
-              // Search Bar
-              TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Cari Dokter atau Spesialis . . .',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade300)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade300)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF6679F4))),
+              const Text(
+                'Pilih dokter yang sesuai dengan kebutuhanmu.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Daftar Dokter Dinamis
+              // Search Bar dengan fungsi filter terhubung
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterDoctors,
+                  decoration: InputDecoration(
+                    icon: const Icon(Icons.search, color: Colors.grey, size: 20),
+                    hintText: 'Cari Dokter atau Spesialis ...',
+                    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                    border: InputBorder.none,
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                      onPressed: () {
+                        _searchController.clear();
+                        _filterDoctors('');
+                      },
+                    )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // List Dokter Hasil Filter
               Expanded(
-                child: ListView.builder(
-                  itemCount: _listDokter.length,
+                child: filteredDoctors.isEmpty
+                    ? const Center(
+                  child: Text(
+                    'Dokter tidak ditemukan.',
+                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                )
+                    : ListView.builder(
+                  itemCount: filteredDoctors.length,
                   itemBuilder: (context, index) {
-                    final doctor = _listDokter[index];
-                    return _buildDoctorCard(doctor);
+                    final doctor = filteredDoctors[index];
+                    return _buildDoctorCard(context, doctor);
                   },
                 ),
               ),
@@ -111,46 +191,81 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
         ),
       ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF6679F4),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Konsultasi'),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), activeIcon: Icon(Icons.assignment), label: 'Skrining'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profil'),
-        ],
+      // Bottom Navigation Bar
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          selectedItemColor: const Color(0xFF6679F4),
+          unselectedItemColor: const Color(0xFF6679F4).withOpacity(0.5),
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.auto_awesome_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.mark_chat_unread_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              label: '',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: '',
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildDoctorCard(Doctor doctor) {
+  Widget _buildDoctorCard(BuildContext context, Doctor doctor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
-          // Navigasi membawa data objek dokter ke halaman detail
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DetailDokterPage(doctor: doctor),
+              builder: (context) => DetailDokterPage(
+                doctor: doctor,
+                namaUser: widget.namaUser,
+              ),
             ),
           );
         },
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const CircleAvatar(
                 radius: 28,
@@ -162,51 +277,74 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(doctor.nama, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: doctor.isOnline ? const Color(0xFFE6F4EA) : const Color(0xFFFFEBF0),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            doctor.isOnline ? 'Online' : 'Offline',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: doctor.isOnline ? const Color(0xFF2E7D32) : const Color(0xFFE53E3E),
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      doctor.nama,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(doctor.spesialis, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    Text(
+                      doctor.spesialis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
                         const Icon(Icons.star, size: 14, color: Colors.amber),
                         const SizedBox(width: 4),
-                        Text(doctor.rating, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text(
+                          doctor.rating,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(width: 4),
-                        Text('(${doctor.ulasan})', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(
+                          '(${doctor.ulasan})',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
-                      child: Text(
-                        doctor.statusJam,
-                        style: TextStyle(fontSize: 10, color: doctor.isOnline ? Colors.green.shade700 : Colors.blue.shade700),
+                    const SizedBox(height: 4),
+                    Text(
+                      doctor.statusJam,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
+                ),
+              ),
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: doctor.isOnline
+                      ? const Color(0xFFE6F4EA)
+                      : const Color(0xFFFFEBF0),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  doctor.isOnline ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: doctor.isOnline
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFE53E3E),
+                  ),
                 ),
               ),
             ],

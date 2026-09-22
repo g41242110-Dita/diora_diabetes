@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
 import 'beranda_page.dart';
+import 'konsultasi_page.dart'; // Import halaman konsultasi
 import 'profile_screen.dart';
 
 class HalamanUtama extends StatefulWidget {
   final String namaUser;
+  final int initialIndex; // Parameter untuk mengatur tab awal
 
-  const HalamanUtama({super.key, this.namaUser = 'Pian'});
+  const HalamanUtama({
+    super.key,
+    this.namaUser = 'Pian',
+    this.initialIndex = 0, // Default ke tab Beranda (Index 0)
+  });
 
   @override
   State<HalamanUtama> createState() => _HalamanUtamaState();
 }
 
 class _HalamanUtamaState extends State<HalamanUtama> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex; // Set index awal dari parameter
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +34,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
         namaUser: widget.namaUser,
       ),
       const Center(child: Text('Halaman Fitur 2')),
-      const Center(child: Text('Halaman Fitur 3')),
+      const KonsultasiPage(), // Index 2: Halaman Konsultasi Dokter
       const Center(child: Text('Halaman Fitur 4')),
       ProfileScreen(namaUser: widget.namaUser), // Index 4: Profil
     ];
@@ -37,7 +49,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           currentIndex: _selectedIndex,
           onTap: (index) {
             setState(() {
-              _selectedIndex = index; // Mengganti tampilan halaman secara langsung
+              _selectedIndex = index; // Mengganti tab secara langsung
             });
           },
           type: BottomNavigationBarType.fixed,

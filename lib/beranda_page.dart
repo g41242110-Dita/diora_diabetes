@@ -17,8 +17,6 @@ class BerandaPage extends StatefulWidget {
 }
 
 class _BerandaPageState extends State<BerandaPage> {
-  int _selectedIndex = 0;
-
   void _bukaHalamanProfil() {
     Navigator.push(
       context,
@@ -54,7 +52,11 @@ class _BerandaPageState extends State<BerandaPage> {
                       const CircleAvatar(
                         radius: 30,
                         backgroundColor: Color(0xFFFFE5D9),
-                        child: Icon(Icons.person, size: 40, color: Colors.orange),
+                        child: Icon(
+                          Icons.person,
+                          size: 40,
+                          color: Colors.orange,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -72,7 +74,10 @@ class _BerandaPageState extends State<BerandaPage> {
                             const SizedBox(height: 2),
                             RichText(
                               text: const TextSpan(
-                                style: TextStyle(fontSize: 13, color: Colors.black87),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black87,
+                                ),
                                 children: [
                                   TextSpan(text: 'Selamat Datang di '),
                                   TextSpan(
@@ -106,7 +111,8 @@ class _BerandaPageState extends State<BerandaPage> {
                 children: [
                   _buildMenuCard(
                     title: 'Skrining\nGejala Diabetes',
-                    subtitle: 'Cek risiko diabetes sejak dini dengan mudah',
+                    subtitle:
+                    'Cek risiko diabetes sejak dini dengan mudah',
                     icon: Icons.stars,
                     bgColor: const Color(0xFFECEBFF),
                     iconBgColor: const Color(0xFFC7C2FF),
@@ -120,9 +126,12 @@ class _BerandaPageState extends State<BerandaPage> {
                       );
                     },
                   ),
+
+                  // KONSULTASI (Meneruskan namaUser ke KonsultasiPage)
                   _buildMenuCard(
                     title: 'Konsultasi',
-                    subtitle: 'Konsultasi dengan dokter untuk hasil yang lebih akurat.',
+                    subtitle:
+                    'Konsultasi dengan dokter untuk hasil yang lebih akurat.',
                     icon: Icons.help_outline,
                     bgColor: const Color(0xFFFFEBF0),
                     iconBgColor: const Color(0xFFFFC2D1),
@@ -131,14 +140,18 @@ class _BerandaPageState extends State<BerandaPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const KonsultasiPage(),
+                          builder: (context) => KonsultasiPage(
+                            namaUser: widget.namaUser,
+                          ),
                         ),
                       );
                     },
                   ),
+
                   _buildMenuCard(
                     title: 'Lokasi Terdekat',
-                    subtitle: 'Temukan fasyankes terdekat yang menyediakan layanan diabetes.',
+                    subtitle:
+                    'Temukan fasyankes terdekat yang menyediakan layanan diabetes.',
                     icon: Icons.location_on_outlined,
                     bgColor: const Color(0xFFE6F4EA),
                     iconBgColor: const Color(0xFFA8E0BA),
@@ -155,9 +168,11 @@ class _BerandaPageState extends State<BerandaPage> {
                       );
                     },
                   ),
+
                   _buildMenuCard(
                     title: 'Artikel',
-                    subtitle: 'Baca informasi seputar diabetes, gaya hidup sehat, & pencegahannya.',
+                    subtitle:
+                    'Baca informasi seputar diabetes, gaya hidup sehat, & pencegahannya.',
                     icon: Icons.article_outlined,
                     bgColor: const Color(0xFFE3F2FD),
                     iconBgColor: const Color(0xFFBBDEFB),
@@ -171,9 +186,11 @@ class _BerandaPageState extends State<BerandaPage> {
                       );
                     },
                   ),
+
                   _buildMenuCard(
                     title: 'Hasil Tes',
-                    subtitle: 'Lihat rekomendasi dan unduh hasil tes skriningmu.',
+                    subtitle:
+                    'Lihat rekomendasi dan unduh hasil tes skriningmu.',
                     icon: Icons.insert_drive_file_outlined,
                     bgColor: const Color(0xFFFFE8E1),
                     iconBgColor: const Color(0xFFFFE082),
@@ -187,6 +204,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       );
                     },
                   ),
+
                   _buildMenuCard(
                     title: 'Progres\nKesehatan',
                     subtitle: 'Pantau kesehatan dan risiko diabetesmu',
@@ -198,7 +216,8 @@ class _BerandaPageState extends State<BerandaPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ProgresKesehatanPage(),
+                          builder: (context) =>
+                          const ProgresKesehatanPage(),
                         ),
                       );
                     },
@@ -217,6 +236,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   color: Colors.black,
                 ),
               ),
+
               const SizedBox(height: 10),
 
               // CARD ARTIKEL
@@ -234,7 +254,10 @@ class _BerandaPageState extends State<BerandaPage> {
                         width: 70,
                         height: 70,
                         color: Colors.grey.shade200,
-                        child: const Icon(Icons.medical_services, color: Colors.blue),
+                        child: const Icon(
+                          Icons.medical_services,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -269,37 +292,6 @@ class _BerandaPageState extends State<BerandaPage> {
           ),
         ),
       ),
-
-      // BOTTOM NAVIGATION BAR
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-
-            if (index == 4) {
-              _bukaHalamanProfil();
-            }
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: Colors.blue.shade200,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.stars_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.help_outline), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.article_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
-          ],
-        ),
-      ),
     );
   }
 
@@ -330,7 +322,11 @@ class _BerandaPageState extends State<BerandaPage> {
                 color: iconBgColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 18, color: iconColor),
+              child: Icon(
+                icon,
+                size: 18,
+                color: iconColor,
+              ),
             ),
             const SizedBox(width: 8),
             Expanded(
