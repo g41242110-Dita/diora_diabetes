@@ -147,7 +147,10 @@ class _BerandaPageState extends State<BerandaPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
+                          // Jika ingin lewat halaman izin lokasi dahulu:
                           builder: (context) => const LokasiPage(),
+                          // Jika ingin langsung ke daftar klinik tanpa halaman izin:
+                          // builder: (context) => DaftarKlinikPage(),
                         ),
                       );
                     },
@@ -179,7 +182,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const HasilSkriningPage(), // <--- Ganti jadi HasilSkriningPage()
+                          builder: (context) => const HasilSkriningPage(),
                         ),
                       );
                     },
