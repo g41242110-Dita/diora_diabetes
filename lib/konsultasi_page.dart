@@ -169,7 +169,6 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
           ),
         ),
       ),
-      // bottomNavigationBar sengaja dihapus agar tidak double dengan milik BerandaPage
     );
   }
 
