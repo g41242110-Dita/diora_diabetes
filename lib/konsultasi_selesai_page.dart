@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'ringkasan_konsultasi_page.dart';
-import 'halaman_utama.dart';
+import 'beranda_page.dart'; // Ganti ke file Beranda/Dashboard kamu
 
 class KonsultasiSelesaiPage extends StatelessWidget {
   final Doctor doctor;
@@ -161,12 +161,12 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                     elevation: 0,
                   ),
                   onPressed: () {
+                    // Menghapus semua halaman termasuk Splash Screen, lalu langsung membuka BerandaPage
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => HalamanUtama(
+                        builder: (context) => BerandaPage(
                           namaUser: namaUser,
-                          initialIndex: 0,
                         ),
                       ),
                           (route) => false,
