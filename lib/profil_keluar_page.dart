@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 import 'login_page.dart';
 
 class KeluarPage extends StatelessWidget {
@@ -7,7 +8,7 @@ class KeluarPage extends StatelessWidget {
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.4), // Background backdrop lebih lembut
+      barrierColor: Colors.black.withValues(alpha: 0.4),
       builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -19,7 +20,7 @@ class KeluarPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
+                  color: Colors.black.withValues(alpha: 0.12),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -41,7 +42,7 @@ class KeluarPage extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFF83B3B).withOpacity(0.15),
+                        color: const Color(0xFFF83B3B).withValues(alpha: 0.15),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -121,12 +122,17 @@ class KeluarPage extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
                             ),
-                            shadowColor: const Color(0xFFE53935).withOpacity(0.3),
+                            shadowColor: const Color(0xFFE53935).withValues(alpha: 0.3),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             Navigator.pop(dialogContext); // Tutup Pop-Up
 
-                            // Pindah ke LoginPage & Bersihkan Stack Navigation
+                            // 1. SIGN OUT DARI FIREBASE AUTH
+                            await FirebaseAuth.instance.signOut();
+
+                            if (!context.mounted) return;
+
+                            // 2. Pindah ke LoginPage & Bersihkan Stack Navigation
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
@@ -197,7 +203,7 @@ class KeluarPage extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
