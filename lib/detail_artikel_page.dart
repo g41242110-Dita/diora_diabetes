@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Import sesuai dengan nama file di struktur project kamu
-import 'beranda_page.dart';
-import 'skrining_page.dart';
-import 'konsultasi_page.dart';
-import 'artikel_page.dart';
-import 'profile_screen.dart';
-
 class DetailArtikelPage extends StatefulWidget {
   final String title;
   final String content;
@@ -30,7 +23,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
   String _bannerTitle = '';
   String _bannerSubtitle = '';
   bool _isSuccessBanner = true;
-  final int _selectedIndex = 3;
 
   void _zoomIn() {
     setState(() {
@@ -67,34 +59,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
         });
       }
     });
-  }
-
-  void _onBottomNavTapped(int index) {
-    Widget targetPage;
-    switch (index) {
-      case 0:
-        targetPage = const BerandaPage();
-        break;
-      case 1:
-        targetPage = const SkriningPage();
-        break;
-      case 2:
-        targetPage = const KonsultasiPage();
-        break;
-      case 3:
-        targetPage = const ArtikelPage();
-        break;
-      case 4:
-        targetPage = const ProfileScreen();
-        break;
-      default:
-        return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => targetPage),
-    );
   }
 
   @override
@@ -289,43 +253,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFF8FAFC),
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          onTap: _onBottomNavTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: '',
-            ),
           ],
         ),
       ),
