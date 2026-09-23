@@ -86,7 +86,14 @@ class _BerandaPageState extends State<BerandaPage> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildBerandaContent(),
-      const SkriningPage(),
+      // PERBAIKAN DI SINI: Kirimkan fungsi onBackToHome agar tab kembali ke Beranda (index 0)
+      SkriningPage(
+        onBackToHome: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),
       KonsultasiPage(namaUser: widget.namaUser),
       const ArtikelPage(),
       ProfileScreen(namaUser: widget.namaUser),
