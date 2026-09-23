@@ -115,7 +115,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       return;
     }
 
-    // 3. Validasi password
+    // 3. Validasi password minimal 6 karakter
     if (password.length < 6) {
       setState(() {
         showErrorBanner = true;
@@ -447,7 +447,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 6),
 
-                  // CAPTCHA DISPLAY
+                  // CAPTCHA DISPLAY & REFRESH
                   Row(
                     children: [
                       Expanded(
@@ -523,8 +523,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6679F4),
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                        const Color(0xFF6679F4).withOpacity(0.6),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -532,13 +530,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                       ),
                       child: isLoading
                           ? const SizedBox(
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
+                          color: Colors.white,
+                          strokeWidth: 2.5,
                         ),
                       )
                           : const Row(
@@ -552,39 +548,28 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                             ),
                           ),
                           SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward,
-                            size: 18,
-                          ),
+                          Icon(Icons.arrow_forward, size: 18),
                         ],
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  const Divider(
-                    color: Color(0xFFE0E0E0),
-                    thickness: 1,
-                  ),
+                  const Divider(color: Color(0xFFE0E0E0), thickness: 1),
 
                   const SizedBox(height: 12),
 
-                  // LINK LOGIN
+                  // LINK KE LOGIN
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
                         'Sudah Punya Akun? ',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
                       ),
                       GestureDetector(
-                        onTap: isLoading
-                            ? null
-                            : () {
+                        onTap: () {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -597,7 +582,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF558B82),
+                            color: Color(0xFF6679F4),
                           ),
                         ),
                       ),
@@ -607,26 +592,22 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               ),
             ),
 
-            // ERROR BANNER
+            // BANNER POP-UP ERROR
             if (showErrorBanner)
               Positioned(
                 top: 10,
                 left: 20,
                 right: 20,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFDE8E8),
-                    border: Border.all(
-                      color: const Color(0xFFF87171),
-                    ),
+                    border: Border.all(color: const Color(0xFFF87171)),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
