@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+// Import halaman-halaman yang dibutuhkan
 import 'profile_screen.dart';
 import 'konsultasi_page.dart';
 import 'skrining_page.dart';
@@ -6,6 +8,7 @@ import 'lokasi_page.dart';
 import 'progres_kesehatan_page.dart';
 import 'artikel_page.dart';
 import 'hasil_skrining_page.dart';
+import 'detail_artikel_page.dart';
 
 class BerandaPage extends StatefulWidget {
   final String namaUser;
@@ -23,11 +26,52 @@ class BerandaPage extends StatefulWidget {
 
 class _BerandaPageState extends State<BerandaPage> {
   late int _selectedIndex;
+  late PageController _pageController;
+
+  // 1. DAFTAR 4 ARTIKEL TERBARU
+  final List<Map<String, String>> _daftarArtikel = [
+    {
+      'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
+      'content':
+      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\nKadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\nPada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\nGlukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
+      'imageUrl': 'https://picsum.photos/400/200?random=1',
+    },
+    {
+      'title': 'Pentingnya Olahraga Rutin Bagi Penderita Diabetes',
+      'content':
+      'Aktivitas fisik secara teratur dapat membantu meningkatkan sensitivitas insulin, sehingga sel-sel tubuh lebih mudah menggunakan glukosa dalam darah.\n\nJenis olahraga yang disarankan meliputi jalan cepat, bersepeda, berenang, dan senam aerobik ringan selama minimal 150 menit per minggu.',
+      'imageUrl': 'https://picsum.photos/400/200?random=2',
+    },
+    {
+      'title': 'Pola Makan Sehat Pencegah Diabetes Tipe 2',
+      'content':
+      'Mengatur pola makan dengan mengonsumsi makanan berindeks glikemik rendah seperti gandum, sayuran hijau, dan kacang-kacangan sangat efektif dalam menjaga kestabilan kadar gula darah.\n\nHindari konsumsi minuman manis kemasan dan kurangi karbohidrat olahan untuk mencegah risiko terkena diabetes tipe 2.',
+      'imageUrl': 'https://picsum.photos/400/200?random=3',
+    },
+    {
+      'title': 'Mengenal Pemeriksaan Kadar Gula Darah Rutin',
+      'content':
+      'Pemeriksaan gula darah secara mandiri maupun medis sangat penting dilakukan secara berkala. Hal ini membantu kita memantau pola lonjakan gula darah dan mengevaluasi efektivitas terapi atau diet harian yang sedang dijalankan.',
+      'imageUrl': 'https://picsum.photos/400/200?random=4',
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+
+    // Set posisi awal slider di tengah-tengah angka besar (1000) agar bisa di-swipe ke kiri maupun ke kanan tanpa batas
+    _pageController = PageController(
+      initialPage: 1000,
+      viewportFraction: 0.95,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   void _bukaHalamanProfil() {
@@ -43,21 +87,18 @@ class _BerandaPageState extends State<BerandaPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Daftar Tampilan berdasarkan Tab Navigasi Bawah
     final List<Widget> pages = [
-      _buildBerandaContent(), // Index 0: Beranda
-      const SkriningPage(), // Index 1: Icon Bintang (Skrining)
-      KonsultasiPage(namaUser: widget.namaUser), // Index 2: Icon Help/Konsultasi
-      const ArtikelPage(), // Index 3: Icon Kertas/Dokumen (Artikel)
-      ProfileScreen(namaUser: widget.namaUser), // Index 4: Icon Profil
+      _buildBerandaContent(),
+      const SkriningPage(),
+      KonsultasiPage(namaUser: widget.namaUser),
+      const ArtikelPage(),
+      ProfileScreen(namaUser: widget.namaUser),
     ];
 
     return PopScope(
-      canPop: _selectedIndex == 0, // Hanya keluar jika di Tab Beranda (Index 0)
+      canPop: _selectedIndex == 0,
       onPopInvokedWithResult: (bool didPop, dynamic result) {
         if (didPop) return;
-
-        // Jika tombol back HP ditekan saat berada di tab lain, pindahkan ke Beranda
         if (_selectedIndex != 0) {
           setState(() {
             _selectedIndex = 0;
@@ -67,8 +108,6 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: pages[_selectedIndex],
-
-        // BARIS IKON NAVIGASI PERMANEN DI BAWAH
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
             border: Border(
@@ -122,7 +161,6 @@ class _BerandaPageState extends State<BerandaPage> {
     );
   }
 
-  // WIDGET KONTEN ISI BERANDA
   Widget _buildBerandaContent() {
     return SafeArea(
       child: SingleChildScrollView(
@@ -130,7 +168,7 @@ class _BerandaPageState extends State<BerandaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // BANNER SALAM / GREETING
+            // BANNER GREETING / PROFIL
             GestureDetector(
               onTap: _bukaHalamanProfil,
               child: Container(
@@ -192,7 +230,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
             const SizedBox(height: 16),
 
-            // GRID MENU UTAMA (2 KOLOM)
+            // GRID MENU UTAMA
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -201,7 +239,6 @@ class _BerandaPageState extends State<BerandaPage> {
               mainAxisSpacing: 12,
               childAspectRatio: 1.4,
               children: [
-                // Skrining (Pindah Tab ke Index 1)
                 _buildMenuCard(
                   title: 'Skrining\nGejala Diabetes',
                   subtitle: 'Cek risiko diabetes sejak dini dengan mudah',
@@ -211,12 +248,10 @@ class _BerandaPageState extends State<BerandaPage> {
                   iconColor: const Color(0xFF6679F4),
                   onTap: () {
                     setState(() {
-                      _selectedIndex = 1; // Pindah ke Tab Skrining
+                      _selectedIndex = 1;
                     });
                   },
                 ),
-
-                // Konsultasi (Pindah Tab ke Index 2)
                 _buildMenuCard(
                   title: 'Konsultasi',
                   subtitle:
@@ -227,11 +262,10 @@ class _BerandaPageState extends State<BerandaPage> {
                   iconColor: const Color(0xFFE53E3E),
                   onTap: () {
                     setState(() {
-                      _selectedIndex = 2; // Pindah ke Tab Konsultasi
+                      _selectedIndex = 2;
                     });
                   },
                 ),
-
                 _buildMenuCard(
                   title: 'Lokasi Terdekat',
                   subtitle:
@@ -249,8 +283,6 @@ class _BerandaPageState extends State<BerandaPage> {
                     );
                   },
                 ),
-
-                // Artikel (Pindah Tab ke Index 3)
                 _buildMenuCard(
                   title: 'Artikel',
                   subtitle:
@@ -261,11 +293,10 @@ class _BerandaPageState extends State<BerandaPage> {
                   iconColor: const Color(0xFF1976D2),
                   onTap: () {
                     setState(() {
-                      _selectedIndex = 3; // Pindah ke Tab Artikel
+                      _selectedIndex = 3;
                     });
                   },
                 ),
-
                 _buildMenuCard(
                   title: 'Hasil Tes',
                   subtitle: 'Lihat rekomendasi dan unduh hasil tes skriningmu.',
@@ -282,7 +313,6 @@ class _BerandaPageState extends State<BerandaPage> {
                     );
                   },
                 ),
-
                 _buildMenuCard(
                   title: 'Progres\nKesehatan',
                   subtitle: 'Pantau kesehatan dan risiko diabetesmu',
@@ -306,7 +336,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
             const SizedBox(height: 20),
 
-            // SEKSI ARTIKEL TERBARU
+            // JUDUL ARTIKEL TERBARU
             const Text(
               'Artikel Terbaru',
               style: TextStyle(
@@ -318,53 +348,85 @@ class _BerandaPageState extends State<BerandaPage> {
 
             const SizedBox(height: 10),
 
-            // CARD ARTIKEL
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+            // SLIDER INFINITE LOOP (BISA DIGESER TANPA BATAS)
+            SizedBox(
+              height: 110,
+              child: PageView.builder(
+                controller: _pageController,
+                itemBuilder: (context, index) {
+                  // Trik Modulo: Mengulang urutan index 0, 1, 2, 3 secara berputar tanpa henti
+                  final actualIndex = index % _daftarArtikel.length;
+                  final item = _daftarArtikel[actualIndex];
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailArtikelPage(
+                            title: item['title']!,
+                            content: item['content']!,
+                            imageUrl: item['imageUrl']!,
+                          ),
+                        ),
+                      );
+                    },
                     child: Container(
-                      width: 70,
-                      height: 70,
-                      color: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.medical_services,
-                        color: Colors.blue,
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              width: 70,
+                              height: 70,
+                              color: const Color(0xFFE2E7FF),
+                              child: const Icon(
+                                Icons.medical_services_outlined,
+                                color: Color(0xFF6679F4),
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  item['title']!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item['content']!,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black54,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Diabetes - Gejala, Penyebab, dan Pengobatan',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi ...',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.black54,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ],

@@ -63,7 +63,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    // Diubah dari Navigator.push menjadi Navigator.pushReplacement
+                    // agar halaman Onboarding tertutup dan tidak bisa di-back ke sini
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const DaftarAkunPage(),
