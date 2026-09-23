@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,6 +24,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String _namaDisplay = '';
   String _emailDisplay = '';
+  String? _base64Image;
   bool _isLoading = true;
 
   @override
@@ -51,8 +53,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (data.containsKey('nama') && data['nama'].toString().isNotEmpty) {
             _namaDisplay = data['nama'];
           }
+          if (data.containsKey('photoBase64') && data['photoBase64'] != null) {
+            _base64Image = data['photoBase64'];
+          }
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint("Error memuat data profil: $e");
+      }
     }
 
     if (mounted) {
@@ -71,6 +78,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return names[0][0].toUpperCase();
   }
 
+  Widget _buildProfileAvatar() {
+    if (_base64Image != null && _base64Image!.isNotEmpty) {
+      try {
+        return CircleAvatar(
+          radius: 40,
+          backgroundColor: const Color(0xFFBAC8FF),
+          child: ClipOval(
+            child: Image.memory(
+              base64Decode(_base64Image!),
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Text(
+                _getInitials(_namaDisplay),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
+        );
+      } catch (_) {}
+    }
+
+    return CircleAvatar(
+      radius: 40,
+      backgroundColor: const Color(0xFFBAC8FF),
+      child: Text(
+        _getInitials(_namaDisplay),
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () {
@@ -107,18 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
 
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: const Color(0xFFBAC8FF),
-                child: Text(
-                  _getInitials(_namaDisplay),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
+              _buildProfileAvatar(),
               const SizedBox(height: 12),
               Text(
                 _namaDisplay,
