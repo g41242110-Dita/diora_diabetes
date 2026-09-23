@@ -71,7 +71,6 @@ class _BerandaPageState extends State<BerandaPage> {
     super.dispose();
   }
 
-  // PERBAIKAN 1: Buka profil lewat perpindahan Tab agar terintegrasi dengan BottomNavBar
   void _bukaHalamanProfil() {
     setState(() {
       _selectedIndex = 4;
@@ -91,13 +90,11 @@ class _BerandaPageState extends State<BerandaPage> {
       ),
       KonsultasiPage(namaUser: widget.namaUser),
       const ArtikelPage(),
-
-      // PERBAIKAN 2: Kirim fungsi callback onBackToHome ke ProfileScreen
       ProfileScreen(
         namaUser: widget.namaUser,
         onBackToHome: () {
           setState(() {
-            _selectedIndex = 0; // Pindah langsung ke Tab Beranda
+            _selectedIndex = 0;
           });
         },
       ),
@@ -180,7 +177,7 @@ class _BerandaPageState extends State<BerandaPage> {
             children: [
               Container(
                 height: 180,
-                padding: const EdgeInsets.only(top: 50, left: 24, right: 24),
+                padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
@@ -196,45 +193,53 @@ class _BerandaPageState extends State<BerandaPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: _bukaHalamanProfil,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Color(0xFFFFE5D9),
-                              child: Icon(Icons.person, color: Colors.orange, size: 28),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Halo, ${widget.namaUser} 👋',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _bukaHalamanProfil,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
                               ),
-                              const Text(
-                                'Selamat Datang di Diora',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                ),
+                              child: const CircleAvatar(
+                                radius: 22,
+                                backgroundColor: Color(0xFFFFE5D9),
+                                child: Icon(Icons.person, color: Colors.orange, size: 28),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Halo, ${widget.namaUser} 👋',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const Text(
+                                    'Selamat Datang di Diora',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white70,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     IconButton(
@@ -303,6 +308,8 @@ class _BerandaPageState extends State<BerandaPage> {
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black87,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
                                   const Text(
@@ -311,6 +318,8 @@ class _BerandaPageState extends State<BerandaPage> {
                                       fontSize: 11,
                                       color: Colors.black54,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -467,6 +476,8 @@ class _BerandaPageState extends State<BerandaPage> {
                                 fontSize: 10.5,
                                 color: Colors.black54,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
