@@ -43,10 +43,10 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
 
     final Color statusColor =
-    widget.isPositif ? const Color(0xFFFFA8A8) : const Color(0xFFA8FFA8);
+        widget.isPositif ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9);
     final Color textColor =
-    widget.isPositif ? Colors.red.shade900 : Colors.green.shade900;
-    final String statusText = widget.isPositif ? 'Positif' : 'Negatif';
+        widget.isPositif ? Colors.red.shade800 : Colors.green.shade800;
+    final String statusText = widget.isPositif ? 'Risiko Tinggi (Positif)' : 'Risiko Rendah (Negatif)';
     final String ringkasanText = widget.isPositif
         ? 'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.'
         : 'Berdasarkan hasil skrining, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap jaga pola makan dan gaya hidup sehat.';
@@ -54,50 +54,57 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'Hasil Skrining',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF6679F4), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const Text(
-              'Hasil Skrining',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(20),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black87, width: 1.2),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade200, width: 1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header Brand & Status Singkat
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Image.asset(
                                 'assets/logo.png',
-                                height: 50,
+                                height: 40,
                                 errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.favorite,
-                                    color: Color(0xFF6679F4), size: 40),
+                                    const Icon(Icons.favorite,
+                                        color: Color(0xFF6679F4), size: 36),
                               ),
                               const SizedBox(width: 8),
                               const Column(
@@ -106,7 +113,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                   Text(
                                     'Diora',
                                     style: TextStyle(
-                                      fontSize: 24,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF6679F4),
                                     ),
@@ -114,45 +121,43 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                   Text(
                                     'Kenali Risiko, Jaga Masa Depanmu',
                                     style: TextStyle(
-                                        fontSize: 8, color: Colors.grey),
+                                        fontSize: 10, color: Colors.grey),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          Container(
-                            height: 50,
-                            width: 1,
-                            color: Colors.grey.shade400,
-                          ),
                           Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text(
-                                'Hasil Skrining Diabetes',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 13),
+                              Text(
+                                tanggalSkrining,
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey),
                               ),
-                              const SizedBox(height: 4),
-                              Text('Hasil : $statusText',
-                                  style: const TextStyle(fontSize: 12)),
-                              Text('Pukul Skrining : $jamSkrining',
-                                  style: const TextStyle(fontSize: 12)),
+                              Text(
+                                jamSkrining,
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey),
+                              ),
                             ],
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      const Divider(color: Colors.grey, thickness: 0.5),
                       const SizedBox(height: 12),
-                      const Divider(color: Colors.black87, thickness: 1),
-                      const SizedBox(height: 8),
+
                       const Center(
                         child: Text(
                           'Laporan Hasil Skrining Diabetes',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                              fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Informasi Data Diri & Ringkasan (Layout Fleksibel)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -160,10 +165,9 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                             child: _buildInfoCard(
                               title: 'Data Pengguna',
                               content: [
-                                'Nama : ${widget.nama}',
-                                'Usia : ${widget.umur} Tahun',
-                                'Jenis Kelamin : ${widget.jenisKelamin}',
-                                'Tanggal Skrining : $tanggalSkrining',
+                                'Nama: ${widget.nama}',
+                                'Usia: ${widget.umur} Tahun',
+                                'Kelamin: ${widget.jenisKelamin}',
                               ],
                             ),
                           ),
@@ -176,93 +180,108 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
+
+                      // Status Badge Utama
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: textColor.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              widget.isPositif ? Icons.warning_rounded : Icons.check_circle_rounded,
+                              color: textColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Status: $statusText',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: textColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Tabel Pertanyaan
                       const Text(
-                        'Hasil Skrining',
+                        'Detail Jawaban Skrining',
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
+                            fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                       const SizedBox(height: 8),
                       _buildQuestionsTable(widget.tableData),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: statusColor,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Hasil Skrining : $statusText',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: textColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
+
+                      // Rekomendasi
                       const Text(
-                        'Rekomendasi',
+                        'Rekomendasi Tindakan',
                         style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.bold),
+                            fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
-                      const SizedBox(height: 4),
-                      if (widget.isPositif) ...const [
-                        Text('• Cek kadar gula darah puasa',
-                            style: TextStyle(fontSize: 11)),
-                        Text('• Cek gula darah 2 jam setelah makan',
-                            style: TextStyle(fontSize: 11)),
-                        Text('• HbA1c (jika diperlukan)',
-                            style: TextStyle(fontSize: 11)),
-                        Text(
-                            '• Konsultasi dengan dokter spesialis penyakit dalam / endokrin',
-                            style: TextStyle(fontSize: 11)),
-                      ] else ...const [
-                        Text('• Pertahankan pola makan gizi seimbang',
-                            style: TextStyle(fontSize: 11)),
-                        Text('• Rutin melakukan aktivitas fisik/olahraga',
-                            style: TextStyle(fontSize: 11)),
-                        Text('• Melakukan tes gula darah secara berkala',
-                            style: TextStyle(fontSize: 11)),
-                      ],
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: widget.isPositif
+                              ? const [
+                                  Text('• Cek kadar gula darah puasa & 2 jam setelah makan', style: TextStyle(fontSize: 11, height: 1.4)),
+                                  Text('• Lakukan pemeriksaan HbA1c jika diperlukan', style: TextStyle(fontSize: 11, height: 1.4)),
+                                  Text('• Konsultasi dengan dokter spesialis penyakit dalam/endokrin', style: TextStyle(fontSize: 11, height: 1.4)),
+                                ]
+                              : const [
+                                  Text('• Pertahankan pola makan gizi seimbang', style: TextStyle(fontSize: 11, height: 1.4)),
+                                  Text('• Rutin melakukan aktivitas fisik atau olahraga', style: TextStyle(fontSize: 11, height: 1.4)),
+                                  Text('• Lakukan tes gula darah secara berkala', style: TextStyle(fontSize: 11, height: 1.4)),
+                                ],
+                        ),
+                      ),
                       const SizedBox(height: 16),
+
+                      // Kotak Informasi Penting (Disclaimer)
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: const Color(0xFFECEEFE),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF6679F4),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.info,
-                                  color: Colors.white, size: 16),
-                            ),
+                            const Icon(Icons.info_outline, color: Color(0xFF6679F4), size: 18),
                             const SizedBox(width: 10),
                             const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Penting',
+                                    'Catatan Penting',
                                     style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF4A5BD0)),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'Hasil skrining ini bukan pemeriksaan medis resmi. Untuk penegakan diagnosis yang akurat, harap berkonsultasi ke fasilitas kesehatan.',
+                                    'Hasil skrining ini bukan diagnosis medis resmi. Harap berkonsultasi dengan tenaga medis profesional untuk penanganan akurat.',
                                     style: TextStyle(
-                                        fontSize: 10, color: Colors.black87),
+                                        fontSize: 10, color: Colors.black87, height: 1.3),
                                   ),
                                 ],
                               ),
@@ -275,6 +294,8 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                 ),
               ),
             ),
+            
+            // Tombol Unduh / Kirim Email
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -290,9 +311,9 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                   ),
                   onPressed: _navigateToProsesKirim,
                   child: const Text(
-                    'Unduh Hasil Skrining',
+                    'Kirim Hasil ke Email',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -312,35 +333,33 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
     String? bodyText,
   }) {
     return Container(
-      padding: const EdgeInsets.all(10),
-      height: 140,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade400),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (content != null)
             ...content.map(
-                  (text) => Padding(
-                padding: const EdgeInsets.only(bottom: 2),
+              (text) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Text(text,
-                    style:
-                    const TextStyle(fontSize: 9, color: Colors.black87)),
+                    style: const TextStyle(fontSize: 10.5, color: Colors.black87)),
               ),
             ),
           if (bodyText != null)
             Text(
               bodyText,
               style: const TextStyle(
-                  fontSize: 9.5, color: Colors.black87, height: 1.3),
+                  fontSize: 10.5, color: Colors.black87, height: 1.3),
             ),
         ],
       ),
@@ -350,64 +369,60 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
   Widget _buildQuestionsTable(List<Map<String, String>> data) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
-        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Table(
           columnWidths: const {
             0: FlexColumnWidth(4),
-            1: FlexColumnWidth(1),
+            1: FlexColumnWidth(1.2),
           },
           border: TableBorder(
-            horizontalInside:
-            BorderSide(color: Colors.grey.shade300, width: 0.5),
-            verticalInside: const BorderSide(color: Colors.black87, width: 1),
-            top: const BorderSide(color: Colors.black87, width: 1),
-            bottom: const BorderSide(color: Colors.black87, width: 1),
+            horizontalInside: BorderSide(color: Colors.grey.shade200, width: 0.5),
           ),
           children: [
-            const TableRow(
-              children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey.shade100),
+              children: const [
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                   child: Text(
                     'Pertanyaan',
-                    textAlign: TextAlign.center,
-                    style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87),
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                   child: Text(
-                    'Jawab',
+                    'Jawaban',
                     textAlign: TextAlign.center,
-                    style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87),
                   ),
                 ),
               ],
             ),
             ...data.map(
-                  (item) => TableRow(
+              (item) => TableRow(
                 children: [
                   Padding(
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                     child: Text(
                       item['q'] ?? '',
-                      style: const TextStyle(fontSize: 8.5),
+                      style: const TextStyle(fontSize: 10.5, color: Colors.black87),
                     ),
                   ),
                   Padding(
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                     child: Text(
                       item['a'] ?? '',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 8.5),
+                      style: TextStyle(
+                        fontSize: 10.5, 
+                        fontWeight: FontWeight.w600,
+                        color: item['a'] == 'Ya' ? Colors.red.shade700 : Colors.green.shade700,
+                      ),
                     ),
                   ),
                 ],
@@ -421,7 +436,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
 }
 
 // -------------------------------------------------------------
-// HALAMAN PROSES & SUCCESS SEND EMAIL (SESUAI GAMBAR HASIL 3 & HASIL 4)
+// HALAMAN PROSES & SUCCESS SEND EMAIL
 // -------------------------------------------------------------
 class ProsesKirimEmailPage extends StatefulWidget {
   const ProsesKirimEmailPage({super.key});
@@ -470,13 +485,10 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
     );
   }
 
-  // Tampilan 1: Mengirim Email (HASIL 3)
   Widget _buildProgressView() {
     return Column(
       children: [
         const Spacer(flex: 2),
-
-        // Ilustrasi Amplop Mengirim
         Center(
           child: Container(
             width: 180,
@@ -485,32 +497,19 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
               color: Color(0xFFE8F0FE),
               shape: BoxShape.circle,
             ),
-            child: Stack(
+            child: const Stack(
               alignment: Alignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.mark_email_read_outlined,
                   size: 90,
                   color: Color(0xFF4285F4),
-                ),
-                Positioned(
-                  top: 35,
-                  right: 35,
-                  child: Transform.rotate(
-                    angle: -0.2,
-                    child: const Icon(
-                      Icons.send_rounded,
-                      size: 40,
-                      color: Color(0xFF6679F4),
-                    ),
-                  ),
                 ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 36),
-
         const Text(
           'Mengirim Email',
           style: TextStyle(
@@ -520,9 +519,8 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
           ),
         ),
         const SizedBox(height: 12),
-
         const Text(
-          'Mohon tunggu sebentar, kami sedang\nmengirimkan hasil skrining Anda ke\nemail yang telah terdaftar.',
+          'Mohon tunggu sebentar, kami sedang\nmengirimkan hasil skrining Anda ke email.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
@@ -530,10 +528,7 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
             height: 1.4,
           ),
         ),
-
         const Spacer(flex: 3),
-
-        // Progress Bar
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
@@ -544,7 +539,6 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
           ),
         ),
         const SizedBox(height: 8),
-
         Text(
           '${(_progress * 100).toInt()}%',
           style: const TextStyle(
@@ -557,13 +551,10 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
     );
   }
 
-  // Tampilan 2: Berhasil Dikirim! (HASIL 4)
   Widget _buildSuccessView() {
     return Column(
       children: [
         const Spacer(flex: 2),
-
-        // Ilustrasi Amplop Berhasil / Check
         Center(
           child: Container(
             width: 180,
@@ -572,10 +563,10 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
               color: Color(0xFFE8F0FE),
               shape: BoxShape.circle,
             ),
-            child: Stack(
+            child: const Stack(
               alignment: Alignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.mark_email_unread_rounded,
                   size: 90,
                   color: Color(0xFF4285F4),
@@ -583,17 +574,10 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
                 Positioned(
                   bottom: 25,
                   right: 25,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_rounded,
-                      size: 44,
-                      color: Color(0xFF22C55E),
-                    ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    size: 44,
+                    color: Color(0xFF22C55E),
                   ),
                 ),
               ],
@@ -601,7 +585,6 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
           ),
         ),
         const SizedBox(height: 36),
-
         const Text(
           'Berhasil Dikirim!',
           style: TextStyle(
@@ -611,9 +594,8 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
           ),
         ),
         const SizedBox(height: 12),
-
         const Text(
-          'Hasil skrining Anda telah berhasil\ndikirak ke email Anda.',
+          'Hasil skrining Anda telah berhasil\ndikirimkan ke email Anda.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
@@ -621,10 +603,7 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
             height: 1.4,
           ),
         ),
-
         const Spacer(flex: 3),
-
-        // Tombol Kembali Ke Beranda
         SizedBox(
           width: double.infinity,
           height: 50,
