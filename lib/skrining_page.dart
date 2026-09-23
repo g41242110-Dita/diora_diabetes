@@ -32,8 +32,8 @@ class _SkriningPageState extends State<SkriningPage> {
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
               SizedBox(width: 8),
               Text(
@@ -113,7 +113,7 @@ class _SkriningPageState extends State<SkriningPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Progress Bar (1/4)
+                      // Progress Bar (1/2 - Setengah)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -121,7 +121,7 @@ class _SkriningPageState extends State<SkriningPage> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: const LinearProgressIndicator(
-                                value: 0.25,
+                                value: 0.5, // Garis progres setengah (50%)
                                 minHeight: 8,
                                 backgroundColor: Color(0xFFE2E8F0),
                                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6679F4)),
@@ -130,7 +130,7 @@ class _SkriningPageState extends State<SkriningPage> {
                           ),
                           const SizedBox(width: 12),
                           const Text(
-                            '1/4',
+                            '1/2', // Teks penanda langkah pertama dari dua langkah
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
