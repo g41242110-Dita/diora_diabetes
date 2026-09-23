@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // <-- Sudah diperbaiki di sini
 
 import 'profil_informasi_pribadi_page.dart';
 import 'profil_artikel_tersimpan_page.dart';
@@ -11,10 +11,12 @@ import 'profil_keluar_page.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String namaUser;
+  final VoidCallback? onBackToHome;
 
   const ProfileScreen({
     super.key,
     this.namaUser = 'Pengguna',
+    this.onBackToHome,
   });
 
   @override
@@ -118,131 +120,142 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _handleBackAction() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else if (widget.onBackToHome != null) {
+      widget.onBackToHome!();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
-          },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBackAction();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
+            onPressed: _handleBackAction,
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6679F4)),
-        )
-            : SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            children: [
-              const Text(
-                'Profil',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+        body: SafeArea(
+          child: _isLoading
+              ? const Center(
+            child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+          )
+              : SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              children: [
+                const Text(
+                  'Profil',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              _buildProfileAvatar(),
-              const SizedBox(height: 12),
-              Text(
-                _namaDisplay,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                _buildProfileAvatar(),
+                const SizedBox(height: 12),
+                Text(
+                  _namaDisplay,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _emailDisplay,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF64748B),
+                const SizedBox(height: 4),
+                Text(
+                  _emailDisplay,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              _buildMenuItem(
-                context: context,
-                icon: Icons.person_outline_rounded,
-                title: 'Informasi Pribadi',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const InformasiPribadiPage(),
-                    ),
-                  ).then((_) => _fetchUserData());
-                },
-              ),
-              _buildMenuItem(
-                context: context,
-                icon: Icons.bookmark_border_rounded,
-                title: 'Artikel Tersimpan',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ArtikelTersimpanPage(),
-                    ),
-                  );
-                },
-              ),
-              _buildMenuItem(
-                context: context,
-                icon: Icons.settings_outlined,
-                title: 'Pengaturan',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PengaturanPage(),
-                    ),
-                  );
-                },
-              ),
-              _buildMenuItem(
-                context: context,
-                icon: Icons.help_outline_rounded,
-                title: 'Bantuan & Dukungan',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BantuanDukunganPage(),
-                    ),
-                  );
-                },
-              ),
-              _buildMenuItem(
-                context: context,
-                icon: Icons.logout_rounded,
-                title: 'Keluar',
-                isLogout: true,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const KeluarPage(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
+                _buildMenuItem(
+                  context: context,
+                  icon: Icons.person_outline_rounded,
+                  title: 'Informasi Pribadi',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const InformasiPribadiPage(),
+                      ),
+                    ).then((_) => _fetchUserData());
+                  },
+                ),
+                _buildMenuItem(
+                  context: context,
+                  icon: Icons.bookmark_border_rounded,
+                  title: 'Artikel Tersimpan',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ArtikelTersimpanPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  context: context,
+                  icon: Icons.settings_outlined,
+                  title: 'Pengaturan',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PengaturanPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  context: context,
+                  icon: Icons.help_outline_rounded,
+                  title: 'Bantuan & Dukungan',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BantuanDukunganPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  context: context,
+                  icon: Icons.logout_rounded,
+                  title: 'Keluar',
+                  isLogout: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const KeluarPage(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
