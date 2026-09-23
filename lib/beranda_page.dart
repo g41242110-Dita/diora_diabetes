@@ -45,65 +45,78 @@ class _BerandaPageState extends State<BerandaPage> {
   Widget build(BuildContext context) {
     // Daftar Tampilan berdasarkan Tab Navigasi Bawah
     final List<Widget> pages = [
-      _buildBerandaContent(), // Index 0: Isi Utama Beranda
-      const Center(child: Text('Halaman Fitur 2')), // Index 1: Stars
-      KonsultasiPage(namaUser: widget.namaUser), // Index 2: Konsultasi
-      const Center(child: Text('Halaman Dokumen')), // Index 3: Article
-      ProfileScreen(namaUser: widget.namaUser), // Index 4: Profile
+      _buildBerandaContent(), // Index 0: Beranda
+      const SkriningPage(), // Index 1: Icon Bintang (Skrining)
+      KonsultasiPage(namaUser: widget.namaUser), // Index 2: Icon Help/Konsultasi
+      const ArtikelPage(), // Index 3: Icon Kertas/Dokumen (Artikel)
+      ProfileScreen(namaUser: widget.namaUser), // Index 4: Icon Profil
     ];
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: pages[_selectedIndex], // Menampilkan halaman sesuai tab yang dipilih
+    return PopScope(
+      canPop: _selectedIndex == 0, // Hanya keluar jika di Tab Beranda (Index 0)
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
 
-      // BARIS IKON NAVIGASI PERMANEN DI BAWAH
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        // Jika tombol back HP ditekan saat berada di tab lain, pindahkan ke Beranda
+        if (_selectedIndex != 0) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: pages[_selectedIndex],
+
+        // BARIS IKON NAVIGASI PERMANEN DI BAWAH
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index; // Pindah tab secara langsung
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4).withOpacity(0.4),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home_rounded),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.stars_outlined),
-              activeIcon: Icon(Icons.stars_rounded),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.help_outline),
-              activeIcon: Icon(Icons.help),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              activeIcon: Icon(Icons.article),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: '',
-            ),
-          ],
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: const Color(0xFF6679F4),
+            unselectedItemColor: const Color(0xFF6679F4).withOpacity(0.4),
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home_rounded),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.stars_outlined),
+                activeIcon: Icon(Icons.stars_rounded),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.help_outline),
+                activeIcon: Icon(Icons.help),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.article_outlined),
+                activeIcon: Icon(Icons.article),
+                label: '',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline),
+                activeIcon: Icon(Icons.person),
+                label: '',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -188,6 +201,7 @@ class _BerandaPageState extends State<BerandaPage> {
               mainAxisSpacing: 12,
               childAspectRatio: 1.4,
               children: [
+                // Skrining (Pindah Tab ke Index 1)
                 _buildMenuCard(
                   title: 'Skrining\nGejala Diabetes',
                   subtitle: 'Cek risiko diabetes sejak dini dengan mudah',
@@ -196,16 +210,13 @@ class _BerandaPageState extends State<BerandaPage> {
                   iconBgColor: const Color(0xFFC7C2FF),
                   iconColor: const Color(0xFF6679F4),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SkriningPage(),
-                      ),
-                    );
+                    setState(() {
+                      _selectedIndex = 1; // Pindah ke Tab Skrining
+                    });
                   },
                 ),
 
-                // KONSULTASI (Langsung ganti tab ke index 2)
+                // Konsultasi (Pindah Tab ke Index 2)
                 _buildMenuCard(
                   title: 'Konsultasi',
                   subtitle:
@@ -216,7 +227,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   iconColor: const Color(0xFFE53E3E),
                   onTap: () {
                     setState(() {
-                      _selectedIndex = 2; // Pindah otomatis ke Tab Konsultasi
+                      _selectedIndex = 2; // Pindah ke Tab Konsultasi
                     });
                   },
                 ),
@@ -239,6 +250,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   },
                 ),
 
+                // Artikel (Pindah Tab ke Index 3)
                 _buildMenuCard(
                   title: 'Artikel',
                   subtitle:
@@ -248,12 +260,9 @@ class _BerandaPageState extends State<BerandaPage> {
                   iconBgColor: const Color(0xFFBBDEFB),
                   iconColor: const Color(0xFF1976D2),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ArtikelPage(),
-                      ),
-                    );
+                    setState(() {
+                      _selectedIndex = 3; // Pindah ke Tab Artikel
+                    });
                   },
                 ),
 
@@ -286,7 +295,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ProgresKesehatanPage(
-                          username: widget.namaUser, // Mengirimkan nama user aktif ke ProgresKesehatanPage
+                          username: widget.namaUser,
                         ),
                       ),
                     );
