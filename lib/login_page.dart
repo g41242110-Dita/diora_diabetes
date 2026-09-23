@@ -22,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
   bool passwordVisible = false;
   bool isLoading = false;
 
-  // Status Notifikasi & Error per Kolom
   bool showErrorBanner = false;
   String errorMessage = 'Pastikan semua kolom telah diisi dengan benar.';
   bool emailError = false;
@@ -34,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    refreshCaptcha(); // Bikin Captcha acak saat halaman pertama dibuka
+    refreshCaptcha();
   }
 
   @override
@@ -45,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // Fungsi acak Captcha dinamis
   void refreshCaptcha() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     Random random = Random();
@@ -63,13 +61,11 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> login() async {
     setState(() {
       showErrorBanner = false;
-      // Cek field kosong
       emailError = emailController.text.trim().isEmpty;
       passwordError = passwordController.text.isEmpty;
       captchaError = captchaController.text.trim().isEmpty;
     });
 
-    // 1. Validasi jika ada kolom kosong
     if (emailError || passwordError || captchaError) {
       setState(() {
         showErrorBanner = true;
@@ -78,18 +74,16 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // 2. Validasi Captcha
     if (captchaController.text.trim().toUpperCase() != captcha) {
       setState(() {
         showErrorBanner = true;
         captchaError = true;
         errorMessage = 'Kode Captcha tidak sesuai.';
       });
-      refreshCaptcha(); // Re-randomize captcha jika salah
+      refreshCaptcha();
       return;
     }
 
-    // Mulai proses Autentikasi Firebase
     setState(() {
       isLoading = true;
       showErrorBanner = false;
@@ -99,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
       final email = emailController.text.trim();
       final password = passwordController.text;
 
-      // 3. AUTENTIKASI KE FIREBASE AUTH
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
@@ -109,8 +102,7 @@ class _LoginPageState extends State<LoginPage> {
         throw Exception('User tidak ditemukan.');
       }
 
-      // 4. AMBIL DATA NAMA USER DARI FIRESTORE
-      String namaUser = email.split('@').first; // Default fallback
+      String namaUser = email.split('@').first;
       final DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -129,7 +121,6 @@ class _LoginPageState extends State<LoginPage> {
         isLoading = false;
       });
 
-      // 5. Jika Berhasil -> Pindah ke Beranda
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -170,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
         passwordError = true;
         errorMessage = message;
       });
-      refreshCaptcha(); // Acak ulang captcha jika gagal auth
+      refreshCaptcha();
     } catch (e) {
       if (!mounted) return;
 
@@ -205,6 +196,13 @@ class _LoginPageState extends State<LoginPage> {
         horizontal: 16,
         vertical: 14,
       ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: BorderSide(
+          color: isError ? Colors.red : Colors.grey.shade400,
+          width: 1.0,
+        ),
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide(
@@ -229,7 +227,6 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // KONTEN UTAMA Halaman Login
             SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
@@ -237,7 +234,6 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // LOGO
                   Center(
                     child: Image.asset(
                       'assets/logo.png',
@@ -248,7 +244,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 12),
 
-                  // JUDUL & SUBJUDUL
                   const Text(
                     'Masuk',
                     textAlign: TextAlign.center,
@@ -270,11 +265,11 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 24),
 
-                  // EMAIL / USERNAME
                   TextField(
                     controller: emailController,
                     enabled: !isLoading,
                     keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     onChanged: (_) {
                       if (emailError) setState(() => emailError = false);
                     },
@@ -287,11 +282,11 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 12),
 
-                  // PASSWORD
                   TextField(
                     controller: passwordController,
                     enabled: !isLoading,
                     obscureText: !passwordVisible,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     onChanged: (_) {
                       if (passwordError) setState(() => passwordError = false);
                     },
@@ -328,7 +323,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 6),
 
-                  // CAPTCHA DISPLAY & REFRESH
                   Row(
                     children: [
                       Expanded(
@@ -370,10 +364,10 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 12),
 
-                  // INPUT CAPTCHA
                   TextField(
                     controller: captchaController,
                     enabled: !isLoading,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     textCapitalization: TextCapitalization.characters,
                     onChanged: (_) {
                       if (captchaError) setState(() => captchaError = false);
@@ -387,7 +381,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 24),
 
-                  // BUTTON MASUK
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
@@ -428,7 +421,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 16),
 
-                  // LUPA KATA SANDI
                   Center(
                     child: GestureDetector(
                       onTap: () {
@@ -455,7 +447,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 12),
 
-                  // LINK KE DAFTAR AKUN
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -487,7 +478,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // BANNER POP-UP ERROR (MELAYANG DI ATAS KONTEN)
             if (showErrorBanner)
               Positioned(
                 top: 10,
