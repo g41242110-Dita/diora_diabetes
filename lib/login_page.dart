@@ -1,5 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'beranda_page.dart';
 import 'daftar_akun.dart';
 import 'forgot_password_page.dart';
@@ -17,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final captchaController = TextEditingController();
 
   bool passwordVisible = false;
+  bool isLoading = false;
 
   // Status Notifikasi & Error per Kolom
   bool showErrorBanner = false;
@@ -56,8 +60,9 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void login() {
+  Future<void> login() async {
     setState(() {
+      showErrorBanner = false;
       // Cek field kosong
       emailError = emailController.text.trim().isEmpty;
       passwordError = passwordController.text.isEmpty;
@@ -84,19 +89,98 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // Jika Berhasil -> Tutup banner error & pindah ke Beranda
+    // Mulai proses Autentikasi Firebase
     setState(() {
+      isLoading = true;
       showErrorBanner = false;
     });
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BerandaPage(
-          namaUser: emailController.text.split('@').first,
+    try {
+      final email = emailController.text.trim();
+      final password = passwordController.text;
+
+      // 3. AUTENTIKASI KE FIREBASE AUTH
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      final User? user = userCredential.user;
+
+      if (user == null) {
+        throw Exception('User tidak ditemukan.');
+      }
+
+      // 4. AMBIL DATA NAMA USER DARI FIRESTORE
+      String namaUser = email.split('@').first; // Default fallback
+      final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists && userDoc.data() != null) {
+        final data = userDoc.data() as Map<String, dynamic>;
+        if (data.containsKey('nama')) {
+          namaUser = data['nama'];
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      // 5. Jika Berhasil -> Pindah ke Beranda
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BerandaPage(
+            namaUser: namaUser,
+          ),
         ),
-      ),
-    );
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'Email belum terdaftar.';
+          break;
+        case 'wrong-password':
+        case 'invalid-credential':
+          message = 'Email atau Kata Sandi yang Anda masukkan salah.';
+          break;
+        case 'invalid-email':
+          message = 'Format email tidak valid.';
+          break;
+        case 'user-disabled':
+          message = 'Akun ini telah dinonaktifkan.';
+          break;
+        case 'network-request-failed':
+          message = 'Tidak ada koneksi internet.';
+          break;
+        default:
+          message = 'Gagal masuk: ${e.message ?? e.code}';
+      }
+
+      setState(() {
+        isLoading = false;
+        showErrorBanner = true;
+        emailError = true;
+        passwordError = true;
+        errorMessage = message;
+      });
+      refreshCaptcha(); // Acak ulang captcha jika gagal auth
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+        showErrorBanner = true;
+        errorMessage = 'Terjadi kesalahan: $e';
+      });
+      refreshCaptcha();
+    }
   }
 
   InputDecoration inputDecoration({
@@ -189,6 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                   // EMAIL / USERNAME
                   TextField(
                     controller: emailController,
+                    enabled: !isLoading,
                     keyboardType: TextInputType.emailAddress,
                     onChanged: (_) {
                       if (emailError) setState(() => emailError = false);
@@ -205,6 +290,7 @@ class _LoginPageState extends State<LoginPage> {
                   // PASSWORD
                   TextField(
                     controller: passwordController,
+                    enabled: !isLoading,
                     obscureText: !passwordVisible,
                     onChanged: (_) {
                       if (passwordError) setState(() => passwordError = false);
@@ -276,7 +362,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.refresh, size: 22),
-                          onPressed: refreshCaptcha,
+                          onPressed: isLoading ? null : refreshCaptcha,
                         ),
                       ),
                     ],
@@ -287,6 +373,7 @@ class _LoginPageState extends State<LoginPage> {
                   // INPUT CAPTCHA
                   TextField(
                     controller: captchaController,
+                    enabled: !isLoading,
                     textCapitalization: TextCapitalization.characters,
                     onChanged: (_) {
                       if (captchaError) setState(() => captchaError = false);
@@ -304,7 +391,7 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: login,
+                      onPressed: isLoading ? null : login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6679F4),
                         foregroundColor: Colors.white,
@@ -313,7 +400,16 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(24),
                         ),
                       ),
-                      child: const Row(
+                      child: isLoading
+                          ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                          : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
@@ -405,7 +501,7 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05), // Menggunakan withValues
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
