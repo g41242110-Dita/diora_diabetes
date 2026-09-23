@@ -32,25 +32,25 @@ class _BerandaPageState extends State<BerandaPage> {
     {
       'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
       'content':
-      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\nKadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\nPada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\nGlukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
+          'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\nKadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\nPada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\nGlukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
       'imageUrl': 'https://picsum.photos/400/200?random=1',
     },
     {
       'title': 'Pentingnya Olahraga Rutin Bagi Penderita Diabetes',
       'content':
-      'Aktivitas fisik secara teratur dapat membantu meningkatkan sensitivitas insulin, sehingga sel-sel tubuh lebih mudah menggunakan glukosa dalam darah.\n\nJenis olahraga yang disarankan meliputi jalan cepat, bersepeda, berenang, dan senam aerobik ringan selama minimal 150 menit per minggu.',
+          'Aktivitas fisik secara teratur dapat membantu meningkatkan sensitivitas insulin, sehingga sel-sel tubuh lebih mudah menggunakan glukosa dalam darah.\n\nJenis olahraga yang disarankan meliputi jalan cepat, bersepeda, berenang, dan senam aerobik ringan selama minimal 150 menit per minggu.',
       'imageUrl': 'https://picsum.photos/400/200?random=2',
     },
     {
       'title': 'Pola Makan Sehat Pencegah Diabetes Tipe 2',
       'content':
-      'Mengatur pola makan dengan mengonsumsi makanan berindeks glikemik rendah seperti gandum, sayuran hijau, dan kacang-kacangan sangat efektif dalam menjaga kestabilan kadar gula darah.\n\nHindari konsumsi minuman manis kemasan dan kurangi karbohidrat olahan untuk mencegah risiko terkena diabetes tipe 2.',
+          'Mengatur pola makan dengan mengonsumsi makanan berindeks glikemik rendah seperti gandum, sayuran hijau, dan kacang-kacangan sangat efektif dalam menjaga kestabilan kadar gula darah.\n\nHindari konsumsi minuman manis kemasan dan kurangi karbohidrat olahan untuk mencegah risiko terkena diabetes tipe 2.',
       'imageUrl': 'https://picsum.photos/400/200?random=3',
     },
     {
       'title': 'Mengenal Pemeriksaan Kadar Gula Darah Rutin',
       'content':
-      'Pemeriksaan gula darah secara mandiri maupun medis sangat penting dilakukan secara berkala. Hal ini membantu kita memantau pola lonjakan gula darah dan mengevaluasi efektivitas terapi atau diet harian yang sedang dijalankan.',
+          'Pemeriksaan gula darah secara mandiri maupun medis sangat penting dilakukan secara berkala. Hal ini membantu kita memantau pola lonjakan gula darah dan mengevaluasi efektivitas terapi atau diet harian yang sedang dijalankan.',
       'imageUrl': 'https://picsum.photos/400/200?random=4',
     },
   ];
@@ -120,7 +120,7 @@ class _BerandaPageState extends State<BerandaPage> {
             },
             type: BottomNavigationBarType.fixed,
             selectedItemColor: const Color(0xFF6679F4),
-            unselectedItemColor: const Color(0xFF6679F4).withValues(alpha: 0.4),
+            unselectedItemColor: const Color(0xFF6679F4).withOpacity(0.4),
             showSelectedLabels: false,
             showUnselectedLabels: false,
             backgroundColor: Colors.white,
@@ -252,7 +252,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
+                          color: Colors.black.withOpacity(0.06),
                           blurRadius: 15,
                           offset: const Offset(0, 6),
                         ),
@@ -320,9 +320,9 @@ class _BerandaPageState extends State<BerandaPage> {
             ],
           ),
 
-          const SizedBox(height: 100),
+          const SizedBox(height: 100), // Spacing khusus karena Hero Card menumpuk
 
-          // 3. QUICK ACTION LAUNCHER
+          // 3. QUICK ACTION LAUNCHER (IKON CIRCLE / CAPSULE)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -394,7 +394,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
           const SizedBox(height: 24),
 
-          // 4. STATS CARD (PROGRES KESEHATAN)
+          // 4. STATS CARD MEMANJANG (PROGRES KESEHATAN)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: GestureDetector(
@@ -459,7 +459,7 @@ class _BerandaPageState extends State<BerandaPage> {
 
           const SizedBox(height: 24),
 
-          // 5. ARTIKEL TERBARU
+          // 5. ARTIKEL TERBARU (SLIDER CARD PORTRAIT HALUS)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -522,7 +522,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
+                          color: Colors.black.withOpacity(0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
