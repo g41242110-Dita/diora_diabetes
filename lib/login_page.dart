@@ -55,6 +55,7 @@ class _LoginPageState extends State<LoginPage> {
       captchaError = false;
     });
   }
+
   void login() {
     setState(() {
       // Cek field kosong
@@ -79,7 +80,7 @@ class _LoginPageState extends State<LoginPage> {
         captchaError = true;
         errorMessage = 'Kode Captcha tidak sesuai.';
       });
-      refreshCaptcha(); // <--- Ditambahkan agar Captcha langsung teracak otomatis saat user salah input
+      refreshCaptcha(); // Re-randomize captcha jika salah
       return;
     }
 
@@ -92,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
       context,
       MaterialPageRoute(
         builder: (context) => BerandaPage(
-          // Mengambil nama awal dari email atau default nama user
           namaUser: emailController.text.split('@').first,
         ),
       ),
@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     decoration: inputDecoration(
                       icon: Icons.email_outlined,
-                      hint: 'Masukkan Email Anda', // <--- Ganti di sini
+                      hint: 'Masukkan Email Anda',
                       isError: emailError,
                     ),
                   ),
@@ -211,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     decoration: inputDecoration(
                       icon: Icons.lock_outline,
-                      hint: 'Masukkan Kata Sandi', // <--- Ganti di sini
+                      hint: 'Masukkan Kata Sandi',
                       isError: passwordError,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -293,7 +293,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     decoration: inputDecoration(
                       icon: Icons.shield_outlined,
-                      hint: '7KG2B',
+                      hint: 'Masukkan Kode Captcha',
                       isError: captchaError,
                     ),
                   ),
@@ -405,7 +405,7 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05), // Menggunakan withValues
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
