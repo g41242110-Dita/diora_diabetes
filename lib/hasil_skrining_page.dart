@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'beranda_page.dart';
+
 class HasilSkriningPage extends StatefulWidget {
   final String nama;
   final String umur;
@@ -43,9 +45,9 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
 
     final Color statusColor =
-        widget.isPositif ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9);
+    widget.isPositif ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9);
     final Color textColor =
-        widget.isPositif ? Colors.red.shade800 : Colors.green.shade800;
+    widget.isPositif ? Colors.red.shade800 : Colors.green.shade800;
     final String statusText = widget.isPositif ? 'Risiko Tinggi (Positif)' : 'Risiko Rendah (Negatif)';
     final String ringkasanText = widget.isPositif
         ? 'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.'
@@ -83,7 +85,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.08),
+                        color: Colors.grey.withValues(alpha: 0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -96,49 +98,56 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                       // Header Brand & Status Singkat
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Row(
-                            children: [
-                              Image.asset(
-                                'assets/logo.png',
-                                height: 40,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.favorite,
-                                        color: Color(0xFF6679F4), size: 36),
-                              ),
-                              const SizedBox(width: 8),
-                              const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Diora',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF6679F4),
-                                    ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Image.asset(
+                                  'assets/logo.png',
+                                  height: 36,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.favorite,
+                                      color: Color(0xFF6679F4), size: 32),
+                                ),
+                                const SizedBox(width: 8),
+                                const Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Diora',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF6679F4),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Kenali Risiko, Jaga Masa Depanmu',
+                                        style: TextStyle(
+                                            fontSize: 9.5, color: Colors.grey),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    'Kenali Risiko, Jaga Masa Depanmu',
-                                    style: TextStyle(
-                                        fontSize: 10, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
                                 tanggalSkrining,
                                 style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey),
+                                    fontSize: 10.5, color: Colors.grey),
                               ),
                               Text(
                                 jamSkrining,
                                 style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey),
+                                    fontSize: 10.5, color: Colors.grey),
                               ),
                             ],
                           ),
@@ -189,7 +198,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                         decoration: BoxDecoration(
                           color: statusColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: textColor.withOpacity(0.3)),
+                          border: Border.all(color: textColor.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -241,15 +250,15 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: widget.isPositif
                               ? const [
-                                  Text('• Cek kadar gula darah puasa & 2 jam setelah makan', style: TextStyle(fontSize: 11, height: 1.4)),
-                                  Text('• Lakukan pemeriksaan HbA1c jika diperlukan', style: TextStyle(fontSize: 11, height: 1.4)),
-                                  Text('• Konsultasi dengan dokter spesialis penyakit dalam/endokrin', style: TextStyle(fontSize: 11, height: 1.4)),
-                                ]
+                            Text('• Cek kadar gula darah puasa & 2 jam setelah makan', style: TextStyle(fontSize: 11, height: 1.4)),
+                            Text('• Lakukan pemeriksaan HbA1c jika diperlukan', style: TextStyle(fontSize: 11, height: 1.4)),
+                            Text('• Konsultasi dengan dokter spesialis penyakit dalam/endokrin', style: TextStyle(fontSize: 11, height: 1.4)),
+                          ]
                               : const [
-                                  Text('• Pertahankan pola makan gizi seimbang', style: TextStyle(fontSize: 11, height: 1.4)),
-                                  Text('• Rutin melakukan aktivitas fisik atau olahraga', style: TextStyle(fontSize: 11, height: 1.4)),
-                                  Text('• Lakukan tes gula darah secara berkala', style: TextStyle(fontSize: 11, height: 1.4)),
-                                ],
+                            Text('• Pertahankan pola makan gizi seimbang', style: TextStyle(fontSize: 11, height: 1.4)),
+                            Text('• Rutin melakukan aktivitas fisik atau olahraga', style: TextStyle(fontSize: 11, height: 1.4)),
+                            Text('• Lakukan tes gula darah secara berkala', style: TextStyle(fontSize: 11, height: 1.4)),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -294,7 +303,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                 ),
               ),
             ),
-            
+
             // Tombol Unduh / Kirim Email
             Padding(
               padding: const EdgeInsets.all(20.0),
@@ -349,7 +358,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
           const SizedBox(height: 8),
           if (content != null)
             ...content.map(
-              (text) => Padding(
+                  (text) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(text,
                     style: const TextStyle(fontSize: 10.5, color: Colors.black87)),
@@ -404,7 +413,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
               ],
             ),
             ...data.map(
-              (item) => TableRow(
+                  (item) => TableRow(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
@@ -419,7 +428,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                       item['a'] ?? '',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 10.5, 
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w600,
                         color: item['a'] == 'Ya' ? Colors.red.shade700 : Colors.green.shade700,
                       ),
@@ -616,7 +625,13 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
               elevation: 0,
             ),
             onPressed: () {
-              Navigator.popUntil(context, (route) => route.isFirst);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BerandaPage(),
+                ),
+                    (route) => false,
+              );
             },
             child: const Text(
               'Kembali Ke Beranda',
