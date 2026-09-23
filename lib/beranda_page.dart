@@ -61,7 +61,7 @@ class _BerandaPageState extends State<BerandaPage> {
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(
       initialPage: 1000,
-      viewportFraction: 0.82,
+      viewportFraction: 0.85,
     );
   }
 
@@ -74,6 +74,12 @@ class _BerandaPageState extends State<BerandaPage> {
   void _bukaHalamanProfil() {
     setState(() {
       _selectedIndex = 4;
+    });
+  }
+
+  void _bukaHalamanSkrining() {
+    setState(() {
+      _selectedIndex = 1;
     });
   }
 
@@ -171,12 +177,13 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. CURVED HEADER DENGAN GRADIENT
+          // 1. CURVED HEADER DENGAN GRADIENT & HERO CARD
           Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
-                height: 180,
+                height: 190,
+                width: double.infinity,
                 padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -252,102 +259,98 @@ class _BerandaPageState extends State<BerandaPage> {
 
               // 2. HERO CARD (SKRINING GEJALA DIABETES)
               Positioned(
-                top: 125,
-                left: 20,
-                right: 20,
+                top: 130,
+                left: 16,
+                right: 16,
                 child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 15,
                         offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = 1;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Row(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Sisi Kiri (Teks biasa)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFECEBFF),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Text(
-                                      'FITUR UTAMA',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF6679F4),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text(
-                                    'Skrining Gejala Diabetes',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECEBFF),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'FITUR UTAMA',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF6679F4),
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF6679F4),
-                                shape: BoxShape.circle,
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Skrining Gejala Diabetes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
-                              child: const Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 22,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                                height: 1.3,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+
+                      // HANYA LINGKARAN PANAH BIRU YANG BISA DIPENCET
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _bukaHalamanSkrining,
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF6679F4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 100),
+          const SizedBox(height: 110),
 
           // 3. QUICK ACTION LAUNCHER
           Padding(
