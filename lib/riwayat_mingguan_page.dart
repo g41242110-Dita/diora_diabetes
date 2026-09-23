@@ -15,6 +15,26 @@ class RiwayatMingguanPage extends StatefulWidget {
 class _RiwayatMingguanPageState extends State<RiwayatMingguanPage> {
   bool isExpanded = false;
 
+  final List<String> _namaBulan = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+
+  // Fungsi untuk otomatis menghitung tanggal Senin s/d Minggu minggu ini
+  String _getRentangMingguIni() {
+    DateTime now = DateTime.now();
+    // Menghitung hari Senin di minggu ini
+    DateTime senin = now.subtract(Duration(days: now.weekday - 1));
+    // Menghitung hari Minggu di minggu ini
+    DateTime minggu = senin.add(const Duration(days: 6));
+
+    String tglAwal = senin.day.toString();
+    String tglAkhir = minggu.day.toString();
+    String bulan = _namaBulan[minggu.month - 1];
+
+    return '$tglAwal-$tglAkhir $bulan';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,19 +69,19 @@ class _RiwayatMingguanPageState extends State<RiwayatMingguanPage> {
               child: Column(
                 children: [
                   ListTile(
-                    title: const Row(
+                    title: Row(
                       children: [
-                        Text(
+                        const Text(
                           'Minggu Ini',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
-                          '1-7 September',
-                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                          _getRentangMingguIni(), // Tanggal otomatis dinamis
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                       ],
                     ),
@@ -78,7 +98,7 @@ class _RiwayatMingguanPageState extends State<RiwayatMingguanPage> {
                     },
                   ),
 
-                  // Isi Ringkasan saat Dimekarkan (Progres Kesehatan 4)
+                  // Isi Ringkasan saat Dimekarkan
                   if (isExpanded) ...[
                     const Divider(height: 1),
                     Padding(
