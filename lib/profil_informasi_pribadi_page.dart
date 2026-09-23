@@ -34,25 +34,28 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Informasi Pribadi',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
+            // Judul Halaman (Seletak dengan Artikel Tersimpan)
+            const Text(
+              'Informasi Pribadi',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+
             if (_showSuccessAlert)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
@@ -101,6 +104,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                   ),
                 ),
               ),
+
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
