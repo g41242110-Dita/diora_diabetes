@@ -285,7 +285,9 @@ class _BerandaPageState extends State<BerandaPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ProgresKesehatanPage(),
+                        builder: (context) => ProgresKesehatanPage(
+                          username: widget.namaUser, // Mengirimkan nama user aktif ke ProgresKesehatanPage
+                        ),
                       ),
                     );
                   },
