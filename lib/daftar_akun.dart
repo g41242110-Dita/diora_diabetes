@@ -24,7 +24,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   bool konfirmasiVisible = false;
   bool isLoading = false;
 
-  // Status error per kolom
   bool showErrorBanner = false;
   String errorMessage = 'Pastikan semua kolom telah diisi dengan benar.';
 
@@ -39,7 +38,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   @override
   void initState() {
     super.initState();
-    refreshCaptcha(); // Otomatis mengacak captcha saat layar dibuka
+    refreshCaptcha();
   }
 
   @override
@@ -52,7 +51,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     super.dispose();
   }
 
-  // Fungsi mengacak kode Captcha dinamis (5 karakter)
   void refreshCaptcha() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     Random random = Random();
@@ -75,7 +73,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   }
 
   Future<void> daftar() async {
-    // Reset error
     setState(() {
       showErrorBanner = false;
 
@@ -86,7 +83,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       captchaError = captchaController.text.trim().isEmpty;
     });
 
-    // 1. Cek kolom kosong
     if (namaError ||
         emailError ||
         passwordError ||
@@ -105,7 +101,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     final konfirmasiPassword = konfirmasiController.text;
     final captchaInput = captchaController.text.trim().toUpperCase();
 
-    // 2. Validasi email
     if (!_isEmailValid(email)) {
       setState(() {
         showErrorBanner = true;
@@ -115,7 +110,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       return;
     }
 
-    // 3. Validasi password minimal 6 karakter
     if (password.length < 6) {
       setState(() {
         showErrorBanner = true;
@@ -125,7 +119,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       return;
     }
 
-    // 4. Konfirmasi password
     if (password != konfirmasiPassword) {
       setState(() {
         showErrorBanner = true;
@@ -136,25 +129,22 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       return;
     }
 
-    // 5. Validasi Captcha dinamis
     if (captchaInput != captcha) {
       setState(() {
         showErrorBanner = true;
         captchaError = true;
         errorMessage = 'Kode Captcha tidak sesuai.';
       });
-      refreshCaptcha(); // Acak ulang captcha otomatis jika gagal!
+      refreshCaptcha();
       return;
     }
 
-    // Mulai proses Firebase
     setState(() {
       isLoading = true;
       showErrorBanner = false;
     });
 
     try {
-      // 6. BUAT AKUN DI FIREBASE AUTH
       final UserCredential userCredential =
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
@@ -167,7 +157,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         throw Exception('User Firebase tidak ditemukan.');
       }
 
-      // 7. SIMPAN DATA USER KE FIRESTORE
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'nama': nama,
         'email': email,
@@ -175,7 +164,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // 8. BERHASIL → MASUK BERANDA
       if (!mounted) return;
 
       setState(() {
@@ -220,7 +208,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         showErrorBanner = true;
         errorMessage = message;
       });
-      refreshCaptcha(); // Refresh captcha jika gagal auth
+      refreshCaptcha();
     } on FirebaseException catch (e) {
       if (!mounted) return;
 
@@ -265,6 +253,13 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         horizontal: 16,
         vertical: 14,
       ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: BorderSide(
+          color: isError ? Colors.red : Colors.grey.shade400,
+          width: 1.0,
+        ),
+      ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
         borderSide: BorderSide(
@@ -299,7 +294,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // LOGO
                   Center(
                     child: Image.asset(
                       'assets/logo.png',
@@ -310,7 +304,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 12),
 
-                  // JUDUL
                   const Text(
                     'Daftar Akun',
                     textAlign: TextAlign.center,
@@ -334,10 +327,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 20),
 
-                  // NAMA LENGKAP
                   TextField(
                     controller: namaController,
                     enabled: !isLoading,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     onChanged: (_) {
                       if (namaError) {
                         setState(() => namaError = false);
@@ -352,11 +345,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 12),
 
-                  // EMAIL
                   TextField(
                     controller: emailController,
                     enabled: !isLoading,
                     keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     onChanged: (_) {
                       if (emailError) {
                         setState(() => emailError = false);
@@ -371,11 +364,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 12),
 
-                  // PASSWORD
                   TextField(
                     controller: passwordController,
                     enabled: !isLoading,
                     obscureText: !passwordVisible,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     onChanged: (_) {
                       if (passwordError) {
                         setState(() => passwordError = false);
@@ -404,11 +397,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 12),
 
-                  // KONFIRMASI PASSWORD
                   TextField(
                     controller: konfirmasiController,
                     enabled: !isLoading,
                     obscureText: !konfirmasiVisible,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     onChanged: (_) {
                       if (konfirmasiError) {
                         setState(() => konfirmasiError = false);
@@ -447,7 +440,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 6),
 
-                  // CAPTCHA DISPLAY & REFRESH
                   Row(
                     children: [
                       Expanded(
@@ -496,10 +488,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 12),
 
-                  // INPUT CAPTCHA
                   TextField(
                     controller: captchaController,
                     enabled: !isLoading,
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                     textCapitalization: TextCapitalization.characters,
                     onChanged: (_) {
                       if (captchaError) {
@@ -515,7 +507,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 24),
 
-                  // BUTTON DAFTAR
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
@@ -560,7 +551,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
                   const SizedBox(height: 12),
 
-                  // LINK KE LOGIN
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -592,7 +582,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               ),
             ),
 
-            // BANNER POP-UP ERROR
             if (showErrorBanner)
               Positioned(
                 top: 10,
