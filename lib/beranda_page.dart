@@ -28,7 +28,6 @@ class _BerandaPageState extends State<BerandaPage> {
   late int _selectedIndex;
   late PageController _pageController;
 
-  // 1. DAFTAR 4 ARTIKEL TERBARU
   final List<Map<String, String>> _daftarArtikel = [
     {
       'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
@@ -60,11 +59,9 @@ class _BerandaPageState extends State<BerandaPage> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-
-    // Set posisi awal slider di tengah-tengah angka besar (1000) agar bisa di-swipe ke kiri maupun ke kanan tanpa batas
     _pageController = PageController(
       initialPage: 1000,
-      viewportFraction: 0.95,
+      viewportFraction: 0.82,
     );
   }
 
@@ -106,7 +103,7 @@ class _BerandaPageState extends State<BerandaPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF8FAFC),
         body: pages[_selectedIndex],
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
@@ -123,7 +120,7 @@ class _BerandaPageState extends State<BerandaPage> {
             },
             type: BottomNavigationBarType.fixed,
             selectedItemColor: const Color(0xFF6679F4),
-            unselectedItemColor: const Color(0xFF6679F4).withOpacity(0.4),
+            unselectedItemColor: const Color(0xFF6679F4).withValues(alpha: 0.4),
             showSelectedLabels: false,
             showUnselectedLabels: false,
             backgroundColor: Colors.white,
@@ -162,342 +159,463 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   Widget _buildBerandaContent() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // BANNER GREETING / PROFIL
-            GestureDetector(
-              onTap: _bukaHalamanProfil,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E7FF),
-                  borderRadius: BorderRadius.circular(16),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. CURVED HEADER DENGAN GRADIENT
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: 180,
+                padding: const EdgeInsets.only(top: 50, left: 24, right: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
                 ),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Color(0xFFFFE5D9),
-                      child: Icon(
-                        Icons.person,
-                        size: 40,
-                        color: Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    GestureDetector(
+                      onTap: _bukaHalamanProfil,
+                      child: Row(
                         children: [
-                          Text(
-                            'Halo, ${widget.namaUser}!',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                          Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Color(0xFFFFE5D9),
+                              child: Icon(Icons.person, color: Colors.orange, size: 28),
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          RichText(
-                            text: const TextSpan(
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.black87,
-                              ),
-                              children: [
-                                TextSpan(text: 'Selamat Datang di '),
-                                TextSpan(
-                                  text: 'Diora 👋',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6679F4),
-                                  ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Halo, ${widget.namaUser} 👋',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
-                              ],
-                            ),
+                              ),
+                              const Text(
+                                'Selamat Datang di Diora',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
+                      onPressed: () {},
+                    ),
                   ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 16),
-
-            // GRID MENU UTAMA
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.4,
-              children: [
-                _buildMenuCard(
-                  title: 'Skrining\nGejala Diabetes',
-                  subtitle: 'Cek risiko diabetes sejak dini dengan mudah',
-                  icon: Icons.stars,
-                  bgColor: const Color(0xFFECEBFF),
-                  iconBgColor: const Color(0xFFC7C2FF),
-                  iconColor: const Color(0xFF6679F4),
+              // 2. HERO CARD (SKRINING GEJALA DIABETES)
+              Positioned(
+                top: 125,
+                left: 20,
+                right: 20,
+                child: GestureDetector(
                   onTap: () {
                     setState(() {
                       _selectedIndex = 1;
                     });
                   },
-                ),
-                _buildMenuCard(
-                  title: 'Konsultasi',
-                  subtitle:
-                  'Konsultasi dengan dokter untuk hasil yang lebih akurat.',
-                  icon: Icons.help_outline,
-                  bgColor: const Color(0xFFFFEBF0),
-                  iconBgColor: const Color(0xFFFFC2D1),
-                  iconColor: const Color(0xFFE53E3E),
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = 2;
-                    });
-                  },
-                ),
-                _buildMenuCard(
-                  title: 'Lokasi Terdekat',
-                  subtitle:
-                  'Temukan fasyankes terdekat yang menyediakan layanan diabetes.',
-                  icon: Icons.location_on_outlined,
-                  bgColor: const Color(0xFFE6F4EA),
-                  iconBgColor: const Color(0xFFA8E0BA),
-                  iconColor: const Color(0xFF2E7D32),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LokasiPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuCard(
-                  title: 'Artikel',
-                  subtitle:
-                  'Baca informasi seputar diabetes, gaya hidup sehat, & pencegahannya.',
-                  icon: Icons.article_outlined,
-                  bgColor: const Color(0xFFE3F2FD),
-                  iconBgColor: const Color(0xFFBBDEFB),
-                  iconColor: const Color(0xFF1976D2),
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = 3;
-                    });
-                  },
-                ),
-                _buildMenuCard(
-                  title: 'Hasil Tes',
-                  subtitle: 'Lihat rekomendasi dan unduh hasil tes skriningmu.',
-                  icon: Icons.insert_drive_file_outlined,
-                  bgColor: const Color(0xFFFFE8E1),
-                  iconBgColor: const Color(0xFFFFE082),
-                  iconColor: const Color(0xFFF57F17),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HasilSkriningPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuCard(
-                  title: 'Progres\nKesehatan',
-                  subtitle: 'Pantau kesehatan dan risiko diabetesmu',
-                  icon: Icons.show_chart,
-                  bgColor: const Color(0xFFFBE9E7),
-                  iconBgColor: const Color(0xFFFFCCBC),
-                  iconColor: const Color(0xFFD84315),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProgresKesehatanPage(
-                          username: widget.namaUser,
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                    );
-                  },
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECEBFF),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'FITUR UTAMA',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF6679F4),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Skrining Gejala Diabetes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF6679F4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 100),
+
+          // 3. QUICK ACTION LAUNCHER
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Layanan & Menu',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildQuickActionItem(
+                      icon: Icons.chat_outlined,
+                      label: 'Konsultasi',
+                      color: const Color(0xFFFF5252),
+                      bgColor: const Color(0xFFFFEBEE),
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 2;
+                        });
+                      },
+                    ),
+                    _buildQuickActionItem(
+                      icon: Icons.location_on_outlined,
+                      label: 'Lokasi',
+                      color: const Color(0xFF2E7D32),
+                      bgColor: const Color(0xFFE8F5E9),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LokasiPage()),
+                        );
+                      },
+                    ),
+                    _buildQuickActionItem(
+                      icon: Icons.article_outlined,
+                      label: 'Artikel',
+                      color: const Color(0xFF1976D2),
+                      bgColor: const Color(0xFFE3F2FD),
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 3;
+                        });
+                      },
+                    ),
+                    _buildQuickActionItem(
+                      icon: Icons.assignment_outlined,
+                      label: 'Hasil Tes',
+                      color: const Color(0xFFF57F17),
+                      bgColor: const Color(0xFFFFF8E1),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const HasilSkriningPage()),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-            // JUDUL ARTIKEL TERBARU
-            const Text(
-              'Artikel Terbaru',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // SLIDER INFINITE LOOP (BISA DIGESER TANPA BATAS)
-            SizedBox(
-              height: 110,
-              child: PageView.builder(
-                controller: _pageController,
-                itemBuilder: (context, index) {
-                  // Trik Modulo: Mengulang urutan index 0, 1, 2, 3 secara berputar tanpa henti
-                  final actualIndex = index % _daftarArtikel.length;
-                  final item = _daftarArtikel[actualIndex];
-
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailArtikelPage(
-                            title: item['title']!,
-                            content: item['content']!,
-                            imageUrl: item['imageUrl']!,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
+          // 4. STATS CARD (PROGRES KESEHATAN)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProgresKesehatanPage(username: widget.namaUser),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(16),
+                        shape: BoxShape.circle,
                       ),
-                      child: Row(
+                      child: const Icon(Icons.show_chart_rounded, color: Color(0xFFE65100), size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              width: 70,
-                              height: 70,
-                              color: const Color(0xFFE2E7FF),
-                              child: const Icon(
-                                Icons.medical_services_outlined,
-                                color: Color(0xFF6679F4),
-                                size: 32,
-                              ),
+                          Text(
+                            'Progres Kesehatan',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  item['title']!,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item['content']!,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.black54,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                          SizedBox(height: 2),
+                          Text(
+                            'Pantau catatan dan tren grafik kesehatanmu.',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              color: Colors.black54,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
+                    const Icon(Icons.chevron_right_rounded, color: Colors.black45),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // 5. ARTIKEL TERBARU
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Artikel Terbaru',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 3;
+                    });
+                  },
+                  child: const Text(
+                    'Lihat Semua',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF6679F4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          SizedBox(
+            height: 190,
+            child: PageView.builder(
+              controller: _pageController,
+              itemBuilder: (context, index) {
+                final actualIndex = index % _daftarArtikel.length;
+                final item = _daftarArtikel[actualIndex];
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailArtikelPage(
+                          title: item['title']!,
+                          content: item['content']!,
+                          imageUrl: item['imageUrl']!,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                          child: Image.network(
+                            item['imageUrl']!,
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 100,
+                              color: const Color(0xFFE2E7FF),
+                              child: const Icon(Icons.article_outlined, color: Color(0xFF6679F4), size: 30),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['title']!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                item['content']!,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black54,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
 
-  Widget _buildMenuCard({
-    required String title,
-    required String subtitle,
+  Widget _buildQuickActionItem({
     required IconData icon,
+    required String label,
+    required Color color,
     required Color bgColor,
-    required Color iconBgColor,
-    required Color iconColor,
     required VoidCallback onTap,
   }) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 18,
-                color: iconColor,
-              ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 8,
-                      color: Colors.black54,
-                      height: 1.1,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
