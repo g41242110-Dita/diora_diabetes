@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'skrining2_page.dart';
 
 class SkriningPage extends StatefulWidget {
-  const SkriningPage({super.key});
+  final VoidCallback? onBackToHome; // Callback untuk berpindah ke tab Beranda
+
+  const SkriningPage({super.key, this.onBackToHome});
 
   @override
   State<SkriningPage> createState() => _SkriningPageState();
@@ -20,12 +22,11 @@ class _SkriningPageState extends State<SkriningPage> {
     super.dispose();
   }
 
-  // Fungsi untuk mengecek validasi sebelum pindah halaman
+  // Fungsi untuk mengecek validasi sebelum pindah ke Skrining 2
   void _validateAndNavigate() {
     String nama = _namaController.text.trim();
     String umur = _umurController.text.trim();
 
-    // Jika ada salah satu yang belum diisi
     if (nama.isEmpty || umur.isEmpty || _jenisKelamin == null) {
       showDialog(
         context: context,
@@ -57,7 +58,6 @@ class _SkriningPageState extends State<SkriningPage> {
       return;
     }
 
-    // Jika semua data terisi, berpindah ke Skrining2Page
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -77,9 +77,16 @@ class _SkriningPageState extends State<SkriningPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (widget.onBackToHome != null) {
+              widget.onBackToHome!(); // Pindah ke tab Beranda
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
       ),
       body: SafeArea(
@@ -206,8 +213,7 @@ class _SkriningPageState extends State<SkriningPage> {
                         },
                       ),
 
-                      // Spacer ini yang mendorong tombol "Lanjutkan" ke bawah layar
-                      const Spacer(), 
+                      const Spacer(),
                       const SizedBox(height: 24),
 
                       // Tombol Lanjutkan
