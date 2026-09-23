@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'hasil_skrining_page.dart'; // Import file Hasil Skrining kamu
+import 'hasil_skrining_page.dart';
 
 class Skrining2Page extends StatefulWidget {
   final String nama;
@@ -18,36 +18,12 @@ class Skrining2Page extends StatefulWidget {
 }
 
 class _Skrining2PageState extends State<Skrining2Page> {
-  // Controller untuk mengatur perpindahan halaman/step
-  final PageController _pageController = PageController();
-  int _currentStep = 0; // 0 = Step 2/4, 1 = Step 3/4, 2 = Step 4/4
-
-  // Pemetaan nomor pertanyaan untuk tiap step
-  final Map<int, List<int>> _stepQuestions = {
-    0: [1, 2, 3, 4, 5],      // Step 2/4
-    1: [6, 7, 8, 9, 10],     // Step 3/4
-    2: [11, 12, 13, 14],     // Step 4/4 (Skrining 5/Selesai)
-  };
-
-  // Map untuk menyimpan semua jawaban pertanyaan 1 sampai 14 (true = Iya, false = Tidak)
+  // Map jawaban (true = Iya, false = Tidak)
   final Map<int, bool?> _jawaban = {
-    1: null,
-    2: null,
-    3: null,
-    4: null,
-    5: null,
-    6: null,
-    7: null,
-    8: null,
-    9: null,
-    10: null,
-    11: null,
-    12: null,
-    13: null,
-    14: null,
+    for (int i = 1; i <= 14; i++) i: null,
   };
 
-  // Teks pertanyaan lengkap untuk dipassing ke halaman hasil
+  // Teks pertanyaan lengkap
   final Map<int, String> _pertanyaanText = {
     1: '1. Apakah kamu sering buang air kecil (BAK)?',
     2: '2. Apakah kamu sering merasa haus?',
@@ -65,27 +41,19 @@ class _Skrining2PageState extends State<Skrining2Page> {
     14: '14. Apakah berat badan kamu termasuk berlebih/obesitas?',
   };
 
-  // Validasi Data Diri (Nama, Umur, Jenis Kelamin)
   bool _isDataDiriComplete() {
     return widget.nama.trim().isNotEmpty &&
         widget.umur.trim().isNotEmpty &&
         widget.jenisKelamin.trim().isNotEmpty;
   }
 
-  // Validasi Pertanyaan Skrining di step aktif
-  bool _isCurrentStepComplete() {
-    List<int>? activeQuestions = _stepQuestions[_currentStep];
-    if (activeQuestions == null) return false;
-
-    for (int qNo in activeQuestions) {
-      if (_jawaban[qNo] == null) {
-        return false; // Ada pertanyaan yang belum dijawab
-      }
+  bool _isAllQuestionsAnswered() {
+    for (int i = 1; i <= 14; i++) {
+      if (_jawaban[i] == null) return false;
     }
-    return true; // Semua pertanyaan di step ini sudah dijawab
+    return true;
   }
 
-  // Fungsi Pop-up Peringatan
   void _showWarningDialog(String message) {
     showDialog(
       context: context,
@@ -94,8 +62,8 @@ class _Skrining2PageState extends State<Skrining2Page> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
               SizedBox(width: 8),
               Text(
@@ -104,10 +72,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
               ),
             ],
           ),
-          content: Text(
-            message,
-            style: const TextStyle(fontSize: 14),
-          ),
+          content: Text(message, style: const TextStyle(fontSize: 14)),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -125,40 +90,20 @@ class _Skrining2PageState extends State<Skrining2Page> {
     );
   }
 
-  // Fungsi Berpindah Step atau Memproses Hasil Akhir
-  void _nextStep() {
-    // 1. Cek Data Diri
-    if (!_isDataDiriComplete()) {
-      _showWarningDialog('Data diri belum lengkap. Harap isi data diri terlebih dahulu!');
-      return;
-    }
-
-    // 2. Cek Jawaban Pertanyaan di Step Aktif
-    if (!_isCurrentStepComplete()) {
-      _showWarningDialog('Harap isi semua pertanyaan pada halaman ini sebelum melanjutkan!');
-      return;
-    }
-
-    // 3. Jika belum di step terakhir, geser ke step berikutnya
-    if (_currentStep < 2) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      // 4. STEP AKHIR (Skrining 5 / Selesai): Hitung & Pindah ke HasilSkriningPage
-      _finishSkrining();
-    }
-  }
-
   void _finishSkrining() {
-    // Menghitung jumlah jawaban "Iya"
+    if (!_isDataDiriComplete()) {
+      _showWarningDialog('Data diri belum lengkap!');
+      return;
+    }
+
+    if (!_isAllQuestionsAnswered()) {
+      _showWarningDialog('Harap jawab seluruh pertanyaan skrining!');
+      return;
+    }
+
     int totalIya = _jawaban.values.where((val) => val == true).length;
-    
-    // Penentuan hasil ringkas (contoh: jika jawaban 'Iya' >= 5 dianggap Risiko Tinggi / Positif)
     bool isPositif = totalIya >= 5;
 
-    // Menyiapkan daftar data pertanyaan dan jawaban untuk tabel hasil
     List<Map<String, String>> formattedTableData = [];
     _pertanyaanText.forEach((no, qText) {
       formattedTableData.add({
@@ -167,7 +112,6 @@ class _Skrining2PageState extends State<Skrining2Page> {
       });
     });
 
-    // Pindah Langsung Ke HasilSkriningPage
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -182,217 +126,222 @@ class _Skrining2PageState extends State<Skrining2Page> {
     );
   }
 
-  // Fungsi Kembali ke Step Sebelumnya
-  void _prevStep() {
-    if (_currentStep > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      Navigator.pop(context);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final String progressText = '${_currentStep + 2}/4';
-    final double progressValue = (_currentStep + 2) / 4;
-
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Fixed
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-                    onPressed: _prevStep,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Judul Utama
+              const Center(
+                child: Text(
+                  'Skrining Gejala Diabetes',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                  const SizedBox(height: 10),
-                  const Center(
-                    child: Text(
-                      'Skrining Gejala Diabetes',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        progressText,
-                        style: const TextStyle(fontSize: 10, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: progressValue,
-                    backgroundColor: Colors.grey.shade200,
-                    color: const Color(0xFF6679F4),
-                    minHeight: 6,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
 
-            // PageView Pertanyaan
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentStep = index;
-                  });
-                },
-                children: [
-                  // Step 2/4 (Pertanyaan 1-5)
-                  _buildStepLayout([
-                    _buildQuestionItem(1, _pertanyaanText[1]!),
-                    _buildQuestionItem(2, _pertanyaanText[2]!),
-                    _buildQuestionItem(3, _pertanyaanText[3]!),
-                    _buildQuestionItem(4, _pertanyaanText[4]!),
-                    _buildQuestionItem(5, _pertanyaanText[5]!),
-                  ]),
-                  // Step 3/4 (Pertanyaan 6-10)
-                  _buildStepLayout([
-                    _buildQuestionItem(6, _pertanyaanText[6]!),
-                    _buildQuestionItem(7, _pertanyaanText[7]!),
-                    _buildQuestionItem(8, _pertanyaanText[8]!),
-                    _buildQuestionItem(9, _pertanyaanText[9]!),
-                    _buildQuestionItem(10, _pertanyaanText[10]!),
-                  ]),
-                  // Step 4/4 / Skrining 5 (Pertanyaan 11-14)
-                  _buildStepLayout([
-                    _buildQuestionItem(11, _pertanyaanText[11]!),
-                    _buildQuestionItem(12, _pertanyaanText[12]!),
-                    _buildQuestionItem(13, _pertanyaanText[13]!),
-                    _buildQuestionItem(14, _pertanyaanText[14]!),
-                  ]),
-                ],
-              ),
-            ),
-
-            // Navigation Bottom Buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
+              // 2. Progress Bar (2/2 - Full)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _prevStep,
-                      icon: const Icon(Icons.arrow_back, size: 16),
-                      label: const Text('Kembali'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF6679F4),
-                        side: const BorderSide(color: Color(0xFF6679F4)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: const LinearProgressIndicator(
+                        value: 1.0, // Diubah ke 1.0 agar penuh 100%
+                        minHeight: 8,
+                        backgroundColor: Color(0xFFE2E8F0),
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6679F4)),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _nextStep,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6679F4),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _currentStep == 2 ? 'Lihat Hasil' : 'Lanjutkan',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
-                        ],
-                      ),
+                  const Text(
+                    '2/2',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+
+              // 3. Sub-Judul
+              const Text(
+                'Pertanyaan Gejala Diabetes',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Jawablah 14 pertanyaan di bawah ini sesuai kondisi yang kamu rasakan.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 4. Daftar Pertanyaan 1 - 14
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 14,
+                itemBuilder: (context, index) {
+                  int no = index + 1;
+                  return _buildQuestionItem(no, _pertanyaanText[no]!);
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // 5. Tombol Selesai & Lihat Hasil
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6679F4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: _finishSkrining,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Selesai & Lihat Hasil',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStepLayout(List<Widget> questions) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      child: Column(
-        children: questions,
-      ),
-    );
-  }
-
+  // Widget Pertanyaan
   Widget _buildQuestionItem(int no, String pertanyaan) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             pertanyaan,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<bool>(
-                  title: const Text('Iya', style: TextStyle(fontSize: 12)),
-                  value: true,
-                  groupValue: _jawaban[no],
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: const Color(0xFF6679F4),
-                  onChanged: (val) {
-                    setState(() => _jawaban[no] = val);
-                  },
+          const SizedBox(height: 12),
+          RadioGroup<bool>(
+            groupValue: _jawaban[no],
+            onChanged: (val) {
+              setState(() {
+                _jawaban[no] = val;
+              });
+            },
+            child: Row(
+              children: [
+                // Pilihan "Iya"
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      setState(() {
+                        _jawaban[no] = true;
+                      });
+                    },
+                    child: const Row(
+                      children: [
+                        Radio<bool>(
+                          value: true,
+                          activeColor: Color(0xFF6679F4),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Iya',
+                          style: TextStyle(fontSize: 13, color: Colors.black87),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: RadioListTile<bool>(
-                  title: const Text('Tidak', style: TextStyle(fontSize: 12)),
-                  value: false,
-                  groupValue: _jawaban[no],
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: const Color(0xFF6679F4),
-                  onChanged: (val) {
-                    setState(() => _jawaban[no] = val);
-                  },
+
+                // Pilihan "Tidak"
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      setState(() {
+                        _jawaban[no] = false;
+                      });
+                    },
+                    child: const Row(
+                      children: [
+                        Radio<bool>(
+                          value: false,
+                          activeColor: Color(0xFF6679F4),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Tidak',
+                          style: TextStyle(fontSize: 13, color: Colors.black87),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
