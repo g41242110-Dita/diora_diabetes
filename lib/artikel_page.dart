@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
-// Import file pendukung & navigasi sesuai struktur project
+// Import file pendukung
 import 'detail_artikel_page.dart';
-import 'beranda_page.dart';
-import 'skrining_page.dart';
-import 'konsultasi_page.dart';
-import 'profile_screen.dart';
 
 class ArtikelPage extends StatefulWidget {
-  const ArtikelPage({super.key});
+  final bool showBackButton;
+
+  const ArtikelPage({
+    super.key,
+    this.showBackButton = false,
+  });
 
   @override
   State<ArtikelPage> createState() => _ArtikelPageState();
@@ -16,7 +17,6 @@ class ArtikelPage extends StatefulWidget {
 
 class _ArtikelPageState extends State<ArtikelPage> {
   final TextEditingController _searchController = TextEditingController();
-  final int _selectedIndex = 3; // Menggunakan 'final' untuk menghilangkan lint warning
 
   // Data daftar artikel
   final List<Map<String, String>> _articles = [
@@ -62,54 +62,27 @@ class _ArtikelPageState extends State<ArtikelPage> {
     super.dispose();
   }
 
-  void _onBottomNavTapped(int index) {
-    if (index == _selectedIndex) return;
-
-    Widget targetPage;
-    switch (index) {
-      case 0:
-        targetPage = const BerandaPage();
-        break;
-      case 1:
-        targetPage = const SkriningPage();
-        break;
-      case 2:
-        targetPage = const KonsultasiPage();
-        break;
-      case 3:
-        targetPage = const ArtikelPage();
-        break;
-      case 4:
-        targetPage = const ProfileScreen();
-        break;
-      default:
-        return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => targetPage),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
+      appBar: widget.showBackButton
+          ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
+      )
+          : null,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 16),
               const Center(
                 child: Text(
                   'Artikel',
@@ -164,43 +137,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
               ),
             ],
           ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFF8FAFC),
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          onTap: _onBottomNavTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: '',
-            ),
-          ],
         ),
       ),
     );
