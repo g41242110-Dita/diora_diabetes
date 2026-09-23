@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InformasiPribadiPage extends StatefulWidget {
   const InformasiPribadiPage({super.key});
@@ -9,21 +11,81 @@ class InformasiPribadiPage extends StatefulWidget {
 
 class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
   bool _showSuccessAlert = false;
+  bool _isLoading = true;
 
-  final TextEditingController _namaController = TextEditingController(text: 'Aurelia Prisilla');
+  final TextEditingController _namaController = TextEditingController();
   final TextEditingController _tglLahirController = TextEditingController(text: '12 Maret 2003');
   final TextEditingController _genderController = TextEditingController(text: 'Perempuan');
   final TextEditingController _noHpController = TextEditingController(text: '0812 3456 7850');
-  final TextEditingController _emailController = TextEditingController(text: 'Aurelia.Prisilla@gmail.com');
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _alamatController = TextEditingController(text: 'Jl. Mastrip 84');
   final TextEditingController _pekerjaanController = TextEditingController(text: 'Mahasiswa');
   final TextEditingController _instansiController = TextEditingController(text: 'Jl. Mastrip 84');
   final TextEditingController _alergiController = TextEditingController(text: 'Tidak Ada');
 
-  void _simpanPerubahan() {
-    setState(() {
-      _showSuccessAlert = true;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  @override
+  void dispose() {
+    _namaController.dispose();
+    _tglLahirController.dispose();
+    _genderController.dispose();
+    _noHpController.dispose();
+    _emailController.dispose();
+    _alamatController.dispose();
+    _pekerjaanController.dispose();
+    _instansiController.dispose();
+    _alergiController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      _emailController.text = user.email ?? '';
+      _namaController.text = user.email?.split('@').first ?? '';
+
+      try {
+        final DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (data.containsKey('nama')) _namaController.text = data['nama'];
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _simpanPerubahan() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'nama': _namaController.text.trim(),
+        });
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _showSuccessAlert = true;
+      });
+    }
   }
 
   @override
@@ -31,235 +93,248 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF8FAFC),
         elevation: 0,
+        scrolledUnderElevation: 0, // Mencegah perubahan warna AppBar saat di-scroll
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () => Navigator.pop(context),
         ),
+        centerTitle: true,
+        title: const Text(
+          'Informasi Pribadi',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Judul Halaman (Seletak dengan Artikel Tersimpan)
-            const Text(
-              'Informasi Pribadi',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            if (_showSuccessAlert)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF81C784), width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF2E7D32),
-                          shape: BoxShape.circle,
+        child: _isLoading
+            ? const Center(
+          child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+        )
+            : SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+          child: Column(
+            children: [
+              if (_showSuccessAlert)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF81C784), width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF2E7D32),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 16,
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Perubahan Berhasil Disimpan !',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _showSuccessAlert = false;
+                            });
+                          },
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Header Foto Profil & Nama
+              Row(
+                children: [
+                  const SizedBox(width: 8),
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundColor: const Color(0xFFFCE3CE),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/avatar.png',
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.person, size: 45, color: Color(0xFF8D6E63)),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Perubahan Berhasil Disimpan !',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.black87, width: 1),
+                          ),
+                          child: const Icon(
+                            Icons.add_a_photo_outlined,
+                            size: 12,
                             color: Colors.black87,
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _showSuccessAlert = false;
-                          });
-                        },
-                        child: const Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
                     ],
                   ),
-                ),
-              ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Row(
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(width: 16),
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 42,
-                              backgroundColor: const Color(0xFFFCE3CE),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/avatar.png',
-                                  width: 84,
-                                  height: 84,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.person, size: 50, color: Color(0xFF8D6E63)),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.black87, width: 1),
-                                ),
-                                child: const Icon(
-                                  Icons.add_a_photo_outlined,
-                                  size: 12,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _namaController.text,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _emailController.text,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildSectionCard(
-                      title: 'Data Diri',
-                      items: [
-                        _DataRowItem(
-                          icon: Icons.group_outlined,
-                          label: 'Nama Lengkap',
-                          controller: _namaController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.calendar_today_outlined,
-                          label: 'Tanggal Lahir',
-                          controller: _tglLahirController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.female_outlined,
-                          label: 'Jenis Kelamin',
-                          controller: _genderController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.phone_outlined,
-                          label: 'No. HP',
-                          controller: _noHpController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.email_outlined,
-                          label: 'Email',
-                          controller: _emailController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.location_on_outlined,
-                          label: 'Alamat',
-                          controller: _alamatController,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildSectionCard(
-                      title: 'Informasi Profesi',
-                      items: [
-                        _DataRowItem(
-                          icon: Icons.work_outline,
-                          label: 'Pekerjaan',
-                          controller: _pekerjaanController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.business_outlined,
-                          label: 'Instansi',
-                          controller: _instansiController,
-                        ),
-                        _DataRowItem(
-                          icon: Icons.block_outlined,
-                          label: 'Riwayat Alergi',
-                          controller: _alergiController,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6679F4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _simpanPerubahan,
-                        child: const Text(
-                          'Simpan Perubahan',
-                          style: TextStyle(
-                            fontSize: 15,
+                        Text(
+                          _namaController.text,
+                          style: const TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Colors.black,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _emailController.text,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Kartu Data Diri
+              _buildSectionCard(
+                title: 'Data Diri',
+                items: [
+                  _DataRowItem(
+                    icon: Icons.group_outlined,
+                    label: 'Nama Lengkap',
+                    controller: _namaController,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Tanggal Lahir',
+                    controller: _tglLahirController,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.female_outlined,
+                    label: 'Jenis Kelamin',
+                    controller: _genderController,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.phone_outlined,
+                    label: 'No. HP',
+                    controller: _noHpController,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    controller: _emailController,
+                    readOnly: true,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.location_on_outlined,
+                    label: 'Alamat',
+                    controller: _alamatController,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Kartu Informasi Profesi
+              _buildSectionCard(
+                title: 'Informasi Profesi',
+                items: [
+                  _DataRowItem(
+                    icon: Icons.work_outline,
+                    label: 'Pekerjaan',
+                    controller: _pekerjaanController,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.business_outlined,
+                    label: 'Instansi',
+                    controller: _instansiController,
+                  ),
+                  _DataRowItem(
+                    icon: Icons.block_outlined,
+                    label: 'Riwayat Alergi',
+                    controller: _alergiController,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+
+      // Tombol Simpan Perubahan Melayang di Bawah
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          ),
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6679F4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                elevation: 0,
+              ),
+              onPressed: _simpanPerubahan,
+              child: const Text(
+                'Simpan Perubahan',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -272,7 +347,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
       ),
       child: Column(
@@ -280,12 +355,12 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
               color: Color(0xFFEBF2FE),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(11),
-                topRight: Radius.circular(11),
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
               ),
             ),
             child: Text(
@@ -306,7 +381,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
             itemBuilder: (context, index) {
               final item = items[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 child: Row(
                   children: [
                     Icon(
@@ -329,6 +404,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                     Expanded(
                       child: TextField(
                         controller: item.controller,
+                        readOnly: item.readOnly,
                         textAlign: TextAlign.right,
                         style: const TextStyle(
                           fontSize: 12,
@@ -356,10 +432,12 @@ class _DataRowItem {
   final IconData icon;
   final String label;
   final TextEditingController controller;
+  final bool readOnly;
 
   _DataRowItem({
     required this.icon,
     required this.label,
     required this.controller,
+    this.readOnly = false,
   });
 }
