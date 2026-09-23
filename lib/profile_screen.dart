@@ -1,18 +1,75 @@
 import 'package:flutter/material.dart';
-// Import semua halaman pendukung
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'profil_informasi_pribadi_page.dart';
 import 'profil_artikel_tersimpan_page.dart';
 import 'profil_pengaturan_page.dart';
 import 'profil_bantuan_dukungan_page.dart';
 import 'profil_keluar_page.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final String namaUser;
 
   const ProfileScreen({
     super.key,
-    this.namaUser = 'Aurelia Prisilla', // Default value jika parameter kosong
+    this.namaUser = 'Pengguna',
   });
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String _namaDisplay = '';
+  String _emailDisplay = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      _emailDisplay = user.email ?? '';
+      _namaDisplay = widget.namaUser != 'Pengguna' && widget.namaUser.isNotEmpty
+          ? widget.namaUser
+          : (_emailDisplay.split('@').first);
+
+      try {
+        final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists && userDoc.data() != null) {
+          final data = userDoc.data() as Map<String, dynamic>;
+          if (data.containsKey('nama') && data['nama'].toString().isNotEmpty) {
+            _namaDisplay = data['nama'];
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getInitials(String name) {
+    if (name.trim().isEmpty) return 'U';
+    List<String> names = name.trim().split(' ');
+    if (names.length >= 2) {
+      return '${names[0][0]}${names[1][0]}'.toUpperCase();
+    }
+    return names[0][0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +88,14 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: _isLoading
+            ? const Center(
+          child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+        )
+            : SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             children: [
-              // Judul Halaman (Seletak dengan Artikel Tersimpan)
               const Text(
                 'Profil',
                 textAlign: TextAlign.center,
@@ -47,12 +107,11 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Avatar & Info Pengguna
               CircleAvatar(
                 radius: 40,
                 backgroundColor: const Color(0xFFBAC8FF),
                 child: Text(
-                  _getInitials(namaUser),
+                  _getInitials(_namaDisplay),
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -62,7 +121,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                namaUser,
+                _namaDisplay,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -70,16 +129,15 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Aurelia.Prisilla@gmail.com',
-                style: TextStyle(
+              Text(
+                _emailDisplay,
+                style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 32),
 
-              // List Menu Profil
               _buildMenuItem(
                 context: context,
                 icon: Icons.person_outline_rounded,
@@ -90,7 +148,7 @@ class ProfileScreen extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => const InformasiPribadiPage(),
                     ),
-                  );
+                  ).then((_) => _fetchUserData());
                 },
               ),
               _buildMenuItem(
@@ -152,16 +210,6 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  // Helper untuk mengambil inisial dari nama
-  String _getInitials(String name) {
-    if (name.trim().isEmpty) return 'AP';
-    List<String> names = name.trim().split(' ');
-    if (names.length >= 2) {
-      return '${names[0][0]}${names[1][0]}'.toUpperCase();
-    }
-    return names[0][0].toUpperCase();
   }
 
   Widget _buildMenuItem({
