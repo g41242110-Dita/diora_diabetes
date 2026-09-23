@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'detail_dokter_page.dart';
-import 'halaman_utama.dart';
 
 class KonsultasiPage extends StatefulWidget {
   final String namaUser;
@@ -16,7 +15,6 @@ class KonsultasiPage extends StatefulWidget {
 }
 
 class _KonsultasiPageState extends State<KonsultasiPage> {
-  int _selectedIndex = 2; // Default di tab Konsultasi
   final TextEditingController _searchController = TextEditingController();
 
   final List<Doctor> doctors = [
@@ -90,25 +88,6 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
         }).toList();
       }
     });
-  }
-
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HalamanUtama(
-            namaUser: widget.namaUser,
-            initialIndex: 0,
-          ),
-        ),
-            (route) => false,
-      );
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
   }
 
   @override
@@ -190,48 +169,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
           ),
         ),
       ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4).withOpacity(0.5),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          elevation: 0,
-          onTap: _onItemTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.mark_chat_unread_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: '',
-            ),
-          ],
-        ),
-      ),
+      // bottomNavigationBar sengaja dihapus agar tidak double dengan milik BerandaPage
     );
   }
 
