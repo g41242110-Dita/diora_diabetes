@@ -134,7 +134,8 @@ class _BerandaPageState extends State<BerandaPage> {
             },
             type: BottomNavigationBarType.fixed,
             selectedItemColor: const Color(0xFF6679F4),
-            unselectedItemColor: const Color(0xFF6679F4).withValues(alpha: 0.4),
+            unselectedItemColor:
+            const Color(0xFF6679F4).withValues(alpha: 0.4),
             showSelectedLabels: false,
             showUnselectedLabels: false,
             backgroundColor: Colors.white,
@@ -143,27 +144,27 @@ class _BerandaPageState extends State<BerandaPage> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),
                 activeIcon: Icon(Icons.home_rounded),
-                label: '',
+                label: 'Beranda',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.stars_outlined),
                 activeIcon: Icon(Icons.stars_rounded),
-                label: '',
+                label: 'Skrining',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.help_outline),
                 activeIcon: Icon(Icons.help),
-                label: '',
+                label: 'Konsultasi',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.article_outlined),
                 activeIcon: Icon(Icons.article),
-                label: '',
+                label: 'Artikel',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),
                 activeIcon: Icon(Icons.person),
-                label: '',
+                label: 'Profil',
               ),
             ],
           ),
@@ -214,7 +215,8 @@ class _BerandaPageState extends State<BerandaPage> {
                               child: const CircleAvatar(
                                 radius: 22,
                                 backgroundColor: Color(0xFFFFE5D9),
-                                child: Icon(Icons.person, color: Colors.orange, size: 28),
+                                child: Icon(Icons.person,
+                                    color: Colors.orange, size: 28),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -250,7 +252,8 @@ class _BerandaPageState extends State<BerandaPage> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
+                      icon: const Icon(Icons.notifications_none_rounded,
+                          color: Colors.white, size: 26),
                       onPressed: () {},
                     ),
                   ],
@@ -262,75 +265,73 @@ class _BerandaPageState extends State<BerandaPage> {
                 top: 130,
                 left: 16,
                 right: 16,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 15,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Sisi Kiri (Teks biasa)
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFECEBFF),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Text(
-                                'FITUR UTAMA',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF6679F4),
+                child: GestureDetector(
+                  onTap: _bukaHalamanSkrining,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECEBFF),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'FITUR UTAMA',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF6679F4),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Skrining Gejala Diabetes',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Skrining Gejala Diabetes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.black54,
-                                height: 1.3,
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.black54,
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // HANYA LINGKARAN PANAH BIRU YANG BISA DIPENCET
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: _bukaHalamanSkrining,
-                        child: Container(
+                        const SizedBox(width: 12),
+                        Container(
                           padding: const EdgeInsets.all(14),
                           decoration: const BoxDecoration(
                             color: Color(0xFF6679F4),
@@ -342,8 +343,8 @@ class _BerandaPageState extends State<BerandaPage> {
                             size: 22,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -389,7 +390,8 @@ class _BerandaPageState extends State<BerandaPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const LokasiPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const LokasiPage()),
                         );
                       },
                     ),
@@ -412,7 +414,8 @@ class _BerandaPageState extends State<BerandaPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const HasilSkriningPage()),
+                          MaterialPageRoute(
+                              builder: (context) => const HasilSkriningPage()),
                         );
                       },
                     ),
@@ -435,7 +438,8 @@ class _BerandaPageState extends State<BerandaPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ProgresKesehatanPage(username: widget.namaUser),
+                      builder: (context) =>
+                          ProgresKesehatanPage(username: widget.namaUser),
                     ),
                   );
                 },
@@ -457,7 +461,8 @@ class _BerandaPageState extends State<BerandaPage> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.show_chart_rounded, color: Color(0xFFE65100), size: 24),
+                        child: const Icon(Icons.show_chart_rounded,
+                            color: Color(0xFFE65100), size: 24),
                       ),
                       const SizedBox(width: 14),
                       const Expanded(
@@ -485,7 +490,8 @@ class _BerandaPageState extends State<BerandaPage> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded, color: Colors.black45),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.black45),
                     ],
                   ),
                 ),
@@ -568,17 +574,20 @@ class _BerandaPageState extends State<BerandaPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
                           child: Image.network(
                             item['imageUrl']!,
                             height: 100,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 100,
-                              color: const Color(0xFFE2E7FF),
-                              child: const Icon(Icons.article_outlined, color: Color(0xFF6679F4), size: 30),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 100,
+                                  color: const Color(0xFFE2E7FF),
+                                  child: const Icon(Icons.article_outlined,
+                                      color: Color(0xFF6679F4), size: 30),
+                                ),
                           ),
                         ),
                         Padding(
