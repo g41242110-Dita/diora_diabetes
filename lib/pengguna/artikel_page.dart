@@ -17,8 +17,9 @@ class ArtikelPage extends StatefulWidget {
 
 class _ArtikelPageState extends State<ArtikelPage> {
   final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
-  // Data daftar artikel
+  // Data daftar artikel (Fungsi & data asli tetap utuh 100%)
   final List<Map<String, String>> _articles = [
     {
       'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
@@ -64,17 +65,38 @@ class _ArtikelPageState extends State<ArtikelPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredArticles = _articles.where((article) {
+      final title = article['title']!.toLowerCase();
+      final snippet = article['snippet']!.toLowerCase();
+      return title.contains(_searchQuery.toLowerCase()) ||
+          snippet.contains(_searchQuery.toLowerCase());
+    }).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: widget.showBackButton
           ? AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      )
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Color(0xFF6679F4)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            )
           : null,
       body: SafeArea(
         child: Padding(
@@ -83,57 +105,118 @@ class _ArtikelPageState extends State<ArtikelPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              const Center(
-                child: Text(
-                  'Artikel',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+              
+              // Header Super Estetik ala Aplikasi Modern
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Artikel',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${filteredArticles.length} Bacaan',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6679F4),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
-              TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Cari Artikel . . .',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFF6679F4)),
-                  ),
+              // Search Bar Modern & Bersih
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6679F4).withOpacity(0.07),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                  border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _articles.length,
-                  itemBuilder: (context, index) {
-                    final article = _articles[index];
-                    return _buildArticleCard(
-                      title: article['title']!,
-                      snippet: article['snippet']!,
-                      content: article['content']!,
-                      imageUrl: article['image']!,
-                      iconData: Icons.bloodtype_outlined,
-                    );
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
                   },
+                  decoration: InputDecoration(
+                    hintText: 'Cari Artikel . . .',
+                    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13, fontWeight: FontWeight.w500),
+                    prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF6679F4), size: 22),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.cancel_rounded, size: 18, color: Colors.grey),
+                            onPressed: () {
+                              setState(() {
+                                _searchController.clear();
+                                _searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                  ),
                 ),
+              ),
+              const SizedBox(height: 20),
+
+              // List Artikel Estetik
+              Expanded(
+                child: filteredArticles.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEEF2FF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.search_off_rounded, size: 36, color: Color(0xFF6679F4)),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Artikel tidak ditemukan',
+                              style: TextStyle(color: Color(0xFF64748B), fontSize: 13.5, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: filteredArticles.length,
+                        itemBuilder: (context, index) {
+                          final article = filteredArticles[index];
+                          return _buildArticleCard(
+                            title: article['title']!,
+                            snippet: article['snippet']!,
+                            content: article['content']!,
+                            imageUrl: article['image']!,
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -142,80 +225,119 @@ class _ArtikelPageState extends State<ArtikelPage> {
     );
   }
 
+  // Tampilan Kartu Artikel Berbasis Foto Asli (Super Aesthetic & Mewah)
   Widget _buildArticleCard({
     required String title,
     required String snippet,
     required String content,
     required String imageUrl,
-    required IconData iconData,
   }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailArtikelPage(
-              title: title,
-              content: content,
-              imageUrl: imageUrl,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailArtikelPage(
+                  title: title,
+                  content: content,
+                  imageUrl: imageUrl,
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Thumbnail Gambar Asli dengan Sudut Melengkung Estetik
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    imageUrl,
+                    width: 78,
+                    height: 78,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 78,
+                      height: 78,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.image_not_supported_rounded, color: Color(0xFF6679F4), size: 28),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                
+                // Teks Judul dan Snippet Artikel
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        snippet,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                          height: 1.35,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                
+                // Icon panah kecil penanda interaktif yang mempermanis visual
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 75,
-              height: 75,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEBF3FE),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                iconData,
-                size: 36,
-                color: const Color(0xFF6679F4),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    snippet,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: Colors.grey.shade600,
-                      height: 1.3,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );
