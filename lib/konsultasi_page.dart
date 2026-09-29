@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'detail_dokter_page.dart';
+import 'beranda_page.dart'; // Import BerandaPage agar bisa dipanggil saat stack kosong
 
 class KonsultasiPage extends StatefulWidget {
   final String namaUser;
@@ -94,79 +95,100 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Konsultasi',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Pilih dokter yang sesuai dengan kebutuhanmu.',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Search Bar dengan fungsi filter terhubung
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _filterDoctors,
-                  decoration: InputDecoration(
-                    icon: const Icon(Icons.search, color: Colors.grey, size: 20),
-                    hintText: 'Cari Dokter atau Spesialis ...',
-                    hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                    border: InputBorder.none,
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
-                      onPressed: () {
-                        _searchController.clear();
-                        _filterDoctors('');
-                      },
-                    )
-                        : null,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF8FAFC),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            // FIX TERBARU: Cek stack navigasi sebelum pop
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              // Jika stack kosong (supaya tidak layar hitam), paksa buka Beranda
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BerandaPage(
+                    namaUser: widget.namaUser,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // List Dokter Hasil Filter
-              Expanded(
-                child: filteredDoctors.isEmpty
-                    ? const Center(
-                  child: Text(
-                    'Dokter tidak ditemukan.',
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                )
-                    : ListView.builder(
-                  itemCount: filteredDoctors.length,
-                  itemBuilder: (context, index) {
-                    final doctor = filteredDoctors[index];
-                    return _buildDoctorCard(context, doctor);
-                  },
-                ),
-              ),
-            ],
+              );
+            }
+          },
+        ),
+        title: const Text(
+          'Konsultasi',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
+        ),
+        centerTitle: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pilih dokter yang sesuai dengan kebutuhanmu.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Search Bar dengan fungsi filter terhubung
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterDoctors,
+                decoration: InputDecoration(
+                  icon: const Icon(Icons.search, color: Colors.grey, size: 20),
+                  hintText: 'Cari Dokter atau Spesialis ...',
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+                  border: InputBorder.none,
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
+                    onPressed: () {
+                      _searchController.clear();
+                      _filterDoctors('');
+                    },
+                  )
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // List Dokter Hasil Filter
+            Expanded(
+              child: filteredDoctors.isEmpty
+                  ? const Center(
+                child: Text(
+                  'Dokter tidak ditemukan.',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+              )
+                  : ListView.builder(
+                itemCount: filteredDoctors.length,
+                itemBuilder: (context, index) {
+                  final doctor = filteredDoctors[index];
+                  return _buildDoctorCard(context, doctor);
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
