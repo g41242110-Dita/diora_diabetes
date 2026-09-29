@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'onboarding_page.dart';
 import 'beranda_page.dart';
-// Menggunakan package path resmi agar kelas AdminDashboardPage terdeteksi
 import 'package:diora_diabetes/admin/admin_dashboard_page.dart';
 
 void main() async {
@@ -56,7 +55,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
 
     if (user != null) {
       String namaUser = user.email?.split('@').first ?? 'Pengguna';
-      String roleUser = 'user'; // Default role jika tidak ditemukan
+      String roleUser = 'pengguna'; // Default role sesuai basis data Diora
 
       try {
         final DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -67,23 +66,23 @@ class _HalamanUtamaState extends State<HalamanUtama> {
         if (userDoc.exists && userDoc.data() != null) {
           final data = userDoc.data() as Map<String, dynamic>;
 
-          if (data.containsKey('nama')) {
+          if (data.containsKey('nama') && data['nama'] != null) {
             namaUser = data['nama'];
           }
 
           // Ambil role dari Firestore
-          if (data.containsKey('role')) {
+          if (data.containsKey('role') && data['role'] != null) {
             roleUser = data['role'];
           }
         }
       } catch (_) {
-        // Jika gagal ambil Firestore, tetap gunakan default
+        // Jika gagal ambil Firestore, tetap gunakan nilai default
       }
 
       if (!mounted) return;
 
       // NAVIGASI BERDASARKAN ROLE
-      if (roleUser.toLowerCase() == 'admin') {
+      if (roleUser.trim().toLowerCase() == 'admin') {
         // Jika Admin -> Masuk ke Dashboard Admin
         Navigator.pushReplacement(
           context,
@@ -92,7 +91,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           ),
         );
       } else {
-        // Jika Pengguna Biasa -> Masuk ke Beranda
+        // Jika Pengguna Biasa/Dokter -> Masuk ke Beranda
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -101,6 +100,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
         );
       }
     } else {
+      if (!mounted) return;
       // Belum Login -> Ke Onboarding Page
       Navigator.pushReplacement(
         context,
