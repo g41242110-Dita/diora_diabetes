@@ -72,15 +72,20 @@ class _SkriningPageState extends State<SkriningPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool canPop = Navigator.canPop(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
+        automaticallyImplyLeading: false,
+        leading: canPop
+            ? IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () => Navigator.pop(context),
-        ),
+        )
+            : null,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -206,8 +211,7 @@ class _SkriningPageState extends State<SkriningPage> {
                         },
                       ),
 
-                      // Spacer ini yang mendorong tombol "Lanjutkan" ke bawah layar
-                      const Spacer(), 
+                      const Spacer(),
                       const SizedBox(height: 24),
 
                       // Tombol Lanjutkan
