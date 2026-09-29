@@ -67,183 +67,154 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          SingleChildScrollView(
+          CustomScrollView(
             physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. BAGIAN ATAS: Banner Berwarna & Estetik sebagai Header Area
-                Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF6679F4), Color(0xFF8B5CF6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+            slivers: [
+              // 1. HEADER BERWARNA YANG DIAM DI TEMPAT (STICKY) SAAT DI-SCROLL
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyHeaderDelegate(
+                  minHeight: 110.0,
+                  maxHeight: 140.0,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF6679F4), Color(0xFF8B5CF6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
                     ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
+                    padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.text_decrease_rounded, color: Colors.white, size: 20),
+                              onPressed: _zoomOut,
+                              tooltip: 'Kecilkan Teks',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.text_increase_rounded, color: Colors.white, size: 20),
+                              onPressed: _zoomIn,
+                              tooltip: 'Besarkan Teks',
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                              onPressed: _toggleBookmark,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
+                ),
+              ),
+
+              // 2. KONTEN DI BAWAHNYA (GAMBAR & PENJELASAN) YANG BISA DIGULIR
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Baris Tombol Kembali & Aksi di dalam Banner Berwarna
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.text_decrease_rounded, color: Colors.white, size: 20),
-                                onPressed: _zoomOut,
-                                tooltip: 'Kecilkan Teks',
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.text_increase_rounded, color: Colors.white, size: 20),
-                                onPressed: _zoomIn,
-                                tooltip: 'Besarkan Teks',
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                                onPressed: _toggleBookmark,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Badge Kategori Berwarna Cerah
+                      // Gambar di Atas Penjelasan
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
                           borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          '✨ Artikel Pilihan',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.network(
+                            widget.imageUrl,
+                            height: 220,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              height: 220,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Judul Artikel di dalam Header Berwarna
-                      Text(
-                        widget.title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 24),
+
+                      // Card Konten / Penjelasan Artikel
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          height: 1.3,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Divider(color: Colors.grey.shade200, thickness: 1),
+                            const SizedBox(height: 12),
+                            Text(
+                              widget.content,
+                              style: TextStyle(
+                                fontSize: _fontSize,
+                                color: const Color(0xFF334155),
+                                height: 1.8,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 20),
-
-                // 2. BAGIAN GAMBAR DI ATAS PENJELASAN
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        widget.imageUrl,
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 220,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // 3. BAGIAN ISI KONTEN ARTIKEL DI BAWAHNYA
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Divider(color: Colors.grey.shade200, thickness: 1),
-                        const SizedBox(height: 12),
-                        Text(
-                          widget.content,
-                          style: TextStyle(
-                            fontSize: _fontSize,
-                            color: const Color(0xFF334155),
-                            height: 1.8,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
+              ),
+            ],
           ),
 
           // Banner Notifikasi Mengambang
@@ -330,5 +301,36 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
         ],
       ),
     );
+  }
+}
+
+// Helper Class untuk Membuat Header Berwarna Menjadi Diam di Tempat (Sticky)
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _StickyHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
   }
 }
