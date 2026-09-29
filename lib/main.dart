@@ -3,9 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'firebase_options.dart';
-import 'onboarding_page.dart';
-import 'beranda_page.dart';
+import 'pengguna/firebase_options.dart';
+import 'pengguna/onboarding_page.dart';
+import 'pengguna/beranda_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
