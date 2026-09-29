@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'onboarding_page.dart';
 import 'beranda_page.dart';
-import 'package:diora_diabetes/admin/admin_dashboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,8 +53,8 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     final User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
+      // PENGGUNA LAMA (Sudah Login) -> Ambil nama dari Firestore lalu ke Beranda
       String namaUser = user.email?.split('@').first ?? 'Pengguna';
-      String roleUser = 'pengguna'; // Default role sesuai basis data Diora
 
       try {
         final DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -65,43 +64,24 @@ class _HalamanUtamaState extends State<HalamanUtama> {
 
         if (userDoc.exists && userDoc.data() != null) {
           final data = userDoc.data() as Map<String, dynamic>;
-
-          if (data.containsKey('nama') && data['nama'] != null) {
+          if (data.containsKey('nama')) {
             namaUser = data['nama'];
-          }
-
-          // Ambil role dari Firestore
-          if (data.containsKey('role') && data['role'] != null) {
-            roleUser = data['role'];
           }
         }
       } catch (_) {
-        // Jika gagal ambil Firestore, tetap gunakan nilai default
+        // Jika gagal ambil Firestore, tetap pakai default namaUser
       }
 
       if (!mounted) return;
 
-      // NAVIGASI BERDASARKAN ROLE
-      if (roleUser.trim().toLowerCase() == 'admin') {
-        // Jika Admin -> Masuk ke Dashboard Admin
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AdminDashboardPage(),
-          ),
-        );
-      } else {
-        // Jika Pengguna Biasa/Dokter -> Masuk ke Beranda
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BerandaPage(namaUser: namaUser),
-          ),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BerandaPage(namaUser: namaUser),
+        ),
+      );
     } else {
-      if (!mounted) return;
-      // Belum Login -> Ke Onboarding Page
+      // PENGGUNA BARU (Belum Login / Sudah Logout) -> Ke Onboarding Page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
