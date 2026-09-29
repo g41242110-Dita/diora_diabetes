@@ -19,8 +19,17 @@ class DetailDokterPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
+        centerTitle: true,
+        title: const Text(
+          'Detail Dokter',
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF6679F4), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -220,7 +229,6 @@ class DetailDokterPage extends StatelessWidget {
                   ),
                   onPressed: doctor.isOnline
                       ? () {
-                    // Pindah ke KONSUL 2 (Chat) dengan meneruskan namaUser
                     Navigator.push(
                       context,
                       MaterialPageRoute(

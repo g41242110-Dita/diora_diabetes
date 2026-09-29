@@ -61,7 +61,7 @@ class _BerandaPageState extends State<BerandaPage> {
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(
       initialPage: 1000,
-      viewportFraction: 0.82,
+      viewportFraction: 0.85,
     );
   }
 
@@ -72,24 +72,38 @@ class _BerandaPageState extends State<BerandaPage> {
   }
 
   void _bukaHalamanProfil() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProfileScreen(
-          namaUser: widget.namaUser,
-        ),
-      ),
-    );
+    setState(() {
+      _selectedIndex = 4;
+    });
+  }
+
+  void _bukaHalamanSkrining() {
+    setState(() {
+      _selectedIndex = 1;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildBerandaContent(),
-      const SkriningPage(),
+      SkriningPage(
+        onBackToHome: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),
       KonsultasiPage(namaUser: widget.namaUser),
       const ArtikelPage(),
-      ProfileScreen(namaUser: widget.namaUser),
+      ProfileScreen(
+        namaUser: widget.namaUser,
+        onBackToHome: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),
     ];
 
     return PopScope(
@@ -163,13 +177,14 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. CURVED HEADER DENGAN GRADIENT
+          // 1. CURVED HEADER DENGAN GRADIENT & HERO CARD
           Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
-                height: 180,
-                padding: const EdgeInsets.only(top: 50, left: 24, right: 24),
+                height: 190,
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
@@ -185,45 +200,53 @@ class _BerandaPageState extends State<BerandaPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: _bukaHalamanProfil,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const CircleAvatar(
-                              radius: 22,
-                              backgroundColor: Color(0xFFFFE5D9),
-                              child: Icon(Icons.person, color: Colors.orange, size: 28),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Halo, ${widget.namaUser} 👋',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _bukaHalamanProfil,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
                               ),
-                              const Text(
-                                'Selamat Datang di Diora',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                ),
+                              child: const CircleAvatar(
+                                radius: 22,
+                                backgroundColor: Color(0xFFFFE5D9),
+                                child: Icon(Icons.person, color: Colors.orange, size: 28),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Halo, ${widget.namaUser} 👋',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const Text(
+                                    'Selamat Datang di Diora',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white70,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     IconButton(
@@ -236,72 +259,79 @@ class _BerandaPageState extends State<BerandaPage> {
 
               // 2. HERO CARD (SKRINING GEJALA DIABETES)
               Positioned(
-                top: 125,
-                left: 20,
-                right: 20,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = 1;
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 15,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFECEBFF),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'FITUR UTAMA',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6679F4),
-                                  ),
-                                ),
+                top: 130,
+                left: 16,
+                right: 16,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Sisi Kiri (Teks biasa)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECEBFF),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Skrining Gejala Diabetes',
+                              child: const Text(
+                                'FITUR UTAMA',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: Color(0xFF6679F4),
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black54,
-                                ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Skrining Gejala Diabetes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
-                            ],
-                          ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // HANYA LINGKARAN PANAH BIRU YANG BISA DIPENCET
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _bukaHalamanSkrining,
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
                           decoration: const BoxDecoration(
                             color: Color(0xFF6679F4),
                             shape: BoxShape.circle,
@@ -312,15 +342,15 @@ class _BerandaPageState extends State<BerandaPage> {
                             size: 22,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 100),
+          const SizedBox(height: 110),
 
           // 3. QUICK ACTION LAUNCHER
           Padding(
@@ -397,61 +427,67 @@ class _BerandaPageState extends State<BerandaPage> {
           // 4. STATS CARD (PROGRES KESEHATAN)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProgresKesehatanPage(username: widget.namaUser),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.show_chart_rounded, color: Color(0xFFE65100), size: 24),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProgresKesehatanPage(username: widget.namaUser),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Progres Kesehatan',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Pantau catatan dan tren grafik kesehatanmu.',
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
+                  );
+                },
+                child: Ink(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    const Icon(Icons.chevron_right_rounded, color: Colors.black45),
-                  ],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.show_chart_rounded, color: Color(0xFFE65100), size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Progres Kesehatan',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Pantau catatan dan tren grafik kesehatanmu.',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                color: Colors.black54,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, color: Colors.black45),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -595,6 +631,7 @@ class _BerandaPageState extends State<BerandaPage> {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Column(
         children: [

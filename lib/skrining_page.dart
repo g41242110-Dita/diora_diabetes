@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'skrining2_page.dart';
 
 class SkriningPage extends StatefulWidget {
-  const SkriningPage({super.key});
+  final VoidCallback? onBackToHome; // Callback untuk berpindah ke tab Beranda
+
+  const SkriningPage({super.key, this.onBackToHome});
 
   @override
   State<SkriningPage> createState() => _SkriningPageState();
@@ -20,19 +22,18 @@ class _SkriningPageState extends State<SkriningPage> {
     super.dispose();
   }
 
-  // Fungsi untuk mengecek validasi sebelum pindah halaman
+  // Fungsi untuk mengecek validasi sebelum pindah ke Skrining 2
   void _validateAndNavigate() {
     String nama = _namaController.text.trim();
     String umur = _umurController.text.trim();
 
-    // Jika ada salah satu yang belum diisi
     if (nama.isEmpty || umur.isEmpty || _jenisKelamin == null) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
               SizedBox(width: 8),
               Text(
@@ -57,7 +58,6 @@ class _SkriningPageState extends State<SkriningPage> {
       return;
     }
 
-    // Jika semua data terisi, berpindah ke Skrining2Page
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -72,20 +72,22 @@ class _SkriningPageState extends State<SkriningPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool canPop = Navigator.canPop(context);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: canPop
-            ? IconButton(
+        scrolledUnderElevation: 0,
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        )
-            : null,
+          onPressed: () {
+            if (widget.onBackToHome != null) {
+              widget.onBackToHome!(); // Pindah ke tab Beranda
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -111,7 +113,7 @@ class _SkriningPageState extends State<SkriningPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Progress Bar (1/4)
+                      // Progress Bar (1/2 - Setengah)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -119,7 +121,7 @@ class _SkriningPageState extends State<SkriningPage> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: const LinearProgressIndicator(
-                                value: 0.25,
+                                value: 0.5, // Garis progres setengah (50%)
                                 minHeight: 8,
                                 backgroundColor: Color(0xFFE2E8F0),
                                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6679F4)),
@@ -128,7 +130,7 @@ class _SkriningPageState extends State<SkriningPage> {
                           ),
                           const SizedBox(width: 12),
                           const Text(
-                            '1/4',
+                            '1/2', // Teks penanda langkah pertama dari dua langkah
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
