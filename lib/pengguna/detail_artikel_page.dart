@@ -17,7 +17,7 @@ class DetailArtikelPage extends StatefulWidget {
 }
 
 class _DetailArtikelPageState extends State<DetailArtikelPage> {
-  double _fontSize = 12.0;
+  double _fontSize = 14.0;
   bool _isBookmarked = false;
   bool _showBanner = false;
   String _bannerTitle = '';
@@ -26,13 +26,13 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
 
   void _zoomIn() {
     setState(() {
-      if (_fontSize < 20.0) _fontSize += 2.0;
+      if (_fontSize < 22.0) _fontSize += 2.0;
     });
   }
 
   void _zoomOut() {
     setState(() {
-      if (_fontSize > 8.0) _fontSize -= 2.0;
+      if (_fontSize > 10.0) _fontSize -= 2.0;
     });
   }
 
@@ -64,154 +64,154 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 40,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
+        centerTitle: true,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF6679F4), size: 16),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
+        actions: [
+          // Tombol Perkecil Teks
+          IconButton(
+            icon: const Icon(Icons.text_decrease_rounded, color: Color(0xFF64748B), size: 20),
+            onPressed: _zoomOut,
+            tooltip: 'Perkecil Teks',
+          ),
+          // Tombol Perbesar Teks
+          IconButton(
+            icon: const Icon(Icons.text_increase_rounded, color: Color(0xFF64748B), size: 20),
+            onPressed: _zoomIn,
+            tooltip: 'Perbesar Teks',
+          ),
+          // Tombol Bookmark
+          Container(
+            margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+            decoration: BoxDecoration(
+              color: _isBookmarked ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _isBookmarked ? const Color(0xFF6679F4) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: IconButton(
+              icon: Icon(
+                _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                color: const Color(0xFF6679F4),
+                size: 20,
+              ),
+              onPressed: _toggleBookmark,
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 14.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.black87, width: 1),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.title,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-
-                              Text(
-                                widget.content,
-                                style: TextStyle(
-                                  fontSize: _fontSize,
-                                  color: Colors.black87,
-                                  height: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  widget.imageUrl,
-                                  height: 150,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    height: 150,
-                                    color: Colors.grey.shade200,
-                                    child: const Icon(Icons.image, size: 40, color: Colors.grey),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-
-                              const Divider(color: Colors.black45, thickness: 1),
-                              const SizedBox(height: 4),
-
-                              Row(
-                                children: [
-                                  InkWell(
-                                    onTap: _zoomIn,
-                                    child: const Icon(Icons.zoom_in, color: Colors.grey, size: 26),
-                                  ),
-                                  InkWell(
-                                    onTap: _zoomOut,
-                                    child: const Icon(Icons.zoom_out, color: Colors.grey, size: 26),
-                                  ),
-                                  const Spacer(),
-                                  InkWell(
-                                    onTap: _toggleBookmark,
-                                    child: Icon(
-                                      _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                                      color: _isBookmarked ? const Color(0xFF2D5C52) : Colors.grey,
-                                      size: 26,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Judul Artikel Utama
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      height: 1.25,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+
+                  // Gambar Header Estetik Tanpa Kotak Pembatas
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(
+                      widget.imageUrl,
+                      height: 220,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 220,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Isi Konten Artikel Bersih & Nyaman Dibaca
+                  Text(
+                    widget.content,
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      color: const Color(0xFF334155),
+                      height: 1.7,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
 
+            // Banner Notifikasi Mengambang
             if (_showBanner)
               Positioned(
-                top: 4,
-                left: 16,
-                right: 16,
+                top: 10,
+                left: 20,
+                right: 20,
                 child: Material(
-                  elevation: 6,
-                  borderRadius: BorderRadius.circular(14),
+                  color: Colors.transparent,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: _isSuccessBanner ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
-                      borderRadius: BorderRadius.circular(14),
+                      color: _isSuccessBanner ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                       border: Border.all(
-                        color: _isSuccessBanner ? const Color(0xFF81C784) : const Color(0xFFE57373),
+                        color: _isSuccessBanner ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
                         width: 1.2,
                       ),
                     ),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: _isSuccessBanner ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+                            color: _isSuccessBanner ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _isSuccessBanner ? Icons.check : Icons.close,
+                            _isSuccessBanner ? Icons.check_rounded : Icons.close_rounded,
                             color: Colors.white,
                             size: 14,
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,18 +219,18 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                             children: [
                               Text(
                                 _bannerTitle,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 12.5,
-                                  color: Colors.black87,
+                                  fontSize: 13,
+                                  color: _isSuccessBanner ? const Color(0xFF166534) : const Color(0xFF991B1B),
                                 ),
                               ),
-                              const SizedBox(height: 1),
+                              const SizedBox(height: 2),
                               Text(
                                 _bannerSubtitle,
-                                style: const TextStyle(
-                                  fontSize: 10.5,
-                                  color: Colors.black54,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: _isSuccessBanner ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
                                 ),
                               ),
                             ],
@@ -243,9 +243,9 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                             });
                           },
                           child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.black54,
+                            Icons.close_rounded,
+                            size: 18,
+                            color: Color(0xFF64748B),
                           ),
                         ),
                       ],
