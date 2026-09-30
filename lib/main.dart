@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pengguna/firebase_options.dart';
 import 'pengguna/onboarding_page.dart';
 import 'pengguna/beranda_page.dart';
+import 'admin/admin_dashboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,17 +45,16 @@ class _HalamanUtamaState extends State<HalamanUtama> {
   }
 
   Future<void> _checkAuthenticationAndNavigate() async {
-    // Tampilkan Splash Screen selama 3 detik
-    await Future.delayed(const Duration(seconds: 3));
+    // Tampilkan Splash Screen selama 2 detik
+    await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
 
-    // Cek status sesi pengguna dari Firebase Auth
     final User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // PENGGUNA LAMA (Sudah Login) -> Ambil nama dari Firestore lalu ke Beranda
       String namaUser = user.email?.split('@').first ?? 'Pengguna';
+      String roleUser = 'pengguna'; // Role default jika tidak ditemukan
 
       try {
         final DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -64,24 +64,50 @@ class _HalamanUtamaState extends State<HalamanUtama> {
 
         if (userDoc.exists && userDoc.data() != null) {
           final data = userDoc.data() as Map<String, dynamic>;
-          if (data.containsKey('nama')) {
-            namaUser = data['nama'];
+
+          if (data.containsKey('nama') && data['nama'] != null) {
+            namaUser = data['nama'].toString();
           }
+
+          if (data.containsKey('role') && data['role'] != null) {
+            roleUser = data['role'].toString().trim().toLowerCase();
+          }
+        } else {
+          debugPrint('⚠️ Dokumen pengguna tidak ditemukan di Firestore untuk UID: ${user.uid}');
         }
-      } catch (_) {
-        // Jika gagal ambil Firestore, tetap pakai default namaUser
+      } catch (e) {
+        debugPrint('❌ Gagal mengambil data Firestore: $e');
       }
+
+      // CEK DEBUGGING DI TERMINAL/CONSOLE
+      debugPrint('----------------------------------------------------');
+      debugPrint('👤 LOGGED IN UID : ${user.uid}');
+      debugPrint('📧 EMAIL         : ${user.email}');
+      debugPrint('🏷️ ROLE DETEKSI  : "$roleUser"');
+      debugPrint('----------------------------------------------------');
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BerandaPage(namaUser: namaUser),
-        ),
-      );
+      // NAVIGASI BERDASARKAN ROLE
+      if (roleUser == 'admin') {
+        debugPrint('➡️ Navigasi ke AdminDashboardPage');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const AdminDashboardPage(),
+          ),
+        );
+      } else {
+        debugPrint('➡️ Navigasi ke BerandaPage (Pengguna)');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BerandaPage(namaUser: namaUser),
+          ),
+        );
+      }
     } else {
-      // PENGGUNA BARU (Belum Login / Sudah Logout) -> Ke Onboarding Page
+      debugPrint('🔒 Belum ada sesi login -> Ke OnboardingPage');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -91,13 +117,68 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     }
   }
 
+  Future<bool> _showExitConfirmationDialog(BuildContext dialogContext) async {
+    final result = await showDialog<bool>(
+      context: dialogContext,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Keluar Aplikasi',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari aplikasi Diora?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF5B71F5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SizedBox.expand(
-        child: Image.asset(
-          'assets/HAL UTAMA.png',
-          fit: BoxFit.cover,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _showExitConfirmationDialog(context);
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        body: SizedBox.expand(
+          child: Image.asset(
+            'assets/HAL UTAMA.png',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: const Color(0xFF5B71F5),
+              child: const Center(
+                child: Icon(
+                  Icons.medical_services_rounded,
+                  size: 100,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
