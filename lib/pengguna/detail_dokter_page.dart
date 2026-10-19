@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
-import 'chat_konsultasi_page.dart';
+import 'booking_dokter_page.dart';
 
 class DetailDokterPage extends StatelessWidget {
   final Doctor doctor;
@@ -210,7 +210,7 @@ class DetailDokterPage extends StatelessWidget {
               ),
             ),
 
-            // Tombol "Konsultasi Sekarang" di Bagian Bawah
+            // Tombol "Booking Jadwal Konsultasi"
             Container(
               padding: const EdgeInsets.all(16),
               color: Colors.white,
@@ -232,7 +232,7 @@ class DetailDokterPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ChatKonsultasiPage(
+                        builder: (context) => BookingDokterPage(
                           doctor: doctor,
                           namaUser: namaUser,
                         ),
@@ -242,7 +242,7 @@ class DetailDokterPage extends StatelessWidget {
                       : null,
                   child: Text(
                     doctor.isOnline
-                        ? 'Konsultasi Sekarang'
+                        ? 'Booking Jadwal Konsultasi'
                         : 'Dokter Sedang Offline',
                     style: const TextStyle(
                       color: Colors.white,
