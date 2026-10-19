@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Dibutuhkan untuk SystemNavigator.pop()
 
-// Import halaman-halaman yang dibutuhkan
 import 'profile_screen.dart';
 import 'konsultasi_page.dart';
 import 'skrining_page.dart';
@@ -10,6 +9,7 @@ import 'progres_kesehatan_page.dart';
 import 'artikel_page.dart';
 import 'hasil_skrining_page.dart';
 import 'detail_artikel_page.dart';
+import 'curved_nav_bar.dart';
 
 class BerandaPage extends StatefulWidget {
   final String namaUser;
@@ -33,25 +33,25 @@ class _BerandaPageState extends State<BerandaPage> {
     {
       'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
       'content':
-          'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\nKadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\nPada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\nGlukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
+      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\nKadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\nPada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\nGlukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
       'imageUrl': 'https://picsum.photos/400/200?random=1',
     },
     {
       'title': 'Pentingnya Olahraga Rutin Bagi Penderita Diabetes',
       'content':
-          'Aktivitas fisik secara teratur dapat membantu meningkatkan sensitivitas insulin, sehingga sel-sel tubuh lebih mudah menggunakan glukosa dalam darah.\n\nJenis olahraga yang disarankan meliputi jalan cepat, bersepeda, berenang, dan senam aerobik ringan selama minimal 150 menit per minggu.',
+      'Aktivitas fisik secara teratur dapat membantu meningkatkan sensitivitas insulin, sehingga sel-sel tubuh lebih mudah menggunakan glukosa dalam darah.\n\nJenis olahraga yang disarankan meliputi jalan cepat, bersepeda, berenang, dan senam aerobik ringan selama minimal 150 menit per minggu.',
       'imageUrl': 'https://picsum.photos/400/200?random=2',
     },
     {
       'title': 'Pola Makan Sehat Pencegah Diabetes Tipe 2',
       'content':
-          'Mengatur pola makan dengan mengonsumsi makanan berindeks glikemik rendah seperti gandum, sayuran hijau, dan kacang-kacangan sangat efektif dalam menjaga kestabilan kadar gula darah.\n\nHindari konsumsi minuman manis kemasan dan kurangi karbohidrat olahan untuk mencegah risiko terkena diabetes tipe 2.',
+      'Mengatur pola makan dengan mengonsumsi makanan berindeks glikemik rendah seperti gandum, sayuran hijau, dan kacang-kacangan sangat efektif dalam menjaga kestabilan kadar gula darah.\n\nHindari konsumsi minuman manis kemasan dan kurangi karbohidrat olahan untuk mencegah risiko terkena diabetes tipe 2.',
       'imageUrl': 'https://picsum.photos/400/200?random=3',
     },
     {
       'title': 'Mengenal Pemeriksaan Kadar Gula Darah Rutin',
       'content':
-          'Pemeriksaan gula darah secara mandiri maupun medis sangat penting dilakukan secara berkala. Hal ini membantu kita memantau pola lonjakan gula darah dan mengevaluasi efektivitas terapi atau diet harian yang sedang dijalankan.',
+      'Pemeriksaan gula darah secara mandiri maupun medis sangat penting dilakukan secara berkala. Hal ini membantu kita memantau pola lonjakan gula darah dan mengevaluasi efektivitas terapi atau diet harian yang sedang dijalankan.',
       'imageUrl': 'https://picsum.photos/400/200?random=4',
     },
   ];
@@ -110,7 +110,7 @@ class _BerandaPageState extends State<BerandaPage> {
           ),
         ),
         actionsPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
           SizedBox(
             width: double.infinity,
@@ -223,55 +223,13 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
         body: pages[_selectedIndex],
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-            ),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: const Color(0xFF6679F4),
-            unselectedItemColor:
-                const Color(0xFF6679F4).withValues(alpha: 0.4),
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-            backgroundColor: Colors.white,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home_rounded),
-                label: 'Beranda',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.stars_outlined),
-                activeIcon: Icon(Icons.stars_rounded),
-                label: 'Skrining',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.help_outline),
-                activeIcon: Icon(Icons.help),
-                label: 'Konsultasi',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.article_outlined),
-                activeIcon: Icon(Icons.article),
-                label: 'Artikel',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: 'Profil',
-              ),
-            ],
-          ),
+        bottomNavigationBar: CurvedNavBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
         ),
       ),
     );
@@ -282,7 +240,6 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. CURVED HEADER DENGAN GRADIENT & HERO CARD
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -363,8 +320,6 @@ class _BerandaPageState extends State<BerandaPage> {
                   ],
                 ),
               ),
-
-              // 2. HERO CARD (SKRINING GEJALA DIABETES)
               Positioned(
                 top: 130,
                 left: 16,
@@ -454,10 +409,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 110),
-
-          // 3. QUICK ACTION LAUNCHER
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -528,10 +480,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
-          // 4. STATS CARD (PROGRES KESEHATAN)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Material(
@@ -602,10 +551,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ),
           ),
-
           const SizedBox(height: 24),
-
-          // 5. ARTIKEL TERBARU
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -637,9 +583,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ],
             ),
           ),
-
           const SizedBox(height: 12),
-
           SizedBox(
             height: 190,
             child: PageView.builder(
@@ -687,11 +631,11 @@ class _BerandaPageState extends State<BerandaPage> {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
-                              height: 100,
-                              color: const Color(0xFFE2E7FF),
-                              child: const Icon(Icons.article_outlined,
-                                  color: Color(0xFF6679F4), size: 30),
-                            ),
+                                  height: 100,
+                                  color: const Color(0xFFE2E7FF),
+                                  child: const Icon(Icons.article_outlined,
+                                      color: Color(0xFF6679F4), size: 30),
+                                ),
                           ),
                         ),
                         Padding(
@@ -729,8 +673,7 @@ class _BerandaPageState extends State<BerandaPage> {
               },
             ),
           ),
-
-          const SizedBox(height: 24),
+          const SizedBox(height: 30),
         ],
       ),
     );

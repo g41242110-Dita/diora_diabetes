@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-// Import file pendukung
 import 'detail_artikel_page.dart';
 
 class ArtikelPage extends StatefulWidget {
@@ -21,53 +19,52 @@ class _ArtikelPageState extends State<ArtikelPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Data daftar artikel (Teks asli tidak diubah sama sekali sesuai permintaan)
   final List<Map<String, String>> _articles = [
     {
       'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
       'snippet':
-          'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi ...',
+      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi ...',
       'image':
-          'https://images.unsplash.com/photo-1615461066841-6116e61058f4?q=80&w=400',
+      'https://images.unsplash.com/photo-1615461066841-6116e61058f4?q=80&w=400',
       'content':
-          'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\n'
-              'Kadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\n'
-              'Pada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\n'
-              'Glukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
+      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\n'
+          'Kadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\n'
+          'Pada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\n'
+          'Glukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
     },
     {
       'title': 'Diabetes Ancaman Nyata Generasi Muda',
       'snippet':
-          'Penyebab Diabetes pada Generasi Muda: 1. Malnutrisi (mengalami masalah gizi) sejak lahir · 2. Pola makan tidak seimbang · 3. Kurangnya aktivitas ...',
+      'Penyebab Diabetes pada Generasi Muda: 1. Malnutrisi (mengalami masalah gizi) sejak lahir · 2. Pola makan tidak seimbang · 3. Kurangnya aktivitas ...',
       'image':
-          'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=400',
+      'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=400',
       'content':
-          'Diabetes kini bukan hanya menyerang lansia, tetapi juga generasi muda. Perubahan gaya hidup, pola makan serba instan, dan kurangnya aktivitas fisik menjadi pemicu utama.\n\n'
-              'Penyebab Diabetes pada Generasi Muda:\n'
-              '1. Malnutrisi atau masalah gizi sejak dini.\n'
-              '2. Pola makan tinggi gula dan lemak jenuh.\n'
-              '3. Jarang berolahraga dan terlalu banyak duduk.\n\n'
-              'Pencegahan sejak dini sangat penting dengan menerapkan pola hidup sehat, rajin bergerak, dan rutin memeriksakan kadar gula darah.',
+      'Diabetes kini bukan hanya menyerang lansia, tetapi juga generasi muda. Perubahan gaya hidup, pola makan serba instan, dan kurangnya aktivitas fisik menjadi pemicu utama.\n\n'
+          'Penyebab Diabetes pada Generasi Muda:\n'
+          '1. Malnutrisi atau masalah gizi sejak dini.\n'
+          '2. Pola makan tinggi gula dan lemak jenuh.\n'
+          '3. Jarang berolahraga dan terlalu banyak duduk.\n\n'
+          'Pencegahan sejak dini sangat penting dengan menerapkan pola hidup sehat, rajin bergerak, dan rutin memeriksakan kadar gula darah.',
     },
     {
       'title': 'diabetes melitus tipe 2 ; artikel review',
       'snippet':
-          'Diabetes Mellitus Tipe 2 adalah penyakit gangguan metabolik yang di tandai oleh kenaikan gula darah akibat penurunan sekresi insulin oleh sel beta pankreas ...',
+      'Diabetes Mellitus Tipe 2 adalah penyakit gangguan metabolik yang di tandai oleh kenaikan gula darah akibat penurunan sekresi insulin oleh sel beta pankreas ...',
       'image':
-          'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=400',
+      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=400',
       'content':
-          'Diabetes Mellitus Tipe 2 merupakan gangguan metabolik yang paling sering ditemui. Kondisi ini ditandai dengan resistensi insulin atau penurunan produksi insulin oleh pankreas.\n\n'
-              'Faktor risiko meliputi genetik, obesitas, serta gaya hidup tidak sehat. Penanganan dilakukan melalui kombinasi edukasi, terapi nutrisi medis, latihan fisik, dan konsumsi obat hipoglikemik sesuai anjuran dokter.',
+      'Diabetes Mellitus Tipe 2 merupakan gangguan metabolik yang paling sering ditemui. Kondisi ini ditandai dengan resistensi insulin atau penurunan produksi insulin oleh pankreas.\n\n'
+          'Faktor risiko meliputi genetik, obesitas, serta gaya hidup tidak sehat. Penanganan dilakukan melalui kombinasi edukasi, terapi nutrisi medis, latihan fisik, dan konsumsi obat hipoglikemik sesuai anjuran dokter.',
     },
     {
       'title': 'Diabetes Melitus',
       'snippet':
-          'Diabetes melitus merupakan salah satu masalah kesehatan didunia yang patut diperhatikan. Prevalensi dari diabetes melitus setiap tahunnya selalu ...',
+      'Diabetes melitus merupakan salah satu masalah kesehatan didunia yang patut diperhatikan. Prevalensi dari diabetes melitus setiap tahunnya selalu ...',
       'image':
-          'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=400',
+      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=400',
       'content':
-          'Diabetes Melitus menjadi salah satu tantangan kesehatan global terbesar saat ini. Angka penderitanya terus meningkat setiap tahun baik di negara berkembang maupun negara maju.\n\n'
-              'Edukasi publik mengenai bahaya komplikasi diabetes—seperti kerusakan ginjal, gangguan penglihatan, dan penyakit jantung—sangat diperlukan untuk menekan angka kasus baru.',
+      'Diabetes Melitus menjadi salah satu tantangan kesehatan global terbesar saat ini. Angka penderitanya terus meningkat setiap tahun baik di negara berkembang maupun negara maju.\n\n'
+          'Edukasi publik mengenai bahaya komplikasi diabetes—seperti kerusakan ginjal, gangguan penglihatan, dan penyakit jantung—sangat diperlukan untuk menekan angka kasus baru.',
     },
   ];
 
@@ -91,7 +88,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. HEADER ESTETIK DENGAN GRADIENT & TOMBOL KEMBALI
           Container(
             padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
             decoration: const BoxDecoration(
@@ -122,7 +118,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -147,7 +143,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -162,15 +158,13 @@ class _ArtikelPageState extends State<ArtikelPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // SEARCH BAR MODERN & BERSIH
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -197,18 +191,18 @@ class _ArtikelPageState extends State<ArtikelPage> {
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(
-                                Icons.cancel_rounded,
-                                size: 18,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
+                        icon: const Icon(
+                          Icons.cancel_rounded,
+                          size: 18,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
                           : null,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -221,61 +215,57 @@ class _ArtikelPageState extends State<ArtikelPage> {
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // 2. LIST ARTIKEL DENGAN KARTU ESTETIK
           Expanded(
             child: filteredArticles.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEEF2FF),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.search_off_rounded,
-                            size: 36,
-                            color: Color(0xFF6679F4),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Artikel tidak ditemukan',
-                          style: TextStyle(
-                            color: Color(0xFF64748B),
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEEF2FF),
+                      shape: BoxShape.circle,
                     ),
-                  )
-                : ListView.builder(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: filteredArticles.length,
-                    itemBuilder: (context, index) {
-                      final article = filteredArticles[index];
-                      return _buildAestheticCard(
-                        title: article['title']!,
-                        snippet: article['snippet']!,
-                        content: article['content']!,
-                        imageUrl: article['image']!,
-                      );
-                    },
+                    child: const Icon(
+                      Icons.search_off_rounded,
+                      size: 36,
+                      color: Color(0xFF6679F4),
+                    ),
                   ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Artikel tidak ditemukan',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: filteredArticles.length,
+              itemBuilder: (context, index) {
+                final article = filteredArticles[index];
+                return _buildAestheticCard(
+                  title: article['title']!,
+                  snippet: article['snippet']!,
+                  content: article['content']!,
+                  imageUrl: article['image']!,
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  // WIDGET KARTU ARTIKEL YANG DIDESAIN ULANG AGAR SUPER ESTETIK
   Widget _buildAestheticCard({
     required String title,
     required String snippet,
@@ -289,7 +279,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6679F4).withOpacity(0.06),
+            color: const Color(0xFF6679F4).withValues(alpha: 0.06),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -321,7 +311,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Gambar Artikel dengan Border Radius Halus
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Image.network(
@@ -345,8 +334,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
                   ),
                 ),
                 const SizedBox(width: 14),
-
-                // Bagian Judul dan Deskripsi Pendek
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,8 +365,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-
-                // Ikon Panah Minimalis Estetik
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(

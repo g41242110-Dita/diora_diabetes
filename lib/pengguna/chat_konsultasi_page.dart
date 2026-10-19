@@ -226,8 +226,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 },
               ),
             ),
-
-            // Input Chat Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               color: Colors.white,
@@ -269,8 +267,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 ],
               ),
             ),
-
-            // Tombol Akhiri Konsultasi
             if (_messages.isNotEmpty)
               Container(
                 width: double.infinity,
@@ -312,7 +308,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75, // Perbaikan perkalian
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(

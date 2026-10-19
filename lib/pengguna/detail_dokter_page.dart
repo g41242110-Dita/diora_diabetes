@@ -29,7 +29,8 @@ class DetailDokterPage extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF6679F4), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: Color(0xFF6679F4), size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -38,18 +39,17 @@ class DetailDokterPage extends StatelessWidget {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Column(
                   children: [
-                    // Gambar/Avatar Dokter Besar
                     const CircleAvatar(
                       radius: 55,
                       backgroundColor: Color(0xFFE2E7FF),
-                      child: Icon(Icons.person, size: 70, color: Color(0xFF6679F4)),
+                      child: Icon(Icons.person,
+                          size: 70, color: Color(0xFF6679F4)),
                     ),
                     const SizedBox(height: 12),
-
-                    // Nama Dokter & Spesialis
                     Text(
                       doctor.nama,
                       style: const TextStyle(
@@ -67,8 +67,6 @@ class DetailDokterPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // Rating & Badge Status
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -91,7 +89,8 @@ class DetailDokterPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: doctor.isOnline
                                 ? const Color(0xFFE6F4EA)
@@ -112,8 +111,6 @@ class DetailDokterPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Card Jadwal Praktik & Pasien
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -173,8 +170,6 @@ class DetailDokterPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Card Tentang Dokter
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -209,8 +204,6 @@ class DetailDokterPage extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Tombol "Booking Jadwal Konsultasi"
             Container(
               padding: const EdgeInsets.all(16),
               color: Colors.white,

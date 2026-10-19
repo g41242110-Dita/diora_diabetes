@@ -39,7 +39,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
   late AnimationController _animController;
   late AnimationController _pulseController;
   late AnimationController _floatingController;
-  
+
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _pulseAnimation;
@@ -72,7 +72,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.15),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+    ).animate(
+        CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
 
     _pulseAnimation = Tween<double>(begin: 0.90, end: 1.10).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -102,7 +103,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     Random random = Random();
     String newCaptcha = String.fromCharCodes(
-      Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
+      Iterable.generate(
+          5, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
     );
 
     setState(() {
@@ -129,7 +131,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
       captchaError = captchaController.text.trim().isEmpty;
     });
 
-    if (namaError || emailError || passwordError || konfirmasiError || captchaError) {
+    if (namaError ||
+        emailError ||
+        passwordError ||
+        konfirmasiError ||
+        captchaError) {
       setState(() {
         showErrorBanner = true;
         errorMessage = 'Pastikan semua kolom telah diisi dengan benar.';
@@ -188,7 +194,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
 
     try {
       final UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -205,7 +211,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         isLoading = false;
@@ -218,7 +226,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
         ),
       );
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       String message;
       switch (e.code) {
         case 'email-already-in-use':
@@ -247,15 +257,20 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
       });
       refreshCaptcha();
     } on FirebaseException catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         isLoading = false;
         showErrorBanner = true;
-        errorMessage = 'Gagal menyimpan data ke Firebase: ${e.message ?? e.code}';
+        errorMessage =
+        'Gagal menyimpan data ke Firebase: ${e.message ?? e.code}';
       });
       refreshCaptcha();
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         isLoading = false;
         showErrorBanner = true;
@@ -320,7 +335,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
       body: SafeArea(
         child: Stack(
           children: [
-            // Background Dekorasi Estetik & Animasi Berdenyut Atas
             Positioned(
               top: -40,
               right: -20,
@@ -348,9 +362,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
               left: -15,
               child: ScaleTransition(
                 scale: _pulseAnimation,
-                child: Opacity(
+                child: const Opacity(
                   opacity: 0.15,
-                  child: const Icon(
+                  child: Icon(
                     Icons.monitor_heart,
                     size: 90,
                     color: Color(0xFF6679F4),
@@ -358,13 +372,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                 ),
               ),
             ),
-
-            // Animasi Bergerak Halus di Bagian Samping Bawah
             Positioned(
               bottom: 30,
               right: -20,
               child: AnimatedBuilder(
-                animation: Listenable.merge([_pulseAnimation, _floatingAnimation]),
+                animation:
+                Listenable.merge([_pulseAnimation, _floatingAnimation]),
                 builder: (context, child) {
                   return Transform.translate(
                     offset: Offset(0, _floatingAnimation.value),
@@ -375,7 +388,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6679F4).withValues(alpha: 0.25),
+                            color: const Color(0xFF6679F4)
+                                .withValues(alpha: 0.25),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -400,9 +414,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                     offset: Offset(0, -_floatingAnimation.value),
                     child: ScaleTransition(
                       scale: _pulseAnimation,
-                      child: Opacity(
+                      child: const Opacity(
                         opacity: 0.15,
-                        child: const Icon(
+                        child: Icon(
                           Icons.water_drop,
                           size: 85,
                           color: Colors.redAccent,
@@ -413,18 +427,16 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                 },
               ),
             ),
-
-            // Konten Utama dengan Animasi Masuk
             FadeTransition(
               opacity: _fadeAnimation,
               child: SlideTransition(
                 position: _slideAnimation,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header Atas: Logo HD & Dokter
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -444,7 +456,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                             width: 115,
                             height: 115,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEAEFF8).withValues(alpha: 0.6),
+                              color: const Color(0xFFEAEFF8)
+                                  .withValues(alpha: 0.6),
                               shape: BoxShape.circle,
                             ),
                             child: Stack(
@@ -458,7 +471,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                                     height: 185,
                                     fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.medical_services, size: 45, color: Color(0xFF6679F4));
+                                      return const Icon(
+                                          Icons.medical_services,
+                                          size: 45,
+                                          color: Color(0xFF6679F4));
                                     },
                                   ),
                                 ),
@@ -474,12 +490,14 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.redAccent.withValues(alpha: 0.3),
+                                            color: Colors.redAccent
+                                                .withValues(alpha: 0.3),
                                             blurRadius: 6,
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(Icons.water_drop, size: 14, color: Colors.redAccent),
+                                      child: const Icon(Icons.water_drop,
+                                          size: 14, color: Colors.redAccent),
                                     ),
                                   ),
                                 ),
@@ -489,14 +507,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                         ],
                       ),
                       const SizedBox(height: 0),
-
-                      // Judul Halaman & Subjudul (Diposisikan di tengah area logo tanpa menyentuh gambar dokter)
-                      Row(
+                      const Row(
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
-                              children: const [
+                              children: [
                                 Text(
                                   'Daftar Akun',
                                   textAlign: TextAlign.center,
@@ -518,13 +534,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                               ],
                             ),
                           ),
-                          // Spacer kosong di kanan seukuran lebar area gambar dokter agar center-nya pas di bawah logo saja
-                          const SizedBox(width: 115),
+                          SizedBox(width: 115),
                         ],
                       ),
                       const SizedBox(height: 14),
-
-                      // Container Kartu Form Pendaftaran dengan Efek Bayangan Hidup
                       AnimatedBuilder(
                         animation: _pulseAnimation,
                         builder: (context, child) {
@@ -535,7 +548,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                               borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF6679F4).withValues(alpha: 0.08 * _pulseAnimation.value),
+                                  color: const Color(0xFF6679F4).withValues(
+                                      alpha: 0.08 * _pulseAnimation.value),
                                   blurRadius: 18 * _pulseAnimation.value,
                                   offset: const Offset(0, 6),
                                 ),
@@ -550,9 +564,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                             TextField(
                               controller: namaController,
                               enabled: !isLoading,
-                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              style: const TextStyle(
+                                  fontSize: 14, color: Colors.black87),
                               onChanged: (_) {
-                                if (namaError) setState(() => namaError = false);
+                                if (namaError) {
+                                  setState(() => namaError = false);
+                                }
                               },
                               decoration: inputDecoration(
                                 icon: Icons.person_outline,
@@ -565,9 +582,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                               controller: emailController,
                               enabled: !isLoading,
                               keyboardType: TextInputType.emailAddress,
-                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              style: const TextStyle(
+                                  fontSize: 14, color: Colors.black87),
                               onChanged: (_) {
-                                if (emailError) setState(() => emailError = false);
+                                if (emailError) {
+                                  setState(() => emailError = false);
+                                }
                               },
                               decoration: inputDecoration(
                                 icon: Icons.email_outlined,
@@ -580,9 +600,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                               controller: passwordController,
                               enabled: !isLoading,
                               obscureText: !passwordVisible,
-                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              style: const TextStyle(
+                                  fontSize: 14, color: Colors.black87),
                               onChanged: (_) {
-                                if (passwordError) setState(() => passwordError = false);
+                                if (passwordError) {
+                                  setState(() => passwordError = false);
+                                }
                               },
                               decoration: inputDecoration(
                                 icon: Icons.lock_outline,
@@ -609,9 +632,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                               controller: konfirmasiController,
                               enabled: !isLoading,
                               obscureText: !konfirmasiVisible,
-                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              style: const TextStyle(
+                                  fontSize: 14, color: Colors.black87),
                               onChanged: (_) {
-                                if (konfirmasiError) setState(() => konfirmasiError = false);
+                                if (konfirmasiError) {
+                                  setState(() => konfirmasiError = false);
+                                }
                               },
                               decoration: inputDecoration(
                                 icon: Icons.lock_outline,
@@ -651,7 +677,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                                     alignment: Alignment.center,
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF1F3F5),
-                                      border: Border.all(color: Colors.grey.shade300),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Text(
@@ -678,10 +705,12 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                                       padding: EdgeInsets.zero,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(16),
-                                        side: BorderSide(color: Colors.grey.shade300),
+                                        side: BorderSide(
+                                            color: Colors.grey.shade300),
                                       ),
                                     ),
-                                    onPressed: isLoading ? null : refreshCaptcha,
+                                    onPressed:
+                                    isLoading ? null : refreshCaptcha,
                                     child: const Icon(Icons.refresh, size: 22),
                                   ),
                                 ),
@@ -691,10 +720,13 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                             TextField(
                               controller: captchaController,
                               enabled: !isLoading,
-                              style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              style: const TextStyle(
+                                  fontSize: 14, color: Colors.black87),
                               textCapitalization: TextCapitalization.characters,
                               onChanged: (_) {
-                                if (captchaError) setState(() => captchaError = false);
+                                if (captchaError) {
+                                  setState(() => captchaError = false);
+                                }
                               },
                               decoration: inputDecoration(
                                 icon: Icons.shield_outlined,
@@ -717,42 +749,41 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                                 ),
                                 child: isLoading
                                     ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5,
-                                        ),
-                                      )
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
                                     : const Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Daftar',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          SizedBox(width: 6),
-                                          Icon(Icons.arrow_forward, size: 18),
-                                        ],
+                                  mainAxisAlignment:
+                                  MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Daftar',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
                                       ),
+                                    ),
+                                    SizedBox(width: 6),
+                                    Icon(Icons.arrow_forward, size: 18),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      // Footer Masuk
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
                             'Sudah Punya Akun? ',
-                            style: TextStyle(fontSize: 13, color: Colors.black54),
+                            style:
+                            TextStyle(fontSize: 13, color: Colors.black54),
                           ),
                           GestureDetector(
                             onTap: () {
@@ -779,8 +810,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                 ),
               ),
             ),
-
-            // Error Banner Floating
             if (showErrorBanner)
               Positioned(
                 top: 10,
@@ -799,7 +828,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFDE8E8),
                       border: Border.all(color: const Color(0xFFF87171)),

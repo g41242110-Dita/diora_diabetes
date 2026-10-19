@@ -105,7 +105,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Header
                     const Text(
                       'Lokasi Klinik',
                       style: TextStyle(
@@ -123,8 +122,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Search Bar
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: SizedBox(
@@ -132,7 +129,8 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                         child: TextField(
                           controller: _searchController,
                           onChanged: _filterKlinik,
-                          style: const TextStyle(fontSize: 13, color: Colors.black),
+                          style: const TextStyle(
+                              fontSize: 13, color: Colors.black),
                           decoration: InputDecoration(
                             hintText: 'Cari Klinik atau Area . . .',
                             hintStyle: const TextStyle(
@@ -140,25 +138,27 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                               color: Colors.black38,
                               fontStyle: FontStyle.italic,
                             ),
-                            prefixIcon: const Icon(Icons.search, color: Color(0xFF5A75F6), size: 20),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                            prefixIcon: const Icon(Icons.search,
+                                color: Color(0xFF5A75F6), size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0, horizontal: 16),
                             filled: true,
                             fillColor: Colors.white,
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
-                              borderSide: const BorderSide(color: Colors.black87, width: 1),
+                              borderSide: const BorderSide(
+                                  color: Colors.black87, width: 1),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
-                              borderSide: const BorderSide(color: Color(0xFF5A75F6), width: 1.5),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFF5A75F6), width: 1.5),
                             ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // TAMPILAN PETA GMAPS
                     Container(
                       height: 160,
                       width: double.infinity,
@@ -175,7 +175,8 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                 return Container(
                                   color: const Color(0xFFE5E3DF),
                                   child: const Center(
-                                    child: Icon(Icons.map, size: 40, color: Colors.grey),
+                                    child: Icon(Icons.map,
+                                        size: 40, color: Colors.grey),
                                   ),
                                 );
                               },
@@ -191,7 +192,8 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(12),
@@ -206,7 +208,8 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.my_location, size: 12, color: Color(0xFF1A73E8)),
+                                      Icon(Icons.my_location,
+                                          size: 12, color: Color(0xFF1A73E8)),
                                       SizedBox(width: 4),
                                       Text(
                                         'Lokasi Anda',
@@ -254,8 +257,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                         ],
                       ),
                     ),
-
-                    // LIST KLINIK DENGAN JAM OPERASIONAL RATA KANAN
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -295,7 +296,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Icon Klinik
                                     Container(
                                       width: 42,
                                       height: 42,
@@ -310,11 +310,10 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-
-                                    // Detail Informasi Klinik (Kiri)
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             klinik['nama']!,
@@ -336,10 +335,9 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-
-                                    // Info Jarak & Jam Pelayanan (Kanan, Tidak Mentok Tepi)
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.end,
                                       children: [
                                         Text(
                                           widget.isLocationGranted

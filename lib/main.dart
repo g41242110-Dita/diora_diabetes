@@ -45,7 +45,6 @@ class _HalamanUtamaState extends State<HalamanUtama> {
   }
 
   Future<void> _checkAuthenticationAndNavigate() async {
-    // Tampilkan Splash Screen selama 2 detik
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -54,7 +53,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
 
     if (user != null) {
       String namaUser = user.email?.split('@').first ?? 'Pengguna';
-      String roleUser = 'pengguna'; // Role default jika tidak ditemukan
+      String roleUser = 'pengguna';
 
       try {
         final DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -79,7 +78,6 @@ class _HalamanUtamaState extends State<HalamanUtama> {
         debugPrint('❌ Gagal mengambil data Firestore: $e');
       }
 
-      // CEK DEBUGGING DI TERMINAL/CONSOLE
       debugPrint('----------------------------------------------------');
       debugPrint('👤 LOGGED IN UID : ${user.uid}');
       debugPrint('📧 EMAIL         : ${user.email}');
@@ -88,7 +86,6 @@ class _HalamanUtamaState extends State<HalamanUtama> {
 
       if (!mounted) return;
 
-      // NAVIGASI BERDASARKAN ROLE
       if (roleUser == 'admin') {
         debugPrint('➡️ Navigasi ke AdminDashboardPage');
         Navigator.pushReplacement(

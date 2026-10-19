@@ -70,7 +70,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 1. HEADER BERWARNA YANG DIAM DI TEMPAT (STICKY) SAAT DI-SCROLL
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _StickyHeaderDelegate(
@@ -94,29 +93,34 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                       children: [
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                            icon: const Icon(Icons.arrow_back_rounded,
+                                color: Colors.white, size: 20),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.text_decrease_rounded, color: Colors.white, size: 20),
+                              icon: const Icon(Icons.text_decrease_rounded,
+                                  color: Colors.white, size: 20),
                               onPressed: _zoomOut,
                               tooltip: 'Kecilkan Teks',
                             ),
                             IconButton(
-                              icon: const Icon(Icons.text_increase_rounded, color: Colors.white, size: 20),
+                              icon: const Icon(Icons.text_increase_rounded,
+                                  color: Colors.white, size: 20),
                               onPressed: _zoomIn,
                               tooltip: 'Besarkan Teks',
                             ),
                             IconButton(
                               icon: Icon(
-                                _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                                _isBookmarked
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_border_rounded,
                                 color: Colors.white,
                                 size: 22,
                               ),
@@ -129,21 +133,18 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                   ),
                 ),
               ),
-
-              // 2. KONTEN DI BAWAHNYA (GAMBAR & PENJELASAN) YANG BISA DIGULIR
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Gambar di Atas Penjelasan
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
+                              color: Colors.black.withValues(alpha: 0.06),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -156,20 +157,20 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                             height: 220,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 220,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 220,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEEF2FF),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(Icons.image_rounded,
+                                      size: 48, color: Color(0xFF6679F4)),
+                                ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // Card Konten / Penjelasan Artikel
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -177,7 +178,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: Colors.black.withValues(alpha: 0.03),
                               blurRadius: 10,
                               offset: const Offset(0, 2),
                             ),
@@ -216,8 +217,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
               ),
             ],
           ),
-
-          // Banner Notifikasi Mengambang
           if (_showBanner)
             Positioned(
               top: 50,
@@ -226,19 +225,24 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: _isSuccessBanner ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                    color: _isSuccessBanner
+                        ? const Color(0xFFF0FDF4)
+                        : const Color(0xFFFEF2F2),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
                     ],
                     border: Border.all(
-                      color: _isSuccessBanner ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
+                      color: _isSuccessBanner
+                          ? const Color(0xFF86EFAC)
+                          : const Color(0xFFFCA5A5),
                       width: 1.2,
                     ),
                   ),
@@ -247,11 +251,15 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: _isSuccessBanner ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                          color: _isSuccessBanner
+                              ? const Color(0xFF22C55E)
+                              : const Color(0xFFEF4444),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _isSuccessBanner ? Icons.check_rounded : Icons.close_rounded,
+                          _isSuccessBanner
+                              ? Icons.check_rounded
+                              : Icons.close_rounded,
                           color: Colors.white,
                           size: 14,
                         ),
@@ -267,7 +275,9 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
-                                color: _isSuccessBanner ? const Color(0xFF166534) : const Color(0xFF991B1B),
+                                color: _isSuccessBanner
+                                    ? const Color(0xFF166534)
+                                    : const Color(0xFF991B1B),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -275,7 +285,9 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                               _bannerSubtitle,
                               style: TextStyle(
                                 fontSize: 11.5,
-                                color: _isSuccessBanner ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                                color: _isSuccessBanner
+                                    ? const Color(0xFF15803D)
+                                    : const Color(0xFFB91C1C),
                               ),
                             ),
                           ],
@@ -304,7 +316,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
   }
 }
 
-// Helper Class untuk Membuat Header Berwarna Menjadi Diam di Tempat (Sticky)
 class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double minHeight;
   final double maxHeight;
@@ -323,7 +334,8 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => maxHeight;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return SizedBox.expand(child: child);
   }
 

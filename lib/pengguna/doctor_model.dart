@@ -9,17 +9,47 @@ class Doctor {
   final String pasienDitangani;
   final String tentangDokter;
 
-  Doctor({
+  const Doctor({
     required this.nama,
     required this.spesialis,
-    required this.rating,
-    required this.ulasan,
-    required this.statusJam,
-    required this.isOnline,
-    required this.jadwalPraktik,
-    required this.pasienDitangani,
-    required this.tentangDokter,
+    this.rating = '0.0',
+    this.ulasan = '0',
+    this.statusJam = '',
+    this.isOnline = false,
+    this.jadwalPraktik = '',
+    this.pasienDitangani = '0',
+    this.tentangDokter = '',
   });
+
+  /// Konversi dari Map JSON / Firestore ke Object Doctor
+  factory Doctor.fromMap(Map<String, dynamic> map) {
+    return Doctor(
+      nama: map['nama'] ?? '',
+      spesialis: map['spesialis'] ?? '',
+      rating: map['rating']?.toString() ?? '0.0',
+      ulasan: map['ulasan']?.toString() ?? '0',
+      statusJam: map['statusJam'] ?? '',
+      isOnline: map['isOnline'] ?? false,
+      jadwalPraktik: map['jadwalPraktik'] ?? '',
+      pasienDitangani: map['pasienDitangani']?.toString() ?? '0',
+      tentangDokter: map['tentangDokter'] ?? '',
+    );
+  }
+
+  /// Konversi dari Object Doctor ke Map JSON
+  Map<String, dynamic> toMap() {
+    return {
+      'nama': nama,
+      'spesialis': spesialis,
+      'rating': rating,
+      'ulasan': ulasan,
+      'statusJam': statusJam,
+      'isOnline': isOnline,
+      'jadwalPraktik': jadwalPraktik,
+      'pasienDitangani': pasienDitangani,
+      'tentangDokter': tentangDokter,
+    };
+  }
 }
 
 // DAFTAR DATA DOKTER UTAMA

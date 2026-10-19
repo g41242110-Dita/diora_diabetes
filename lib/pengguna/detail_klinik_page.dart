@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// Import file halaman navigasi bottom bar Anda
 import 'beranda_page.dart';
-import 'skrining_page.dart';
-import 'konsultasi_page.dart';
-import 'artikel_page.dart';
-import 'profile_screen.dart';
+import 'curved_nav_bar.dart';
 
 class DetailKlinikPage extends StatefulWidget {
   final String namaKlinik;
   final String alamatKlinik;
   final String jarakKlinik;
   final String nomorTelepon;
+  final String namaUser;
 
   const DetailKlinikPage({
     super.key,
@@ -20,6 +17,7 @@ class DetailKlinikPage extends StatefulWidget {
     required this.alamatKlinik,
     required this.jarakKlinik,
     this.nomorTelepon = '081296738118',
+    this.namaUser = 'Pian',
   });
 
   @override
@@ -29,24 +27,26 @@ class DetailKlinikPage extends StatefulWidget {
 class _DetailKlinikPageState extends State<DetailKlinikPage> {
   final int _selectedIndex = 0;
 
-  final List<Map<String, String>> _dokterList = [
+  final List<Map<String, String>> _dokterList = const [
     {
-      'nama': 'dr. Muhammad Iqbal, Sp. DV',
-      'spesialis': 'Dokter Spesialis Penyakit Dalam',
+      'nama': 'dr. Muhammad Iqbal, Sp. DVE',
+      'spesialis': 'Spesialis Dermatologi dan Venereologi',
     },
     {
-      'nama': 'dr. Putri Amelia, Sp. DV',
-      'spesialis': 'Dokter Spesialis Penyakit Dalam',
+      'nama': 'dr. Putri Amelia, Sp. DVE',
+      'spesialis': 'Spesialis Dermatologi dan Venereologi',
     },
     {
-      'nama': 'dr. Jessica Nathania, Sp. DV',
-      'spesialis': 'Dokter Spesialis Penyakit Dalam',
+      'nama': 'dr. Jessica Nathania, Sp. DVE',
+      'spesialis': 'Spesialis Dermatologi dan Venereologi',
     },
   ];
 
   Future<void> _openGoogleMaps() async {
-    final String query = Uri.encodeComponent('${widget.namaKlinik}, ${widget.alamatKlinik}');
-    final Uri googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    final Uri googleMapsUrl = Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': '${widget.namaKlinik}, ${widget.alamatKlinik}',
+    });
 
     try {
       bool launched = await launchUrl(
@@ -77,8 +77,9 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
     final Uri phoneUrl = Uri(scheme: 'tel', path: cleanPhone);
 
     try {
-      bool launched = await launchUrl(phoneUrl);
-      if (!launched && mounted) {
+      if (await canLaunchUrl(phoneUrl)) {
+        await launchUrl(phoneUrl);
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal membuka aplikasi Telepon')),
         );
@@ -95,30 +96,14 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
   void _onBottomNavTapped(int index) {
     if (index == _selectedIndex) return;
 
-    Widget targetPage;
-    switch (index) {
-      case 0:
-        targetPage = const BerandaPage();
-        break;
-      case 1:
-        targetPage = const SkriningPage();
-        break;
-      case 2:
-        targetPage = const KonsultasiPage();
-        break;
-      case 3:
-        targetPage = const ArtikelPage();
-        break;
-      case 4:
-        targetPage = const ProfileScreen();
-        break;
-      default:
-        return;
-    }
-
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => targetPage),
+      MaterialPageRoute(
+        builder: (context) => BerandaPage(
+          namaUser: widget.namaUser,
+          initialIndex: index,
+        ),
+      ),
           (route) => false,
     );
   }
@@ -132,7 +117,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
         elevation: 0,
         toolbarHeight: 45,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF5A75F6)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -144,24 +129,28 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.black87, width: 1.2),
+              border: Border.all(color: Colors.black12, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Nama Klinik
                 Text(
                   widget.namaKlinik,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Foto Klinik
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
@@ -180,8 +169,6 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Jarak Klinik
                 Text(
                   '${widget.jarakKlinik} dari lokasi Anda',
                   style: const TextStyle(
@@ -190,8 +177,6 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ),
                 ),
                 const SizedBox(height: 14),
-
-                // Tombol Rute & Telp
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -210,7 +195,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF436058),
+                          backgroundColor: const Color(0xFF6679F4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -235,7 +220,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                         ),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: const Color(0xFFEEEEEE),
-                          side: const BorderSide(color: Colors.black87, width: 1),
+                          side: const BorderSide(color: Colors.black12, width: 1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -246,9 +231,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // Alamat
-                const Divider(height: 1, thickness: 1, color: Color(0xFFB0BEC5)),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
                 const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -257,7 +240,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.black87,
                     ),
                   ),
                 ),
@@ -273,9 +256,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // Jam Pelayanan (Teks Libur Rata Kiri Sejajar Jam)
-                const Divider(height: 1, thickness: 1, color: Color(0xFFB0BEC5)),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
                 const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -284,7 +265,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.black87,
                     ),
                   ),
                 ),
@@ -319,9 +300,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-
-                // Dokter Tersedia
-                const Divider(height: 1, thickness: 1, color: Color(0xFFB0BEC5)),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
                 const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -330,12 +309,11 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.black87,
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
-
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -360,26 +338,28 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                dokter['nama']!,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  dokter['nama']!,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                dokter['spesialis']!,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black54,
+                                const SizedBox(height: 2),
+                                Text(
+                                  dokter['spesialis']!,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.black54,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -391,44 +371,9 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
           ),
         ),
       ),
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFFF8FAFC),
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: const Color(0xFF6679F4),
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          onTap: _onBottomNavTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Beranda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: 'Skrining',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              label: 'Konsultasi',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.article_outlined),
-              label: 'Artikel',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: 'Profil',
-            ),
-          ],
-        ),
+      bottomNavigationBar: CurvedNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onBottomNavTapped,
       ),
     );
   }

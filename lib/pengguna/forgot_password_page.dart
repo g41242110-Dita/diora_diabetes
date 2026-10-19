@@ -1,4 +1,7 @@
+// ignore_for_file: type_annotate_public_apis
+
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -8,30 +11,95 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final emailController = TextEditingController();
-  bool emailError = false;
+  final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
-    emailController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  void resetPassword() {
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+
     setState(() {
-      emailError = emailController.text.trim().isEmpty;
+      _errorMessage = null;
     });
 
-    if (!emailError) {
-      // Proses kirim tautan reset password
+    if (email.isEmpty) {
+      setState(() {
+        _errorMessage = 'Email tidak boleh kosong';
+      });
+      return;
+    }
+
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(email)) {
+      setState(() {
+        _errorMessage = 'Format email tidak valid';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tautan reset kata sandi telah dikirim!')),
+        SnackBar(
+          content: Text('Tautan reset kata sandi telah dikirim ke $email'),
+          backgroundColor: Colors.green,
+        ),
       );
+
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'Email tidak terdaftar dalam sistem.';
+          break;
+        case 'invalid-email':
+          message = 'Format email tidak valid.';
+          break;
+        case 'network-request-failed':
+          message = 'Gagal terhubung ke jaringan. Periksa koneksi internet Anda.';
+          break;
+        default:
+          message = e.message ?? 'Terjadi kesalahan. Silakan coba lagi.';
+      }
+
+      setState(() {
+        _errorMessage = message;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = 'Terjadi kesalahan tidak terduga: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool hasError = _errorMessage != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -40,7 +108,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Tombol Close (X) di pojok kanan atas
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
@@ -48,21 +115,28 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // LOGO APLIKASI
               Center(
                 child: Image.asset(
                   'assets/logo.png',
                   height: 130,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 100,
+                    width: 100,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEEF2FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_reset_rounded,
+                      size: 50,
+                      color: Color(0xFF6679F4),
+                    ),
+                  ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // JUDUL & SUBJUDUL
               const Text(
                 'Lupa Kata Sandi?',
                 textAlign: TextAlign.center,
@@ -82,66 +156,76 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   height: 1.3,
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // INPUT EMAIL
               TextField(
-                controller: emailController,
+                controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                enabled: !_isLoading,
                 onChanged: (_) {
-                  if (emailError) setState(() => emailError = false);
+                  if (hasError) {
+                    setState(() {
+                      _errorMessage = null;
+                    });
+                  }
                 },
                 decoration: InputDecoration(
                   prefixIcon: Icon(
                     Icons.email_outlined,
                     size: 20,
-                    color: emailError ? Colors.red : Colors.grey.shade600,
+                    color: hasError ? Colors.red : Colors.grey.shade600,
                   ),
                   hintText: 'Email',
                   hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                  errorText: _errorMessage,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                      color: emailError ? Colors.red : Colors.grey.shade400,
+                      color: hasError ? Colors.red : Colors.grey.shade400,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(
-                      color: emailError ? Colors.red : const Color(0xFF6679F4),
+                      color: hasError ? Colors.red : const Color(0xFF6679F4),
                       width: 1.5,
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // TOMBOL KIRIM TAUTAN
               SizedBox(
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: resetPassword,
+                  onPressed: _isLoading ? null : _resetPassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6679F4),
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFF6679F4).withValues(alpha: 0.6),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
+                  child: _isLoading
+                      ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Text(
                     'Kirim Tautan Reset',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // BOX INFORMASI
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -149,15 +233,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFC7D2FE)),
                 ),
-                child: Row(
+                child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline, color: Color(0xFF4F46E5), size: 20),
-                    const SizedBox(width: 10),
+                    Icon(Icons.info_outline, color: Color(0xFF4F46E5), size: 20),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Informasi',
                             style: TextStyle(
@@ -181,14 +265,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
-
               const Divider(color: Color(0xFFE0E0E0), thickness: 1),
-
               const SizedBox(height: 16),
-
-              // KEMBALI KE LOGIN
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -197,13 +276,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     style: TextStyle(fontSize: 13, color: Colors.black54),
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: _isLoading ? null : () => Navigator.pop(context),
                     child: const Text(
                       'Masuk',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF558B82),
+                        color: Color(0xFF6679F4),
                       ),
                     ),
                   ),
