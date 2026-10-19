@@ -31,7 +31,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Senin - Jumat, 07.00 - 15.00',
       pasienDitangani: '1152+ Pasien',
       tentangDokter:
-      'Berpengalaman dalam menangani penyakit dalam, termasuk diabetes, hipertensi, dan gangguan metabolik.',
+          'Berpengalaman dalam menangani penyakit dalam, termasuk diabetes, hipertensi, dan gangguan metabolik.',
     ),
     Doctor(
       nama: 'dr. Asila Salsavea Gunawan, Sp. PD',
@@ -43,7 +43,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Senin - Jumat, 15.00 - 23.00',
       pasienDitangani: '890+ Pasien',
       tentangDokter:
-      'Fokus pada manajemen diabetes melitus tipe 1 & 2 serta pencegahan komplikasi kronis.',
+          'Fokus pada manajemen diabetes melitus tipe 1 & 2 serta pencegahan komplikasi kronis.',
     ),
     Doctor(
       nama: 'dr. Ryan Ramadhani, Sp. GK',
@@ -55,7 +55,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Senin - Jumat, 23.00 - 07.00',
       pasienDitangani: '740+ Pasien',
       tentangDokter:
-      'Spesialis konsultasi pola makan, diet diabetes, dan pengaturan indeks glikemik harian.',
+          'Spesialis konsultasi pola makan, diet diabetes, dan pengaturan indeks glikemik harian.',
     ),
 
     // --- 4 DOKTER OFFLINE ---
@@ -69,7 +69,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Sabtu - Minggu, 08.00 - 12.00',
       pasienDitangani: '620+ Pasien',
       tentangDokter:
-      'Menangani konsultasi penyakit dalam dan edukasi pemantauan gula darah mandiri.',
+          'Menangani konsultasi penyakit dalam dan edukasi pemantauan gula darah mandiri.',
     ),
     Doctor(
       nama: 'dr. Sari Dewi, Sp. GK',
@@ -81,7 +81,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Sabtu - Minggu, 13.00 - 17.00',
       pasienDitangani: '510+ Pasien',
       tentangDokter:
-      'Pakar terapi nutrisi klinis untuk penderita diabetes dengan riwayat komplikasi.',
+          'Pakar terapi nutrisi klinis untuk penderita diabetes dengan riwayat komplikasi.',
     ),
     Doctor(
       nama: 'dr. Natashia Luvicia, Sp. PD',
@@ -93,7 +93,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Sabtu - Minggu, 09.00 - 15.00',
       pasienDitangani: '930+ Pasien',
       tentangDokter:
-      'Ahli penanganan diabetes tipe 2, sindrom metabolik, dan manajemen gaya hidup sehat.',
+          'Ahli penanganan diabetes tipe 2, sindrom metabolik, dan manajemen gaya hidup sehat.',
     ),
     Doctor(
       nama: 'dr. Rizki Fatur, Sp. PD',
@@ -105,7 +105,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       jadwalPraktik: 'Sabtu - Minggu, 16.00 - 20.00',
       pasienDitangani: '410+ Pasien',
       tentangDokter:
-      'Konsultasi kesehatan penyakit dalam, skrining komorbid, dan evaluasi hasil laboratorium.',
+          'Konsultasi kesehatan penyakit dalam, skrining komorbid, dan evaluasi hasil laboratorium.',
     ),
   ];
 
@@ -143,217 +143,314 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            } else {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BerandaPage(
-                    namaUser: widget.namaUser,
-                  ),
-                ),
-              );
-            }
-          },
-        ),
-        title: const Text(
-          'Konsultasi',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pilih dokter yang sesuai dengan kebutuhanmu.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
+      backgroundColor: const Color(0xFFF4F7FE),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. HEADER ESTETIK DENGAN GRADIENT & SEARCH BAR
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Search Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _filterDoctors,
-                decoration: InputDecoration(
-                  icon: const Icon(Icons.search, color: Colors.grey, size: 20),
-                  hintText: 'Cari Dokter atau Spesialis ...',
-                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                  border: InputBorder.none,
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                    icon: const Icon(Icons.clear, size: 18, color: Colors.grey),
-                    onPressed: () {
-                      _searchController.clear();
-                      _filterDoctors('');
-                    },
-                  )
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // List Dokter
-            Expanded(
-              child: filteredDoctors.isEmpty
-                  ? const Center(
-                child: Text(
-                  'Dokter tidak ditemukan.',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-              )
-                  : ListView.builder(
-                itemCount: filteredDoctors.length,
-                itemBuilder: (context, index) {
-                  final doctor = filteredDoctors[index];
-                  return _buildDoctorCard(context, doctor);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDoctorCard(BuildContext context, Doctor doctor) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DetailDokterPage(
-                doctor: doctor,
-                namaUser: widget.namaUser,
-              ),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              const CircleAvatar(
-                radius: 28,
-                backgroundColor: Color(0xFFE2E7FF),
-                child: Icon(Icons.person, size: 36, color: Color(0xFF6679F4)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      doctor.nama,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                    GestureDetector(
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BerandaPage(
+                                namaUser: widget.namaUser,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          size: 22,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      doctor.spesialis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 14, color: Colors.amber),
-                        const SizedBox(width: 4),
-                        Text(
-                          doctor.rating,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '(${doctor.ulasan})',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      doctor.statusJam,
+                    const SizedBox(width: 14),
+                    const Text(
+                      'Konsultasi',
                       style: TextStyle(
-                        fontSize: 10,
-                        color: doctor.isOnline ? const Color(0xFF2E7D32) : Colors.grey,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: doctor.isOnline
-                      ? const Color(0xFFE6F4EA)
-                      : const Color(0xFFFFEBF0),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  doctor.isOnline ? 'Online' : 'Offline',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: doctor.isOnline
-                        ? const Color(0xFF2E7D32)
-                        : const Color(0xFFE53E3E),
+                const SizedBox(height: 8),
+                const Padding(
+                  padding: EdgeInsets.only(left: 36.0),
+                  child: Text(
+                    'Pilih dokter yang sesuai dengan kebutuhanmu.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Colors.white70,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 20),
+
+                // Search Bar Modern
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _filterDoctors,
+                    decoration: InputDecoration(
+                      hintText: 'Cari Dokter atau Spesialis ...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Color(0xFF6679F4),
+                        size: 22,
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.cancel_rounded,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                _filterDoctors('');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. LIST DOKTER ESTETIK
+          Expanded(
+            child: filteredDoctors.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.search_off_rounded,
+                            size: 36,
+                            color: Color(0xFF6679F4),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Dokter tidak ditemukan.',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: filteredDoctors.length,
+                    itemBuilder: (context, index) {
+                      final doctor = filteredDoctors[index];
+                      return _buildAestheticDoctorCard(context, doctor);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAestheticDoctorCard(BuildContext context, Doctor doctor) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6679F4).withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0xFFEEF2F6),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailDokterPage(
+                  doctor: doctor,
+                  namaUser: widget.namaUser,
+                ),
               ),
-            ],
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Color(0xFFEEF2FF),
+                  child: Icon(Icons.person, size: 32, color: Color(0xFF6679F4)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        doctor.nama,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                          height: 1.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        doctor.spesialis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded,
+                              size: 14, color: Colors.amber),
+                          const SizedBox(width: 4),
+                          Text(
+                            doctor.rating,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${doctor.ulasan})',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        doctor.statusJam,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: doctor.isOnline
+                              ? const Color(0xFF2E7D32)
+                              : Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: doctor.isOnline
+                        ? const Color(0xFFE6F4EA)
+                        : const Color(0xFFFFEBF0),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    doctor.isOnline ? 'Online' : 'Offline',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: doctor.isOnline
+                          ? const Color(0xFF2E7D32)
+                          : const Color(0xFFE53E3E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
