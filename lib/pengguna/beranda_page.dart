@@ -86,7 +86,6 @@ class _BerandaPageState extends State<BerandaPage> {
 
   // ============================================================
   // FUNGSI UNTUK MENAMPILKAN POP-UP KONFIRMASI KELUAR APLIKASI
-  // (UKURAN TEKS DIABUAT LEBIH BESAR DAN JELAS)
   // ============================================================
   Future<bool> _showExitConfirmationDialog() async {
     final shouldExit = await showDialog<bool>(
@@ -100,17 +99,18 @@ class _BerandaPageState extends State<BerandaPage> {
           'Konfirmasi',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 20, // Ukuran judul diperbesar
+            fontSize: 20,
           ),
         ),
         content: const Text(
           'Apakah anda yakin ingin keluar dari aplikasi?',
           style: TextStyle(
-            fontSize: 16, // Ukuran pesan diperbesar
+            fontSize: 16,
             color: Colors.black87,
           ),
         ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actionsPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
           SizedBox(
             width: double.infinity,
@@ -118,7 +118,7 @@ class _BerandaPageState extends State<BerandaPage> {
               children: [
                 SizedBox(
                   width: double.infinity,
-                  height: 48, // Tinggi tombol disesuaikan
+                  height: 48,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6679F4),
@@ -133,7 +133,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16, // Ukuran teks tombol diperbesar
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -144,7 +144,8 @@ class _BerandaPageState extends State<BerandaPage> {
                   height: 48,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF6679F4), width: 1.5),
+                      side: const BorderSide(
+                          color: Color(0xFF6679F4), width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -155,7 +156,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       style: TextStyle(
                         color: Color(0xFF6679F4),
                         fontWeight: FontWeight.bold,
-                        fontSize: 16, // Ukuran teks tombol diperbesar
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -182,7 +183,14 @@ class _BerandaPageState extends State<BerandaPage> {
         },
       ),
       KonsultasiPage(namaUser: widget.namaUser),
-      const ArtikelPage(),
+      ArtikelPage(
+        showBackButton: true,
+        onBackToHome: () {
+          setState(() {
+            _selectedIndex = 0; // Kembali ke Beranda dengan mulus
+          });
+        },
+      ),
       ProfileScreen(
         namaUser: widget.namaUser,
         onBackToHome: () {
