@@ -6,11 +6,13 @@ import 'konsultasi_selesai_page.dart';
 class ChatKonsultasiPage extends StatefulWidget {
   final Doctor doctor;
   final String namaUser;
+  final String? jamBooking;
 
   const ChatKonsultasiPage({
     super.key,
     required this.doctor,
     this.namaUser = 'Pengguna',
+    this.jamBooking,
   });
 
   @override
@@ -42,13 +44,17 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     _messageController.clear();
     _scrollToBottom();
 
-    // SIMULASI: Dokter Membalas Otomatis setelah 1.5 detik
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    // SIMULASI BALASAN DOKTER / PESAN OTOMATIS SISTEM
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) {
+        final jamText = widget.jamBooking ?? 'terjadwal';
+
+        // Jika pesan dikirim di luar jam sesi booking,
+        // sistem memberikan info waktu tunggu respons dokter.
         setState(() {
           _messages.add(ChatMessage(
             text:
-            "Halo, selamat pagi. Tentu, saya bantu jelaskan ya. Untuk mengetahui apakah Anda benar-benar mengalami diabetes atau tidak, hasil skrining saja belum cukup.",
+            "Pesan Anda telah diterima. Dokter ${widget.doctor.nama} akan membalas saat sesi konsultasi Anda aktif pada jam $jamText.",
             time: timeStr,
             isMe: false,
           ));
@@ -136,6 +142,31 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       body: SafeArea(
         child: Column(
           children: [
+            // Banner Jam Booking
+            if (widget.jamBooking != null)
+              Container(
+                width: double.infinity,
+                color: const Color(0xFFECEEFE),
+                padding:
+                const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.access_time_filled,
+                        size: 16, color: Color(0xFF4A5BD0)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Jadwal Konsultasi Terjadwal: ${widget.jamBooking}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4A5BD0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             Expanded(
               child: _messages.isEmpty
                   ? Center(
@@ -148,7 +179,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                         Icon(
                           Icons.chat_bubble,
                           size: 90,
-                          color: const Color(0xFF5D83EC).withValues(alpha: 0.9),
+                          color: const Color(0xFF5D83EC)
+                              .withValues(alpha: 0.9),
                         ),
                         const Positioned(
                           right: 8,
@@ -171,11 +203,11 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Tulis pesan untuk mulai\nkonsultasi dengan dokter.',
+                    Text(
+                      'Sampaikan keluhan/pertanyaan Anda.\nDokter akan merespons pada jam ${widget.jamBooking ?? "sesi konsultasi"}.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: const TextStyle(
+                        fontSize: 12,
                         color: Colors.grey,
                         height: 1.4,
                       ),
@@ -280,7 +312,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: MediaQuery.of(context).size.width * 0.75, // Perbaikan perkalian
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -341,8 +373,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
               backgroundColor: const Color(0xFF5D83EC),
             ),
             onPressed: () {
-              Navigator.pop(context); // Tutup dialog
-              // Pindah ke Halaman Konsultasi Selesai dengan meneruskan namaUser
+              Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -353,7 +384,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 ),
               );
             },
-            child: const Text('Ya, Akhiri', style: TextStyle(color: Colors.white)),
+            child: const Text('Ya, Akhiri',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
