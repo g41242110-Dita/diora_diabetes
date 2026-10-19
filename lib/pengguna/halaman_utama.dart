@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'beranda_page.dart';
+import 'skrining_page.dart';
 import 'konsultasi_page.dart';
-import 'profile_screen.dart'; // <-- Jalur import diperbaiki di sini
+import 'artikel_page.dart';
+import 'profile_screen.dart';
+import 'curved_nav_bar.dart';
 
 class HalamanUtama extends StatefulWidget {
   final String namaUser;
@@ -26,43 +29,47 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     _selectedIndex = widget.initialIndex;
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       BerandaPage(
         namaUser: widget.namaUser,
       ),
-      const Center(child: Text('Halaman Fitur 2')),
-      const KonsultasiPage(),
-      const Center(child: Text('Halaman Fitur 4')),
-      ProfileScreen(namaUser: widget.namaUser),
+      SkriningPage(
+        onBackToHome: () => _onItemTapped(0),
+      ),
+      KonsultasiPage(
+        namaUser: widget.namaUser,
+      ),
+      const ArtikelPage(),
+      ProfileScreen(
+        namaUser: widget.namaUser,
+        onBackToHome: () => _onItemTapped(0),
+      ),
     ];
 
-    return Scaffold(
-      body: pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFF6679F4), width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF6679F4),
-          unselectedItemColor: Colors.blue.shade200,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.stars_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.help_outline), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.article_outlined), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
-          ],
+    return PopScope(
+      canPop: _selectedIndex == 0,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        if (_selectedIndex != 0) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: pages[_selectedIndex],
+        bottomNavigationBar: CurvedNavBar(
+          selectedIndex: _selectedIndex,
+          onItemTapped: _onItemTapped,
         ),
       ),
     );
