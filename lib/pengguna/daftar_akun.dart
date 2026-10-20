@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'beranda_page.dart';
+import '../auth_router.dart';
 import 'login_page.dart';
 
 class DaftarAkunPage extends StatefulWidget {
@@ -208,6 +208,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
         'nama': nama,
         'email': email,
         'uid': user.uid,
+        'role': 'pengguna',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -215,16 +216,20 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
         return;
       }
 
-      setState(() {
-        isLoading = false;
-      });
+      // Arahkan lewat AuthRouter (berdasarkan role di Firestore).
+      final bool berhasil = await AuthRouter.arahkan(context, user);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BerandaPage(namaUser: nama),
-        ),
-      );
+      if (!mounted) {
+        return;
+      }
+
+      if (!berhasil) {
+        setState(() {
+          isLoading = false;
+          showErrorBanner = true;
+          errorMessage = 'Akun dibuat, tetapi data akun tidak ditemukan.';
+        });
+      }
     } on FirebaseAuthException catch (e) {
       if (!mounted) {
         return;
