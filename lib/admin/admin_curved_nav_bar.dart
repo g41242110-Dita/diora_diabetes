@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 
-class AdminNavbarSmoothVideo extends StatefulWidget {
+class AdminCurvedNavBar extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
-  const AdminNavbarSmoothVideo({
+  const AdminCurvedNavBar({
     super.key,
     required this.selectedIndex,
     required this.onItemTapped,
   });
 
   @override
-  State<AdminNavbarSmoothVideo> createState() => _AdminNavbarSmoothVideoState();
+  State<AdminCurvedNavBar> createState() => _AdminCurvedNavBarState();
 }
 
-class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
+class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late AnimationController _animationController;
+  late Animation<double> _curveAnimation;
 
-  // 6 Menu Admin sesuai urutan
   static const List<_NavItemData> _items = [
     _NavItemData(
       index: 0,
@@ -30,8 +29,8 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
     _NavItemData(
       index: 1,
       label: 'Pengguna',
-      icon: Icons.people_outline_rounded,
-      activeIcon: Icons.people_rounded,
+      icon: Icons.people_alt_outlined,
+      activeIcon: Icons.people_alt_rounded,
     ),
     _NavItemData(
       index: 2,
@@ -59,49 +58,50 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
     ),
   ];
 
-  double _startPos = 0;
-  double _endPos = 0;
+  double _previousX = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 300),
     );
 
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.fastOutSlowIn, // Gerakan meluncur halus dan presisi
+    _curveAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.fastOutSlowIn,
     );
   }
 
   @override
-  void didUpdateWidget(covariant AdminNavbarSmoothVideo oldWidget) {
+  void didUpdateWidget(covariant AdminCurvedNavBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _startPos = _endPos;
-      _controller.reset();
-      _controller.forward();
+      _animationController.reset();
+      _animationController.forward();
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     const double barHeight = 65.0;
-    const double buttonSize = 42.0;
+    const double fabSize = 44.0;
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final double itemWidth = screenWidth / _items.length;
 
-    // Menghitung posisi koordinat X target
-    _endPos = (widget.selectedIndex + 0.5) * itemWidth;
-    if (_startPos == 0) _startPos = _endPos;
+    // Posisi presisi berdasarkan selectedIndex (0 sampai 5)
+    final double targetX = (widget.selectedIndex + 0.5) * itemWidth;
+
+    if (_previousX == 0) {
+      _previousX = targetX;
+    }
 
     final activeItemData = _items.firstWhere(
           (e) => e.index == widget.selectedIndex,
@@ -109,40 +109,48 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
     );
 
     return AnimatedBuilder(
-      animation: _animation,
+      animation: _curveAnimation,
       builder: (context, child) {
-        // Menghitung posisi X saat animasi berjalan
+        // Kalkulasi posisi X yang berjalan secara beriringan
         final double currentX =
-            _startPos + (_endPos - _startPos) * _animation.value;
+            _previousX + (targetX - _previousX) * _curveAnimation.value;
+
+        if (_curveAnimation.isCompleted) {
+          _previousX = targetX;
+        }
 
         return Stack(
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
           children: [
-            // 1. Latar Belakang Putih dengan Lekukan Bergerak
+            // Background Canvas Lekukan
             CustomPaint(
               size: Size(screenWidth, barHeight),
-              painter: _SmoothNotchPainter(centerX: currentX),
+              painter: _FluidNavBarPainter(centerX: currentX),
             ),
 
-            // 2. Tombol Kotak Melayang (Rounded Square) yang Ikut Meluncur
+            // Tombol Melayang
             Positioned(
-              left: currentX - (buttonSize / 2),
-              top: -8, // Menonjol ke atas persis seperti di video
+              left: currentX - (fabSize / 2),
+              top: -fabSize / 2 + 2,
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
+                duration: const Duration(milliseconds: 200),
                 child: Container(
                   key: ValueKey<int>(widget.selectedIndex),
-                  width: buttonSize,
-                  height: buttonSize,
+                  width: fabSize,
+                  height: fabSize,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5B67CA), // Warna Ungu/Indigo App
-                    borderRadius: BorderRadius.circular(16), // Rounded Square
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF5B67CA).withValues(alpha: 0.35),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.35),
                         blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -155,7 +163,7 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
               ),
             ),
 
-            // 3. Item Ikon & Label
+            // Item Ikon & Teks
             SizedBox(
               height: barHeight,
               child: Row(
@@ -164,11 +172,14 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
 
                   return Expanded(
                     child: InkWell(
-                      onTap: () => widget.onItemTapped(item.index),
+                      onTap: () {
+                        _previousX = currentX; // Catat posisi terakhir sebelum berpindah
+                        widget.onItemTapped(item.index);
+                      },
                       splashColor: Colors.transparent,
                       highlightColor: Colors.transparent,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           AnimatedOpacity(
                             duration: const Duration(milliseconds: 150),
@@ -176,25 +187,22 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
                             child: Icon(
                               item.icon,
                               color: const Color(0xFF94A3B8),
-                              size: 21,
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6.0),
-                            child: Text(
-                              item.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? const Color(0xFF5B67CA)
-                                    : const Color(0xFF64748B),
-                              ),
+                          const SizedBox(height: 3),
+                          Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? const Color(0xFF4F46E5)
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -211,11 +219,24 @@ class _AdminNavbarSmoothVideoState extends State<AdminNavbarSmoothVideo>
   }
 }
 
-// Painter khusus lekukan halus di dasar tombol
-class _SmoothNotchPainter extends CustomPainter {
+class _NavItemData {
+  final int index;
+  final String label;
+  final IconData icon;
+  final IconData activeIcon;
+
+  const _NavItemData({
+    required this.index,
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+  });
+}
+
+class _FluidNavBarPainter extends CustomPainter {
   final double centerX;
 
-  const _SmoothNotchPainter({required this.centerX});
+  const _FluidNavBarPainter({required this.centerX});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -227,28 +248,26 @@ class _SmoothNotchPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Ukuran lekukan disesuaikan dengan bentuk tombol kotak
-    const double notchWidth = 30.0;
-    const double notchDepth = 12.0;
+    const double notchRadius = 26.0;
+    const double notchDepth = 22.0;
 
     path.moveTo(0, 0);
-    path.lineTo(centerX - notchWidth - 8, 0);
+    path.lineTo(centerX - notchRadius - 8, 0);
 
-    // Lekukan halus ke bawah
     path.cubicTo(
-      centerX - notchWidth * 0.5,
+      centerX - notchRadius,
       0,
-      centerX - notchWidth * 0.5,
+      centerX - notchRadius * 0.5,
       notchDepth,
       centerX,
       notchDepth,
     );
     path.cubicTo(
-      centerX + notchWidth * 0.5,
+      centerX + notchRadius * 0.5,
       notchDepth,
-      centerX + notchWidth * 0.5,
+      centerX + notchRadius,
       0,
-      centerX + notchWidth + 8,
+      centerX + notchRadius + 8,
       0,
     );
 
@@ -257,12 +276,12 @@ class _SmoothNotchPainter extends CustomPainter {
     path.lineTo(0, h);
     path.close();
 
-    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.06), 6.0, true);
+    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.05), 5.0, true);
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _SmoothNotchPainter oldDelegate) {
+  bool shouldRepaint(covariant _FluidNavBarPainter oldDelegate) {
     return oldDelegate.centerX != centerX;
   }
 }
