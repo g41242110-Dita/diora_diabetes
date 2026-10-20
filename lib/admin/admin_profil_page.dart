@@ -1,10 +1,15 @@
+// ignore_for_file: type_annotate_public_apis, spell_check_on_only_sample_attachments
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'admin_logout.dart';
+// Import file pendukung sesuai dengan struktur folder di project kamu
+import 'admin_logout_profil.dart';
 import 'admin_informasi_pribadi_page.dart';
+import 'admin_ubah_password_admin_page.dart';
+import 'admin_notifikasi_page.dart';
 
 class AdminProfilPage extends StatefulWidget {
   final String namaUser;
@@ -333,15 +338,29 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
             bgColor: const Color(0xFFECFDF5),
             title: 'Ubah Password',
             subtitle: 'Ganti password akun',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UbahPasswordAdminPage(),
+                ),
+              );
+            },
           ),
           _buildMenuItem(
             icon: Icons.settings_outlined,
             iconColor: const Color(0xFFF59E0B),
             bgColor: const Color(0xFFFEF3C7),
             title: 'Notifikasi',
-            subtitle: 'pilih jenis notifikasi yang ingin anda terima',
-            onTap: () {},
+            subtitle: 'Pilih jenis notifikasi yang ingin Anda terima',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotifikasiAplikasiAdminPage(),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 6),
           _buildMenuItem(
