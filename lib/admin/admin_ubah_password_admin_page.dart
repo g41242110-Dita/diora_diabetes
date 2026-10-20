@@ -47,7 +47,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Alert Banner "Perubahan Disimpan !"
             if (_showSuccessAlert)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -106,7 +105,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Judul Halaman
                     const Center(
                       child: Text(
                         'Ubah Password',
@@ -121,7 +119,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
                     const Divider(color: Colors.black45, thickness: 1),
                     const SizedBox(height: 16),
 
-                    // Petunjuk Karakter
                     const Text(
                       'Gunakan minimal 8 karakter dengan kombinasi huruf dan angka.',
                       style: TextStyle(
@@ -132,7 +129,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Input 1: Password Saat Ini
                     _buildPasswordField(
                       label: 'Password Saat Ini',
                       hintText: 'Masukkan password lama',
@@ -146,7 +142,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Input 2: Password Baru
                     _buildPasswordField(
                       label: 'Password Baru',
                       hintText: 'Masukkan password baru',
@@ -160,7 +155,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Input 3: Konfirmasi Password Baru
                     _buildPasswordField(
                       label: 'Konfirmasi Password Baru',
                       hintText: 'Ulangi password baru',
@@ -178,7 +172,6 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
               ),
             ),
 
-            // Tombol Simpan Password di Bagian Bawah
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
               child: SizedBox(
@@ -186,12 +179,12 @@ class _UbahPasswordAdminPageState extends State<UbahPasswordAdminPage> {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: const Color(0xFF2563EB),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                     elevation: 4,
-                    shadowColor: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                    shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
                   ),
                   onPressed: _simpanPerubahan,
                   child: const Text(
