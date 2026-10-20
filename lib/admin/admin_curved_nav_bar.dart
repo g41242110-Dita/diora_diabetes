@@ -121,13 +121,10 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
           alignment: Alignment.bottomCenter,
           clipBehavior: Clip.none,
           children: [
-            // Background Canvas Lekukan
             CustomPaint(
               size: Size(screenWidth, barHeight),
               painter: _FluidNavBarPainter(centerX: currentX),
             ),
-
-            // Tombol Melayang
             Positioned(
               left: currentX - (fabSize / 2),
               top: -fabSize / 2 + 2,
@@ -146,7 +143,7 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF4F46E5).withValues(alpha: 0.35),
+                        color: const Color(0xFF4F46E5).withOpacity(0.35),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -160,8 +157,6 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
                 ),
               ),
             ),
-
-            // Item Ikon & Teks
             SizedBox(
               height: barHeight,
               child: Row(
@@ -274,7 +269,7 @@ class _FluidNavBarPainter extends CustomPainter {
     path.lineTo(0, h);
     path.close();
 
-    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.05), 5.0, true);
+    canvas.drawShadow(path, Colors.black.withOpacity(0.05), 5.0, true);
     canvas.drawPath(path, paint);
   }
 
