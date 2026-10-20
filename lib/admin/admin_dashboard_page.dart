@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-// Import file dari folder lib/admin/
+// Import semua file halaman admin yang dibutuhkan
 import 'admin_beranda_page.dart';
 import 'admin_curved_nav_bar.dart';
+import 'admin_profil_page.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -20,12 +21,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   void initState() {
     super.initState();
     _pages = [
-      const AdminBerandaPage(),                      // Index 0: Beranda
+      const AdminBerandaPage(),                         // Index 0: Beranda
       const Center(child: Text('Halaman Pengguna')),    // Index 1: Pengguna
       const Center(child: Text('Halaman Skrining')),    // Index 2: Skrining
       const Center(child: Text('Halaman Laporan')),     // Index 3: Laporan
       const Center(child: Text('Halaman Artikel')),     // Index 4: Artikel
-      const Center(child: Text('Halaman Profil')),      // Index 5: Profil
+      const AdminProfilPage(),                          // Index 5: Profil Admin (Diperbaiki di sini)
     ];
   }
 
