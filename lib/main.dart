@@ -9,7 +9,7 @@ import 'pengguna/onboarding_page.dart';
 
 /// true  = setiap aplikasi dibuka SELALU harus login dulu
 /// false = sesi login terakhir dipertahankan (langsung masuk sesuai role)
-const bool wajibLoginSetiapBukaApp = true;
+const bool wajibLoginSetiapBukaApp = false; // <-- Diubah jadi false!
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,8 +18,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Buang sesi lama sebelum UI tampil, supaya app selalu mulai dari login
-  // (tidak langsung masuk ke beranda admin / pengguna).
+  // Buang sesi lama sebelum UI tampil, jika wajibLoginSetiapBukaApp bernilai true
   if (wajibLoginSetiapBukaApp) {
     await FirebaseAuth.instance.signOut();
   }
@@ -59,7 +58,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    // Sesi lama dibuang supaya selalu mulai dari halaman login.
+    // Jika wajibLoginSetiapBukaApp diaktifkan
     if (wajibLoginSetiapBukaApp && FirebaseAuth.instance.currentUser != null) {
       await FirebaseAuth.instance.signOut();
     }
