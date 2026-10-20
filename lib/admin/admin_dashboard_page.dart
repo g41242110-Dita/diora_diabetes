@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-// Import halaman admin
+// Import semua halaman admin
 import 'admin_beranda_page.dart';
-import 'admin_skrining_page.dart';
-import 'admin_laporan_skrining_page.dart';
-import 'admin_profil_page.dart';
+import 'admin_skrining_page.dart';         // Halaman Skrining
+import 'admin_laporan_skrining_page.dart'; // Halaman Laporan
+import 'admin_artikel_page.dart';          // Halaman Artikel
+import 'admin_profil_page.dart';           // Halaman Profil
 import 'admin_curved_nav_bar.dart';
 
 class AdminDashboardPage extends StatefulWidget {
@@ -17,13 +18,13 @@ class AdminDashboardPage extends StatefulWidget {
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _selectedIndex = 0;
 
-  // Daftar 6 Halaman Admin
+  // Daftar 6 halaman admin (sesuai dengan urutan ikon di navbar)
   final List<Widget> _pages = const [
     AdminBerandaPage(),            // Index 0: Beranda
     Center(child: Text('Pengguna')), // Index 1: Pengguna
     AdminSkriningPage(),           // Index 2: Skrining
     AdminLaporanSkriningPage(),    // Index 3: Laporan
-    Center(child: Text('Artikel')),  // Index 4: Artikel
+    AdminArtikelPage(),            // Index 4: ARTIKEL (Menggunakan AdminArtikelPage)
     AdminProfilPage(),             // Index 5: Profil Admin
   ];
 
