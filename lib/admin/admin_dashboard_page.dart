@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 // Import semua file halaman admin yang dibutuhkan
 import 'admin_beranda_page.dart';
 import 'admin_curved_nav_bar.dart';
+<<<<<<< Updated upstream
 import 'admin_profil_page.dart';
+=======
+import 'admin_profil_page.dart'; // <-- 1. Tambahkan import profil admin di sini
+>>>>>>> Stashed changes
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -26,7 +30,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       const Center(child: Text('Halaman Skrining')),    // Index 2: Skrining
       const Center(child: Text('Halaman Laporan')),     // Index 3: Laporan
       const Center(child: Text('Halaman Artikel')),     // Index 4: Artikel
+<<<<<<< Updated upstream
       const AdminProfilPage(),                          // Index 5: Profil Admin (Diperbaiki di sini)
+=======
+      const AdminProfilPage(                            // Index 5: Profil Admin yang sudah dibuat
+        onBackToHome: null,
+      ),
+>>>>>>> Stashed changes
     ];
   }
 
