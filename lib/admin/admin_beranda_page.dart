@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'admin_skrining_page.dart';
 
 class AdminBerandaPage extends StatefulWidget {
   const AdminBerandaPage({super.key});
@@ -18,16 +19,20 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
   }
 
   Future<int> _ambilTotalPengguna() async {
-    final snapshot =
-    await FirebaseFirestore.instance.collection('users').get();
+    try {
+      final snapshot =
+      await FirebaseFirestore.instance.collection('users').get();
 
-    return snapshot.docs.where((doc) {
-      final data = doc.data();
-      final role =
-      (data['role'] ?? 'pengguna').toString().trim().toLowerCase();
+      return snapshot.docs.where((doc) {
+        final data = doc.data();
+        final role =
+        (data['role'] ?? 'pengguna').toString().trim().toLowerCase();
 
-      return role != 'admin';
-    }).length;
+        return role != 'admin';
+      }).length;
+    } catch (_) {
+      return 0;
+    }
   }
 
   @override
@@ -118,12 +123,25 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildStatCard(
-                icon: Icons.auto_awesome_rounded,
-                label: 'Total Skrining',
-                value: '968',
-                iconBgColor: const Color(0xFFE2E8FF),
-                iconColor: const Color(0xFF4C63E6),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminSkriningPage(
+                        initialFilter: 'Semua',
+                      ),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: _buildStatCard(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Total Skrining',
+                  value: '968',
+                  iconBgColor: const Color(0xFFE2E8FF),
+                  iconColor: const Color(0xFF4C63E6),
+                ),
               ),
             ),
           ],
@@ -132,12 +150,26 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
         Row(
           children: [
             Expanded(
-              child: _buildStatCard(
-                icon: Icons.error_rounded,
-                label: 'Skrining Positif',
-                value: '186',
-                iconBgColor: const Color(0xFFFFE5E5),
-                iconColor: Colors.redAccent,
+              child: InkWell(
+                onTap: () {
+                  // MENGARAH LANGSUNG KE HALAMAN SKRINING DENGAN FILTER POSITIF
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminSkriningPage(
+                        initialFilter: 'Positif',
+                      ),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: _buildStatCard(
+                  icon: Icons.error_rounded,
+                  label: 'Skrining Positif',
+                  value: '186',
+                  iconBgColor: const Color(0xFFFFE5E5),
+                  iconColor: Colors.redAccent,
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -392,11 +424,11 @@ class _SimpleChartPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final fillPaint = Paint()
-      ..color = const Color(0xFF4C63E6).withValues(alpha: 0.10)
+      ..color = const Color(0xFF4C63E6).withOpacity(0.10)
       ..style = PaintingStyle.fill;
 
     for (int i = 1; i <= 3; i++) {
-      final y = size.height * i / 4;
+      final y = size.height * (i / 4);
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
