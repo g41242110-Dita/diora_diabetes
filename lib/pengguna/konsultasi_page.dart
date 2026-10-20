@@ -18,7 +18,8 @@ class KonsultasiPage extends StatefulWidget {
 class _KonsultasiPageState extends State<KonsultasiPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Doctor> doctors = const [
+  // DAFTAR 7 DOKTER LENGKAP (3 ONLINE SHIFT 24 JAM & 4 OFFLINE)
+  final List<Doctor> doctors = [
     // --- 3 DOKTER ONLINE (3 SHIFT) ---
     Doctor(
       nama: 'dr. Amanda Putri, Sp. PD',
@@ -147,7 +148,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
         backgroundColor: const Color(0xFFF8FAFC),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
@@ -166,7 +167,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
         title: const Text(
           'Konsultasi',
           style: TextStyle(
-            color: Colors.black87,
+            color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -333,7 +334,8 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: doctor.isOnline
                       ? const Color(0xFFE6F4EA)
