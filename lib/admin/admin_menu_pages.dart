@@ -4,6 +4,7 @@ import 'admin_beranda_page.dart';
 import 'admin_skrining_page.dart';
 import 'admin_laporan_skrining_page.dart';
 import 'admin_profil_page.dart';
+import 'admin_artikel_page.dart'; // Import halaman artikel
 import 'admin_curved_nav_bar.dart';
 
 class AdminMenuPages extends StatefulWidget {
@@ -16,14 +17,14 @@ class AdminMenuPages extends StatefulWidget {
 class _AdminMenuPagesState extends State<AdminMenuPages> {
   int _selectedIndex = 0;
 
-  // Tepat 6 Halaman Sesuai Urutan 6 Menu di AdminCurvedNavBar
-  final List<Widget> _pages = [
-    const AdminBerandaPage(),         // Index 0: Beranda
+  // 6 Halaman Admin Terhubung dengan Lengkap
+  late final List<Widget> _pages = [
+    const AdminBerandaPage(),            // Index 0: Beranda
     const _DummyPage(title: 'Pengguna'), // Index 1: Pengguna
-    const AdminSkriningPage(),        // Index 2: Skrining (Tampilan Skrining Kamu)
-    const AdminLaporanSkriningPage(), // Index 3: Laporan
-    const _DummyPage(title: 'Artikel'),  // Index 4: Artikel
-    const AdminProfilPage(),          // Index 5: Profil
+    const AdminSkriningPage(),           // Index 2: Skrining
+    const AdminLaporanSkriningPage(),    // Index 3: Laporan
+    const AdminArtikelPage(),            // Index 4: Artikel (Sudah terhubung ke UI asli)
+    const AdminProfilPage(),             // Index 5: Profil
   ];
 
   @override
