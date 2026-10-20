@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'ringkasan_konsultasi_page.dart';
-import 'beranda_page.dart'; // Ganti ke file Beranda/Dashboard kamu
+import 'beranda_page.dart';
 
 class KonsultasiSelesaiPage extends StatelessWidget {
   final Doctor doctor;
@@ -15,9 +15,19 @@ class KonsultasiSelesaiPage extends StatelessWidget {
 
   String _getFormattedDateTime() {
     final now = DateTime.now();
-    final List<String> months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    final List<String> months = const [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
     ];
     final day = now.day.toString().padLeft(2, '0');
     final month = months[now.month - 1];
@@ -44,7 +54,11 @@ class KonsultasiSelesaiPage extends StatelessWidget {
         ),
         title: const Text(
           'Konsultasi Selesai',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
       ),
@@ -63,19 +77,31 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: Color(0xFFE2E7FF),
                 ),
-                child: const Icon(Icons.medical_services_outlined, size: 80, color: Color(0xFF6679F4)),
+                child: const Icon(
+                  Icons.medical_services_outlined,
+                  size: 80,
+                  color: Color(0xFF6679F4),
+                ),
               ),
               const SizedBox(height: 24),
 
               const Text(
                 'Konsultasi Telah Berakhir',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
-                'Terimakasih telah berkonsultasi dengan dokter. Berikut ringkasan percakapan Anda.',
+                'Terima kasih telah berkonsultasi dengan dokter. Berikut ringkasan percakapan Anda.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -92,7 +118,11 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                     const CircleAvatar(
                       radius: 26,
                       backgroundColor: Color(0xFFE2E7FF),
-                      child: Icon(Icons.person, size: 32, color: Color(0xFF6679F4)),
+                      child: Icon(
+                        Icons.person,
+                        size: 32,
+                        color: Color(0xFF6679F4),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -101,17 +131,27 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                         children: [
                           Text(
                             doctor.nama,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             doctor.spesialis,
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             dateTimeStr,
-                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -128,8 +168,10 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                 height: 48,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF5D83EC), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    side: const BorderSide(color: Color(0xFF6679F4), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
                   onPressed: () {
                     Navigator.push(
@@ -144,7 +186,10 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                   },
                   child: const Text(
                     'Lihat Ringkasan Konsultasi',
-                    style: TextStyle(color: Color(0xFF5D83EC), fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Color(0xFF6679F4),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -156,12 +201,13 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5D83EC),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    backgroundColor: const Color(0xFF6679F4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     elevation: 0,
                   ),
                   onPressed: () {
-                    // Menghapus semua halaman termasuk Splash Screen, lalu langsung membuka BerandaPage
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
@@ -174,7 +220,10 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                   },
                   child: const Text(
                     'Kembali ke Beranda',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
