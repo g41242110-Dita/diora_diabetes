@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-// PASTIKAN IMPORT FILE ADMIN, BUKAN BERANDA PENGGUNA!
-import 'admin_beranda_page.dart';
+import '../auth_router.dart';
+import 'admin_dashboard_page.dart';
 
 class LoginAdminPage extends StatefulWidget {
   const LoginAdminPage({super.key});
@@ -28,82 +27,108 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
     super.dispose();
   }
 
+  void _showLoginError(String message) {
+    if (!mounted) return;
+
+    setState(() {
+      _showError = true;
+      _errorMessage = message;
+    });
+  }
+
   Future<void> _handleLoginAdmin() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
+    if (_isLoading) return;
+
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      setState(() {
-        _showError = true;
-        _errorMessage = 'Email dan Password tidak boleh kosong.';
-      });
+      _showLoginError('Email dan kata sandi wajib diisi.');
       return;
     }
 
     setState(() {
       _isLoading = true;
       _showError = false;
+      _errorMessage = '';
     });
 
     try {
-      // 1. Log masuk ke Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+      final UserCredential credential =
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      String uid = userCredential.user!.uid;
-
-      // 2. Semak dokumen di Firestore
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      if (userDoc.exists && userDoc.data() != null) {
-        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
-        String role = (data['role'] ?? '').toString().trim().toLowerCase();
-
-        // 3. Semak jika role bernilai 'admin'
-        if (role == 'admin') {
-          if (!mounted) return;
-
-          // ============================================================
-          // KUNCI PENYELESAIAN: Pindah terus ke AdminBerandaPage!
-          // ============================================================
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminBerandaPage(), // <- Halaman Admin
-            ),
-                (route) => false,
-          );
-          return;
-        }
+      final User? user = credential.user;
+      if (user == null) {
+        await FirebaseAuth.instance.signOut();
+        _showLoginError('Data akun tidak ditemukan.');
+        return;
       }
 
-      // Jika akun bukan admin
-      await FirebaseAuth.instance.signOut();
+      final data = await AuthRouter.ambilDataUser(user);
+
+      if (data == null) {
+        await FirebaseAuth.instance.signOut();
+        _showLoginError(
+          'Data akun tidak ditemukan di Firestore (koleksi users). '
+              'Pastikan ID dokumen sama dengan UID atau field email sama.',
+        );
+        return;
+      }
+
+      final String role = AuthRouter.ambilRole(data);
+      debugPrint('Login admin -> uid: ${user.uid}, role: $role');
+
+      if (role != 'admin') {
+        await FirebaseAuth.instance.signOut();
+        _showLoginError(
+          'Akun ini bukan akun Admin. Silakan gunakan akun admin yang benar.',
+        );
+        return;
+      }
+
       if (!mounted) return;
-      setState(() {
-        _showError = true;
-        _errorMessage = 'Akaun ini bukan akaun Admin!';
-      });
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const AdminDashboardPage()),
+            (route) => false,
+      );
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _showError = true;
-        _errorMessage = e.message ?? 'Log masuk gagal. Semak email & kata laluan.';
-      });
+      String message;
+      switch (e.code) {
+        case 'invalid-email':
+          message = 'Format email tidak valid.';
+          break;
+        case 'user-not-found':
+        case 'invalid-credential':
+          message = 'Email atau kata sandi salah.';
+          break;
+        case 'wrong-password':
+          message = 'Kata sandi salah.';
+          break;
+        case 'too-many-requests':
+          message = 'Terlalu banyak percobaan. Coba lagi nanti.';
+          break;
+        case 'network-request-failed':
+          message = 'Koneksi internet bermasalah.';
+          break;
+        default:
+          message = e.message ?? 'Login gagal. Silakan coba lagi.';
+      }
+      _showLoginError(message);
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _showError = true;
-        _errorMessage = 'Ralat sistem: $e';
-      });
+      debugPrint('Login admin error: $e');
+      _showLoginError(
+        'Gagal memeriksa akun. Periksa koneksi dan aturan akses Firestore.',
+      );
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (_) {}
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -116,8 +141,13 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.grey),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.grey,
+          ),
+          onPressed: _isLoading
+              ? null
+              : () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
           'LOG MASUK ADMIN',
@@ -130,41 +160,50 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
 
               if (_showError) ...[
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFEBEE),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFFCDD2)),
+                    border: Border.all(
+                      color: const Color(0xFFFFCDD2),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.cancel, color: Colors.red, size: 24),
-                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _errorMessage,
                           style: const TextStyle(
                             color: Colors.red,
-                            fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _showError = false;
-                          });
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () {
+                          setState(() => _showError = false);
                         },
-                        child: const Icon(Icons.close, color: Colors.grey, size: 16),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.grey,
+                          size: 18,
+                        ),
                       ),
                     ],
                   ),
@@ -187,24 +226,42 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
                   color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
+
               const Text(
-                'Log masuk ke akaun Admin Diora',
+                'Log masuk ke akun Admin Diora',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey,
                 ),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
 
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                enabled: !_isLoading,
                 decoration: InputDecoration(
                   labelText: 'Email Admin',
-                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                  prefixIcon: const Icon(
+                    Icons.email_outlined,
+                    color: Colors.grey,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.black26),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF5B71F5),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -213,22 +270,40 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
+                enabled: !_isLoading,
+                onSubmitted: (_) => _handleLoginAdmin(),
                 decoration: InputDecoration(
-                  labelText: 'Kata Laluan',
-                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                  labelText: 'Kata Sandi',
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: Colors.grey,
+                  ),
                   suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: Colors.grey,
-                    ),
                     onPressed: () {
                       setState(() {
                         _obscurePassword = !_obscurePassword;
                       });
                     },
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.black26),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF5B71F5),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -236,19 +311,21 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
 
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLoginAdmin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5B71F5),
+                    disabledBackgroundColor:
+                    const Color(0xFF5B71F5).withValues(alpha: 0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
                   child: _isLoading
                       ? const SizedBox(
-                    height: 20,
-                    width: 20,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(
                       color: Colors.white,
                       strokeWidth: 2,
@@ -264,6 +341,7 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
             ],
           ),
         ),
