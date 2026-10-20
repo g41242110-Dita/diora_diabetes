@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Konten tab Beranda (tanpa Scaffold, AppBar, maupun navbar;
-/// semuanya sudah disediakan AdminDashboardPage).
 class AdminBerandaPage extends StatefulWidget {
   const AdminBerandaPage({super.key});
 
@@ -20,17 +18,13 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
   }
 
   Future<int> _ambilTotalPengguna() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .get();
+    final snapshot =
+    await FirebaseFirestore.instance.collection('users').get();
 
-    // Hanya menghitung dokumen dengan role pengguna.
     return snapshot.docs.where((doc) {
       final data = doc.data();
-      final role = (data['role'] ?? 'pengguna')
-          .toString()
-          .trim()
-          .toLowerCase();
+      final role =
+      (data['role'] ?? 'pengguna').toString().trim().toLowerCase();
 
       return role != 'admin';
     }).length;
@@ -39,7 +33,7 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -50,7 +44,6 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
           _buildTrendChartCard(),
           const SizedBox(height: 20),
           _buildAktivitasTerbaruCard(),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -431,8 +424,7 @@ class _SimpleChartPainter extends CustomPainter {
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, linePaint);
 
-    final dotPaint = Paint()
-      ..color = const Color(0xFF4C63E6);
+    final dotPaint = Paint()..color = const Color(0xFF4C63E6);
 
     for (final point in points) {
       canvas.drawCircle(point, 3.5, dotPaint);
