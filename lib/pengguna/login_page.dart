@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'beranda_page.dart';
+import '../auth_router.dart';
 import 'daftar_akun.dart';
 import 'forgot_password_page.dart';
 
@@ -102,33 +101,23 @@ class _LoginPageState extends State<LoginPage> {
         throw Exception('User tidak ditemukan.');
       }
 
-      String namaUser = email.split('@').first;
-      final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      if (!mounted) return;
 
-      if (userDoc.exists && userDoc.data() != null) {
-        final data = userDoc.data() as Map<String, dynamic>;
-        if (data.containsKey('nama')) {
-          namaUser = data['nama'];
-        }
-      }
+      // Role dicek di Firestore:
+      // admin -> dashboard admin, pengguna -> beranda pengguna.
+      final bool berhasil = await AuthRouter.arahkan(context, user);
 
       if (!mounted) return;
 
-      setState(() {
-        isLoading = false;
-      });
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BerandaPage(
-            namaUser: namaUser,
-          ),
-        ),
-      );
+      if (!berhasil) {
+        setState(() {
+          isLoading = false;
+          showErrorBanner = true;
+          errorMessage =
+          'Data akun tidak ditemukan atau role tidak dikenal. Hubungi admin.';
+        });
+        refreshCaptcha();
+      }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
