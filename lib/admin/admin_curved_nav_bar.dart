@@ -96,7 +96,6 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
     final double screenWidth = MediaQuery.sizeOf(context).width;
     final double itemWidth = screenWidth / _items.length;
 
-    // Posisi presisi berdasarkan selectedIndex (0 sampai 5)
     final double targetX = (widget.selectedIndex + 0.5) * itemWidth;
 
     if (_previousX == 0) {
@@ -111,7 +110,6 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
     return AnimatedBuilder(
       animation: _curveAnimation,
       builder: (context, child) {
-        // Kalkulasi posisi X yang berjalan secara beriringan
         final double currentX =
             _previousX + (targetX - _previousX) * _curveAnimation.value;
 
@@ -173,7 +171,7 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
                   return Expanded(
                     child: InkWell(
                       onTap: () {
-                        _previousX = currentX; // Catat posisi terakhir sebelum berpindah
+                        _previousX = currentX;
                         widget.onItemTapped(item.index);
                       },
                       splashColor: Colors.transparent,
