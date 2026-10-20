@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../pengguna/onboarding_page.dart';
-
+/// Konten tab Beranda (tanpa Scaffold, AppBar, maupun navbar;
+/// semuanya sudah disediakan AdminDashboardPage).
 class AdminBerandaPage extends StatefulWidget {
   const AdminBerandaPage({super.key});
 
@@ -11,77 +11,47 @@ class AdminBerandaPage extends StatefulWidget {
 }
 
 class _AdminBerandaPageState extends State<AdminBerandaPage> {
-  int _currentBottomIndex = 2;
+  late final Future<int> _totalPengguna;
 
-  Future<void> _logoutAdmin() async {
-    final bool? konfirmasi = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Konfirmasi Logout',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun Admin?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _totalPengguna = _ambilTotalPengguna();
+  }
 
-    if (konfirmasi == true) {
-      await FirebaseAuth.instance.signOut();
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingPage()),
-            (route) => false,
-      );
-    }
+  Future<int> _ambilTotalPengguna() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .get();
+
+    // Hanya menghitung dokumen dengan role pengguna.
+    return snapshot.docs.where((doc) {
+      final data = doc.data();
+      final role = (data['role'] ?? 'pengguna')
+          .toString()
+          .trim()
+          .toLowerCase();
+
+      return role != 'admin';
+    }).length;
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        await _logoutAdmin();
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeaderBanner(),
-                const SizedBox(height: 20),
-                _buildStatGrid(),
-                const SizedBox(height: 20),
-                _buildTrendChartCard(),
-                const SizedBox(height: 20),
-                _buildAktivitasTerbaruCard(),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-        bottomNavigationBar: _buildBottomNavigationBar(),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeaderBanner(),
+          const SizedBox(height: 20),
+          _buildStatGrid(),
+          const SizedBox(height: 20),
+          _buildTrendChartCard(),
+          const SizedBox(height: 20),
+          _buildAktivitasTerbaruCard(),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
@@ -94,48 +64,37 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
         color: const Color(0xFFDCE4FF),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: const Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Hallo, Admin ',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Image.network(
-                      'https://cdn-icons-png.flaticon.com/512/10813/10813372.png',
-                      height: 22,
-                      errorBuilder: (ctx, err, stack) =>
-                      const Text('👋', style: TextStyle(fontSize: 18)),
-                    ),
-                  ],
+                Text(
+                  'Halo, Admin 👋',
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Berikut ringkasan data pengguna dan aktifitas pada sistem Diora.',
+                SizedBox(height: 8),
+                Text(
+                  'Berikut ringkasan data pengguna dan aktivitas pada sistem Diora.',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.black54,
-                    height: 1.3,
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Image.network(
-            'https://cdn-icons-png.flaticon.com/512/3774/3774299.png',
-            height: 80,
-            errorBuilder: (ctx, err, stack) =>
-            const Icon(Icons.medical_information, size: 60, color: Color(0xFF5B71F5)),
+          SizedBox(width: 12),
+          Icon(
+            Icons.admin_panel_settings_rounded,
+            size: 64,
+            color: Color(0xFF5B71F5),
           ),
         ],
       ),
@@ -148,46 +107,54 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
         Row(
           children: [
             Expanded(
-              child: _buildStatCard(
-                icon: Icons.group_rounded,
-                iconBgColor: const Color(0xFFE2E8FF),
-                iconColor: const Color(0xFF4C63E6),
-                label: 'Total Pengguna',
-                value: '1.248',
+              child: FutureBuilder<int>(
+                future: _totalPengguna,
+                builder: (context, snapshot) {
+                  final total = snapshot.data;
+                  return _buildStatCard(
+                    icon: Icons.group_rounded,
+                    label: 'Total Pengguna',
+                    value: snapshot.hasError
+                        ? '-'
+                        : total?.toString() ?? '...',
+                    iconBgColor: const Color(0xFFE2E8FF),
+                    iconColor: const Color(0xFF4C63E6),
+                  );
+                },
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
                 icon: Icons.auto_awesome_rounded,
-                iconBgColor: const Color(0xFFE2E8FF),
-                iconColor: const Color(0xFF4C63E6),
                 label: 'Total Skrining',
                 value: '968',
+                iconBgColor: const Color(0xFFE2E8FF),
+                iconColor: const Color(0xFF4C63E6),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _buildStatCard(
                 icon: Icons.error_rounded,
-                iconBgColor: const Color(0xFFFFE5E5),
-                iconColor: const Color(0xFFFF5252),
                 label: 'Skrining Positif',
                 value: '186',
+                iconBgColor: const Color(0xFFFFE5E5),
+                iconColor: Colors.redAccent,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
                 icon: Icons.article_rounded,
-                iconBgColor: const Color(0xFFE2E8FF),
-                iconColor: const Color(0xFF4C63E6),
                 label: 'Total Artikel',
                 value: '58',
+                iconBgColor: const Color(0xFFE2E8FF),
+                iconColor: const Color(0xFF4C63E6),
               ),
             ),
           ],
@@ -198,19 +165,20 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
 
   Widget _buildStatCard({
     required IconData icon,
-    required Color iconBgColor,
-    required Color iconColor,
     required String label,
     required String value,
+    required Color iconBgColor,
+    required Color iconColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12, width: 1),
+        border: Border.all(color: Colors.black12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
@@ -218,31 +186,24 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
               color: iconBgColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: iconColor, size: 24),
+            child: Icon(icon, color: iconColor, size: 23),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
         ],
@@ -257,98 +218,47 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12, width: 1),
+        border: Border.all(color: Colors.black12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.show_chart_rounded,
-                  color: Color(0xFF4C63E6),
-                  size: 20,
-                ),
+              Icon(
+                Icons.show_chart_rounded,
+                color: Color(0xFF4C63E6),
               ),
-              const SizedBox(width: 10),
-              const Text(
-                'Trend Skrining Diabetes',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Trend Skrining Diabetes',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Container(
-            height: 140,
+            height: 170,
             width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
             decoration: BoxDecoration(
+              color: const Color(0xFFF3F5FF),
               borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF4C63E6).withValues(alpha: 0.05),
-                  const Color(0xFF4C63E6).withValues(alpha: 0.2),
-                ],
-              ),
             ),
-            child: Stack(
-              children: [
-                const Positioned(
-                  left: 8,
-                  top: 10,
-                  child: Text('200', style: TextStyle(fontSize: 9, color: Colors.grey)),
-                ),
-                const Positioned(
-                  left: 8,
-                  top: 45,
-                  child: Text('150', style: TextStyle(fontSize: 9, color: Colors.grey)),
-                ),
-                const Positioned(
-                  left: 8,
-                  top: 80,
-                  child: Text('100', style: TextStyle(fontSize: 9, color: Colors.grey)),
-                ),
-                const Positioned(
-                  left: 12,
-                  bottom: 25,
-                  child: Text('0', style: TextStyle(fontSize: 9, color: Colors.grey)),
-                ),
-                Center(
-                  child: CustomPaint(
-                    size: const Size(double.infinity, 80),
-                    painter: _SimpleChartPainter(),
-                  ),
-                ),
-                const Positioned(
-                  bottom: 8,
-                  left: 30,
-                  right: 10,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('24 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                      Text('25 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                      Text('26 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                      Text('27 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                      Text('28 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                      Text('29 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                      Text('30 Apr', style: TextStyle(fontSize: 9, color: Color(0xFF4C63E6))),
-                    ],
-                  ),
-                ),
-              ],
+            child: CustomPaint(
+              painter: _SimpleChartPainter(),
+              child: const SizedBox.expand(),
             ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ilustrasi tren — belum menggunakan data skrining sebenarnya.',
+            style: TextStyle(fontSize: 11, color: Colors.black54),
           ),
         ],
       ),
@@ -362,81 +272,76 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12, width: 1),
+        border: Border.all(color: Colors.black12),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.access_time_filled_rounded,
-                  color: Color(0xFF4C63E6),
-                  size: 20,
-                ),
+              Icon(
+                Icons.access_time_rounded,
+                color: Color(0xFF4C63E6),
               ),
-              const SizedBox(width: 10),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Aktivitas Terbaru',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildActivityItem(
+          SizedBox(height: 16),
+          _ActivityItem(
             name: 'Siti Aisyah',
             action: 'Melakukan skrining diet',
-            dateTime: '30 Agustus 2026\n14.32 WIB',
-            avatarBgColor: const Color(0xFFDCE4FF),
-            genderIsFemale: true,
+            time: 'Contoh aktivitas',
+            female: true,
           ),
-          const Divider(height: 20, thickness: 0.5),
-          _buildActivityItem(
+          Divider(height: 24),
+          _ActivityItem(
             name: 'Rina Marlina',
             action: 'Membaca artikel',
-            dateTime: '30 Agustus 2026\n10.56 WIB',
-            avatarBgColor: const Color(0xFFDCE4FF),
-            genderIsFemale: true,
+            time: 'Contoh aktivitas',
+            female: true,
           ),
-          const Divider(height: 20, thickness: 0.5),
-          _buildActivityItem(
+          Divider(height: 24),
+          _ActivityItem(
             name: 'Bimo Setiawan',
             action: 'Konsultasi',
-            dateTime: '30 Agustus 2026\n08.13 WIB',
-            avatarBgColor: const Color(0xFFDCE4FF),
-            genderIsFemale: false,
+            time: 'Contoh aktivitas',
+            female: false,
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildActivityItem({
-    required String name,
-    required String action,
-    required String dateTime,
-    required Color avatarBgColor,
-    required bool genderIsFemale,
-  }) {
+class _ActivityItem extends StatelessWidget {
+  final String name;
+  final String action;
+  final String time;
+  final bool female;
+
+  const _ActivityItem({
+    required this.name,
+    required this.action,
+    required this.time,
+    required this.female,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         CircleAvatar(
-          radius: 20,
-          backgroundColor: avatarBgColor,
+          backgroundColor: const Color(0xFFDCE4FF),
           child: Icon(
-            genderIsFemale ? Icons.face_3_rounded : Icons.face_rounded,
+            female ? Icons.face_3_rounded : Icons.face_rounded,
             color: const Color(0xFF4C63E6),
-            size: 26,
           ),
         ),
         const SizedBox(width: 12),
@@ -449,10 +354,9 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 action,
                 style: const TextStyle(
@@ -463,66 +367,18 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
             ],
           ),
         ),
-        Text(
-          dateTime,
-          textAlign: TextAlign.end,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Colors.black45,
-            height: 1.2,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            time,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.black45,
+            ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 65,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.black12, width: 0.8)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(icon: Icons.groups_outlined, index: 0),
-          _buildNavItem(icon: Icons.menu_book_rounded, index: 1),
-          _buildNavItem(icon: Icons.medical_services_rounded, index: 2, isMain: true),
-          _buildNavItem(icon: Icons.insert_chart_outlined_rounded, index: 3),
-          _buildNavItem(icon: Icons.person_outline_rounded, index: 4),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem({required IconData icon, required int index, bool isMain = false}) {
-    final bool isSelected = _currentBottomIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentBottomIndex = index;
-        });
-        if (index == 4) {
-          _logoutAdmin();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: isMain
-            ? BoxDecoration(
-          color: const Color(0xFF5B71F5),
-          borderRadius: BorderRadius.circular(12),
-        )
-            : null,
-        child: Icon(
-          icon,
-          size: 28,
-          color: isMain
-              ? Colors.white
-              : (isSelected ? const Color(0xFF5B71F5) : const Color(0xFF5B71F5).withValues(alpha: 0.7)),
-        ),
-      ),
     );
   }
 }
@@ -530,45 +386,59 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
 class _SimpleChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final gridPaint = Paint()
+      ..color = Colors.black12
+      ..strokeWidth = 0.7;
+
+    final linePaint = Paint()
       ..color = const Color(0xFF4C63E6)
       ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    final dotPaint = Paint()
-      ..color = const Color(0xFF4C63E6)
+    final fillPaint = Paint()
+      ..color = const Color(0xFF4C63E6).withValues(alpha: 0.10)
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    path.moveTo(0, size.height * 0.75);
-    path.cubicTo(
-      size.width * 0.2,
-      size.height * 0.3,
-      size.width * 0.4,
-      size.height * 0.4,
-      size.width * 0.5,
-      size.height * 0.6,
-    );
-    path.cubicTo(
-      size.width * 0.7,
-      size.height * 0.8,
-      size.width * 0.85,
-      size.height * 0.3,
-      size.width,
-      size.height * 0.1,
-    );
+    for (int i = 1; i <= 3; i++) {
+      final y = size.height * i / 4;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
 
-    canvas.drawPath(path, paint);
+    final points = <Offset>[
+      Offset(size.width * 0.03, size.height * 0.75),
+      Offset(size.width * 0.18, size.height * 0.60),
+      Offset(size.width * 0.34, size.height * 0.68),
+      Offset(size.width * 0.50, size.height * 0.38),
+      Offset(size.width * 0.66, size.height * 0.52),
+      Offset(size.width * 0.82, size.height * 0.28),
+      Offset(size.width * 0.97, size.height * 0.16),
+    ];
 
-    canvas.drawCircle(Offset(0, size.height * 0.75), 3, dotPaint);
-    canvas.drawCircle(Offset(size.width * 0.28, size.height * 0.48), 3, dotPaint);
-    canvas.drawCircle(Offset(size.width * 0.45, size.height * 0.52), 3, dotPaint);
-    canvas.drawCircle(Offset(size.width * 0.6, size.height * 0.65), 3, dotPaint);
-    canvas.drawCircle(Offset(size.width * 0.75, size.height * 0.5), 3, dotPaint);
-    canvas.drawCircle(Offset(size.width * 0.88, size.height * 0.38), 3, dotPaint);
-    canvas.drawCircle(Offset(size.width, size.height * 0.1), 3, dotPaint);
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+
+    final fillPath = Path.from(path)
+      ..lineTo(points.last.dx, size.height)
+      ..lineTo(points.first.dx, size.height)
+      ..close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, linePaint);
+
+    final dotPaint = Paint()
+      ..color = const Color(0xFF4C63E6);
+
+    for (final point in points) {
+      canvas.drawCircle(point, 3.5, dotPaint);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SimpleChartPainter oldDelegate) => false;
 }
