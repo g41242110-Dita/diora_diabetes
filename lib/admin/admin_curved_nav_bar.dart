@@ -40,18 +40,12 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
     ),
     _NavItemData(
       index: 3,
-      label: 'Laporan',
-      icon: Icons.bar_chart_rounded,
-      activeIcon: Icons.bar_chart_rounded,
-    ),
-    _NavItemData(
-      index: 4,
       label: 'Artikel',
       icon: Icons.article_outlined,
       activeIcon: Icons.article_rounded,
     ),
     _NavItemData(
-      index: 5,
+      index: 4,
       label: 'Profil',
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
@@ -143,7 +137,7 @@ class _AdminCurvedNavBarState extends State<AdminCurvedNavBar>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF4F46E5).withOpacity(0.35),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.35),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -269,7 +263,7 @@ class _FluidNavBarPainter extends CustomPainter {
     path.lineTo(0, h);
     path.close();
 
-    canvas.drawShadow(path, Colors.black.withOpacity(0.05), 5.0, true);
+    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.05), 5.0, true);
     canvas.drawPath(path, paint);
   }
 
