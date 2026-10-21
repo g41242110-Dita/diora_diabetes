@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_pengguna_page.dart';
 import 'admin_skrining_page.dart';
+import 'admin_artikel_page.dart'; // Import halaman artikel
 
 class AdminBerandaPage extends StatefulWidget {
   const AdminBerandaPage({super.key});
@@ -22,12 +23,12 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
   Future<int> _ambilTotalPengguna() async {
     try {
       final snapshot =
-      await FirebaseFirestore.instance.collection('users').get();
+          await FirebaseFirestore.instance.collection('users').get();
 
       return snapshot.docs.where((doc) {
         final data = doc.data();
         final role =
-        (data['role'] ?? 'pengguna').toString().trim().toLowerCase();
+            (data['role'] ?? 'pengguna').toString().trim().toLowerCase();
 
         return role != 'admin';
       }).length;
@@ -188,12 +189,24 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildStatCard(
-                icon: Icons.article_rounded,
-                label: 'Total Artikel',
-                value: '58',
-                iconBgColor: const Color(0xFFE2E8FF),
-                iconColor: const Color(0xFF4C63E6),
+              child: InkWell(
+                onTap: () {
+                  // Pindah ke Halaman Artikel ketika kartu diklik
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminArtikelPage(),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: _buildStatCard(
+                  icon: Icons.article_rounded,
+                  label: 'Total Artikel',
+                  value: '58',
+                  iconBgColor: const Color(0xFFE2E8FF),
+                  iconColor: const Color(0xFF4C63E6),
+                ),
               ),
             ),
           ],

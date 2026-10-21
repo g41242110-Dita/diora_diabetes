@@ -4,6 +4,7 @@ import 'admin_beranda_page.dart';
 import 'admin_skrining_page.dart';
 import 'admin_laporan_skrining_page.dart';
 import 'admin_profil_page.dart';
+import 'admin_artikel_page.dart';
 import 'admin_curved_nav_bar.dart';
 
 class AdminMenuPages extends StatefulWidget {
@@ -16,22 +17,28 @@ class AdminMenuPages extends StatefulWidget {
 class _AdminMenuPagesState extends State<AdminMenuPages> {
   int _selectedIndex = 0;
 
-  // Tepat 6 Halaman Sesuai Urutan 6 Menu di AdminCurvedNavBar
-  final List<Widget> _pages = [
-    const AdminBerandaPage(),         // Index 0: Beranda
-    const _DummyPage(title: 'Pengguna'), // Index 1: Pengguna
-    const AdminSkriningPage(),        // Index 2: Skrining (Tampilan Skrining Kamu)
-    const AdminLaporanSkriningPage(), // Index 3: Laporan
-    const _DummyPage(title: 'Artikel'),  // Index 4: Artikel
-    const AdminProfilPage(),          // Index 5: Profil
-  ];
-
   @override
   Widget build(BuildContext context) {
+    // Buat daftar halaman di dalam method build
+    final List<Widget> pages = [
+      const AdminBerandaPage(),            // Index 0: Beranda
+      const _DummyPage(title: 'Pengguna'), // Index 1: Pengguna
+      const AdminSkriningPage(),           // Index 2: Skrining
+      const AdminLaporanSkriningPage(),    // Index 3: Laporan
+      AdminArtikelPage(
+        onBackToBeranda: () {
+          setState(() {
+            _selectedIndex = 0; // Pindah langsung ke Beranda
+          });
+        },
+      ),                                   // Index 4: Artikel
+      const AdminProfilPage(),             // Index 5: Profil
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: AdminCurvedNavBar(
         selectedIndex: _selectedIndex,
