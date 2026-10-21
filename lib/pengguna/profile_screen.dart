@@ -103,29 +103,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? const Center(
             child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
           )
-              : SingleChildScrollView(
-            child: Column(
-              children: [
-                // Header & Kartu Mengambang
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
+              : Column(
+            children: [
+              // Header Gradien & Kartu Profil Mengambang
+              Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  _buildTopGradientHeader(),
+                  Positioned(
+                    top: 65,
+                    left: 20,
+                    right: 20,
+                    child: _buildFloatingCard(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 105),
+
+              // Menu Navigasi yang didorong penuh ke bawah
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTopGradientHeader(),
-                    Positioned(
-                      top: 75,
-                      left: 20,
-                      right: 20,
-                      child: _buildFloatingCard(),
+                    Expanded(
+                      child: _buildMenuList(),
                     ),
+                    const SizedBox(height: 12), // Memberikan sisa jarak pas di atas bottom nav
                   ],
                 ),
-                const SizedBox(height: 110), // Jarak dirapikan agar tidak terlalu jauh
-                // Menu Navigasi
-                _buildMenuList(),
-                const SizedBox(height: 100), // Memberi ruang ekstra untuk navbar bawah
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -136,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildTopGradientHeader() {
     return Container(
       width: double.infinity,
-      height: 170,
+      height: 155,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -180,7 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // 2. Kartu Profil Mengambang
   Widget _buildFloatingCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -195,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _buildAvatar(size: 80),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             'Halo, $_namaDisplay 👋',
             style: const TextStyle(
@@ -286,11 +294,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 4. Daftar Menu Pilihan
+  // 4. Daftar Menu Pilihan (Diposisikan dengan jarak merata)
   Widget _buildMenuList() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildMenuItem(
             icon: Icons.person_outline_rounded,
@@ -374,7 +383,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool isLogout = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -393,7 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Container(
