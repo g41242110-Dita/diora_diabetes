@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'admin_pengguna_page.dart';
 import 'admin_skrining_page.dart';
 
 class AdminBerandaPage extends StatefulWidget {
@@ -105,24 +106,37 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
         Row(
           children: [
             Expanded(
-              child: FutureBuilder<int>(
-                future: _totalPengguna,
-                builder: (context, snapshot) {
-                  final total = snapshot.data;
-                  return _buildStatCard(
-                    icon: Icons.group_rounded,
-                    label: 'Total Pengguna',
-                    value: snapshot.hasError
-                        ? '-'
-                        : total?.toString() ?? '...',
-                    iconBgColor: const Color(0xFFE2E8FF),
-                    iconColor: const Color(0xFF4C63E6),
+              // KARTU TOTAL PENGGUNA BISA DIPENCET
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminPenggunaPage(),
+                    ),
                   );
                 },
+                borderRadius: BorderRadius.circular(16),
+                child: FutureBuilder<int>(
+                  future: _totalPengguna,
+                  builder: (context, snapshot) {
+                    final total = snapshot.data;
+                    return _buildStatCard(
+                      icon: Icons.group_rounded,
+                      label: 'Total Pengguna',
+                      value: snapshot.hasError
+                          ? '-'
+                          : total?.toString() ?? '...',
+                      iconBgColor: const Color(0xFFE2E8FF),
+                      iconColor: const Color(0xFF4C63E6),
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
+              // KARTU TOTAL SKRINING
               child: InkWell(
                 onTap: () {
                   Navigator.push(
@@ -150,9 +164,9 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
         Row(
           children: [
             Expanded(
+              // KARTU SKRINING POSITIF
               child: InkWell(
                 onTap: () {
-                  // MENGARAH LANGSUNG KE HALAMAN SKRINING DENGAN FILTER POSITIF
                   Navigator.push(
                     context,
                     MaterialPageRoute(
