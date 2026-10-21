@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Dibutuhkan untuk SystemNavigator.pop()
+import 'package:flutter/services.dart';
 
 import 'profile_screen.dart';
 import 'konsultasi_page.dart';
@@ -84,9 +84,6 @@ class _BerandaPageState extends State<BerandaPage> {
     });
   }
 
-  // ============================================================
-  // FUNGSI UNTUK MENAMPILKAN POP-UP KONFIRMASI KELUAR APLIKASI
-  // ============================================================
   Future<bool> _showExitConfirmationDialog() async {
     final shouldExit = await showDialog<bool>(
       context: context,
@@ -187,7 +184,7 @@ class _BerandaPageState extends State<BerandaPage> {
         showBackButton: true,
         onBackToHome: () {
           setState(() {
-            _selectedIndex = 0; // Kembali ke Beranda dengan mulus
+            _selectedIndex = 0;
           });
         },
       ),
@@ -202,11 +199,10 @@ class _BerandaPageState extends State<BerandaPage> {
     ];
 
     return PopScope(
-      canPop: false, // Mencegah aplikasi langsung keluar
+      canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) async {
         if (didPop) return;
 
-        // Jika sedang tidak di tab Beranda, pindah ke Beranda terlebih dahulu
         if (_selectedIndex != 0) {
           setState(() {
             _selectedIndex = 0;
@@ -214,10 +210,9 @@ class _BerandaPageState extends State<BerandaPage> {
           return;
         }
 
-        // Jika sudah di Beranda, tampilkan pop-up konfirmasi
         final bool confirmExit = await _showExitConfirmationDialog();
         if (confirmExit) {
-          SystemNavigator.pop(); // Menutup aplikasi secara menyeluruh
+          SystemNavigator.pop();
         }
       },
       child: Scaffold(
@@ -243,10 +238,11 @@ class _BerandaPageState extends State<BerandaPage> {
           Stack(
             clipBehavior: Clip.none,
             children: [
+              // Header Background
               Container(
-                height: 190,
+                height: 185,
                 width: double.infinity,
-                padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
+                padding: const EdgeInsets.only(top: 60, left: 20, right: 20),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
@@ -320,8 +316,10 @@ class _BerandaPageState extends State<BerandaPage> {
                   ],
                 ),
               ),
+
+              // Floating Card Skrining
               Positioned(
-                top: 130,
+                top: 125,
                 left: 16,
                 right: 16,
                 child: GestureDetector(
@@ -329,7 +327,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 18),
+                        horizontal: 18, vertical: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -364,18 +362,18 @@ class _BerandaPageState extends State<BerandaPage> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               const Text(
                                 'Skrining Gejala Diabetes',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               const Text(
                                 'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
                                 style: TextStyle(
@@ -391,7 +389,7 @@ class _BerandaPageState extends State<BerandaPage> {
                         ),
                         const SizedBox(width: 12),
                         Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(12),
                           decoration: const BoxDecoration(
                             color: Color(0xFF6679F4),
                             shape: BoxShape.circle,
@@ -399,7 +397,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           child: const Icon(
                             Icons.arrow_forward_rounded,
                             color: Colors.white,
-                            size: 22,
+                            size: 20,
                           ),
                         ),
                       ],
@@ -409,7 +407,11 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ],
           ),
-          const SizedBox(height: 110),
+
+          // Jarak ke Layanan & Menu
+          const SizedBox(height: 75),
+
+          // Section 1: Layanan & Menu
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -480,7 +482,11 @@ class _BerandaPageState extends State<BerandaPage> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+
+          // Spasi ke Progres Kesehatan
+          const SizedBox(height: 22),
+
+          // Section 2: Banner Progres Kesehatan
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Material(
@@ -497,7 +503,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   );
                 },
                 child: Ink(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFFFFF3E0), Color(0xFFFFE0B2)],
@@ -515,7 +521,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.show_chart_rounded,
-                            color: Color(0xFFE65100), size: 24),
+                            color: Color(0xFFE65100), size: 22),
                       ),
                       const SizedBox(width: 14),
                       const Expanded(
@@ -551,7 +557,11 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+
+          // Spasi ke Artikel Terbaru
+          const SizedBox(height: 22),
+
+          // Section 3: Artikel Terbaru
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -585,7 +595,7 @@ class _BerandaPageState extends State<BerandaPage> {
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 190,
+            height: 185,
             child: PageView.builder(
               controller: _pageController,
               itemBuilder: (context, index) {
@@ -626,12 +636,12 @@ class _BerandaPageState extends State<BerandaPage> {
                               top: Radius.circular(16)),
                           child: Image.network(
                             item['imageUrl']!,
-                            height: 100,
+                            height: 95,
                             width: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
-                                  height: 100,
+                                  height: 95,
                                   color: const Color(0xFFE2E7FF),
                                   child: const Icon(Icons.article_outlined,
                                       color: Color(0xFF6679F4), size: 30),
@@ -639,7 +649,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -653,7 +663,7 @@ class _BerandaPageState extends State<BerandaPage> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
                               Text(
                                 item['content']!,
                                 style: const TextStyle(
@@ -673,7 +683,9 @@ class _BerandaPageState extends State<BerandaPage> {
               },
             ),
           ),
-          const SizedBox(height: 30),
+
+          // Bottom Padding ekstra agar scroll bisa turun pas di atas CurvedNavBar
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -692,14 +704,14 @@ class _BerandaPageState extends State<BerandaPage> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: bgColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             label,
             style: const TextStyle(
