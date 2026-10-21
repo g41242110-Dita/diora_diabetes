@@ -14,15 +14,14 @@ class AdminTambahArtikelPage extends StatefulWidget {
 class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
   final TextEditingController _judulController = TextEditingController();
   final TextEditingController _isiController = TextEditingController();
-  
+
   String _status = 'Publis'; // 'Draf' atau 'Publis'
-  
+
   // State Format Teks Aktif
   bool _isBoldActive = false;
   bool _isItalicActive = false;
   bool _isUnderlineActive = false;
   TextAlign _textAlign = TextAlign.left;
-  bool _isBulletActive = false;
 
   // Variabel untuk Gambar Thumbnail & Gambar di dalam Isi Artikel
   Uint8List? _webImageThumbnail;
@@ -57,31 +56,50 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
     try {
       final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
-        setState(() {
-          _isiController.text += "\n[Gambar Disisipkan: ${pickedFile.name}]\n";
-        });
+        _insertTextAtCursor("[Gambar: ${pickedFile.name}]");
       }
     } catch (e) {
       debugPrint("Gagal menyisipkan gambar: $e");
     }
   }
 
-  // FUNGSI 3: FORMAT TOOLBAR TEKS (TANPA POP-UP / SNACKBAR)
+  // FUNGSI AMAN: Sisipkan Teks di Posisi Kursor/Gantikan Teks Terblok Tanpa Memilih Paksa
+  void _insertTextAtCursor(String insertText) {
+    final text = _isiController.text;
+    final selection = _isiController.selection;
+
+    if (selection.isValid && selection.baseOffset >= 0) {
+      final newText = text.replaceRange(selection.start, selection.end, insertText);
+      _isiController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: selection.start + insertText.length),
+      );
+    } else {
+      _isiController.text += insertText;
+      _isiController.selection = TextSelection.collapsed(offset: _isiController.text.length);
+    }
+  }
+
+  // FUNGSI 3: FORMAT TOOLBAR TEKS
   void _formatTeks(String action) {
     setState(() {
       if (action == 'bold') _isBoldActive = !_isBoldActive;
       if (action == 'italic') _isItalicActive = !_isItalicActive;
       if (action == 'underline') _isUnderlineActive = !_isUnderlineActive;
-      if (action == 'left') _textAlign = TextAlign.left;
-      if (action == 'center') _textAlign = TextAlign.center;
+
+      // Tata Letak Teks (Alignment)
+      if (action == 'align_left') _textAlign = TextAlign.left;
+      if (action == 'align_center') _textAlign = TextAlign.center;
+      if (action == 'align_right') _textAlign = TextAlign.right;
+      if (action == 'align_justify') _textAlign = TextAlign.justify;
+
+      // Sisipkan Bullet / Numbering / Link dengan Rapi
       if (action == 'bullet') {
-        _isBulletActive = !_isBulletActive;
-        if (_isBulletActive) {
-          _isiController.text = "• ${_isiController.text}";
-        }
-      }
-      if (action == 'link') {
-        _isiController.text += " [Tautan URL] ";
+        _insertTextAtCursor('• ');
+      } else if (action == 'number') {
+        _insertTextAtCursor('1. ');
+      } else if (action == 'link') {
+        _insertTextAtCursor('[Tautan URL]');
       }
     });
   }
@@ -167,7 +185,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER KUSTOM ESTETIK
+              // HEADER KUSTOM
               Row(
                 children: [
                   InkWell(
@@ -245,7 +263,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // --- 2. THUMBNAIL (BISA PILIH DARI GALERI) ---
+                    // --- 2. THUMBNAIL (AMBIL DARI GALERI) ---
                     const Text(
                       'Thumbnail Artikel',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
@@ -296,7 +314,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // --- 3. ISI ARTIKEL & TOOLBAR (TANPA SNACKBAR) ---
+                    // --- 3. ISI ARTIKEL & TOOLBAR TEKS ---
                     const Text(
                       'Isi Artikel',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
@@ -309,30 +327,49 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                         border: Border.all(color: Colors.grey.shade200),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Toolbar Rapat Kiri di Sisi Kiri
                           Container(
+                            width: double.infinity,
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
                               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
                             ),
-                            child: Row(
-                              children: [
-                                _buildToolbarButton(Icons.format_bold, 'bold', _isBoldActive),
-                                _buildToolbarButton(Icons.format_italic, 'italic', _isItalicActive),
-                                _buildToolbarButton(Icons.format_underlined, 'underline', _isUnderlineActive),
-                                Container(height: 20, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 6)),
-                                _buildToolbarButton(Icons.format_align_left, 'left', false),
-                                _buildToolbarButton(Icons.format_align_center, 'center', false),
-                                _buildToolbarButton(Icons.format_list_bulleted, 'bullet', _isBulletActive),
-                                _buildToolbarButton(Icons.link, 'link', false),
-                                IconButton(
-                                  icon: const Icon(Icons.image_rounded, size: 20, color: Color(0xFF2563EB)),
-                                  onPressed: _insertImageToContent,
-                                  tooltip: 'Sisipkan Gambar ke Teks',
-                                ),
-                              ],
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  _buildToolbarButton(Icons.format_bold, 'bold', _isBoldActive),
+                                  _buildToolbarButton(Icons.format_italic, 'italic', _isItalicActive),
+                                  _buildToolbarButton(Icons.format_underlined, 'underline', _isUnderlineActive),
+
+                                  Container(height: 20, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
+
+                                  // Alignment
+                                  _buildToolbarButton(Icons.format_align_left, 'align_left', _textAlign == TextAlign.left),
+                                  _buildToolbarButton(Icons.format_align_center, 'align_center', _textAlign == TextAlign.center),
+                                  _buildToolbarButton(Icons.format_align_right, 'align_right', _textAlign == TextAlign.right),
+                                  _buildToolbarButton(Icons.format_align_justify, 'align_justify', _textAlign == TextAlign.justify),
+
+                                  Container(height: 20, width: 1, color: Colors.grey.shade300, margin: const EdgeInsets.symmetric(horizontal: 8)),
+
+                                  // Poin/Numbered List
+                                  _buildToolbarButton(Icons.format_list_bulleted, 'bullet', false),
+                                  _buildToolbarButton(Icons.format_list_numbered, 'number', false),
+
+                                  _buildToolbarButton(Icons.link, 'link', false),
+
+                                  IconButton(
+                                    icon: const Icon(Icons.image_rounded, size: 20, color: Color(0xFF2563EB)),
+                                    onPressed: _insertImageToContent,
+                                    tooltip: 'Sisipkan Gambar ke Teks',
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           TextField(
@@ -347,7 +384,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                               decoration: _isUnderlineActive ? TextDecoration.underline : TextDecoration.none,
                             ),
                             decoration: const InputDecoration(
-                              hintText: 'Tulis isi artikel lengkap secara mendalam di sini...',
+                              hintText: 'Tulis isi artikel lengkap di sini...',
                               hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
                               contentPadding: EdgeInsets.all(18),
                               border: InputBorder.none,
