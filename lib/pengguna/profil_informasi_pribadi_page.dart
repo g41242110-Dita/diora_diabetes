@@ -235,37 +235,35 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: Color(0xFF1E293B)),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
           onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Informasi Pribadi',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: const Color(0xFFE2E8F0),
-            height: 1,
-          ),
         ),
       ),
       body: SafeArea(
         child: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF6679F4)),
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+        )
+            : Column(
+          children: [
+            const Text(
+              'Informasi Pribadi',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   children: [
                     if (_showSuccessAlert)
@@ -318,7 +316,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                         ),
                       ),
 
-                    // Kartu Profil Utama dengan Kesan Hidup & Interaktif
+                    // Kartu Profil Utama
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -327,7 +325,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                         border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -425,49 +423,45 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       ],
                     ),
                     const SizedBox(height: 24),
+
+                    // Tombol Simpan Perubahan (Bulat)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6679F4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: _isSaving ? null : _simpanPerubahan,
+                        child: _isSaving
+                            ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Text(
+                          'Simpan Perubahan',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-          ),
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 50,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6679F4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-              onPressed: _isSaving ? null : _simpanPerubahan,
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Simpan Perubahan',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -484,7 +478,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
           height: 72,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.person, size: 36, color: Color(0xFF94A3B8)),
+          const Icon(Icons.person, size: 36, color: Color(0xFF94A3B8)),
         );
       } catch (_) {}
     }
@@ -521,7 +515,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,
             separatorBuilder: (context, index) =>
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
             itemBuilder: (context, index) {
               final item = items[index];
               return AnimatedContainer(
@@ -529,7 +523,6 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    // Ikon diberikan kontena latar belakang lembut supaya kelihatan hidup & menonjol
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
