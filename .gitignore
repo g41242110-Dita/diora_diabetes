@@ -18,17 +18,10 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# Gradle / Android Cache related
-.gradle/
-**/android/.gradle/
-android/.gradle/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# VS Code related
 #.vscode/
 
-# Flutter/Dart/Pub related
+# Flutter / Dart / Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -38,16 +31,24 @@ android/.gradle/
 /build/
 /coverage/
 
-# Symbolication related
-app.*.symbols
+# Android / Gradle related (Abaikan file cache & auto-generated)
+.gradle/
+**/android/.gradle/
+android/.gradle/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+android/gradlew
+android/gradlew.bat
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
-# Obfuscation related
+# Symbolication & Obfuscation related
+app.*.symbols
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Android Studio build artifacts
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# Widget Preview related
+# Widget Preview
 .widget_preview/
