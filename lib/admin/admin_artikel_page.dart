@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_tambah_artikel_page.dart'; // Import halaman Tambah Artikel
 
 class AdminArtikelPage extends StatefulWidget {
   final VoidCallback? onBackToBeranda;
@@ -12,6 +13,9 @@ class AdminArtikelPage extends StatefulWidget {
 class _AdminArtikelPageState extends State<AdminArtikelPage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'Artikel Draf';
+  
+  // Status untuk berpindah antara tampilan daftar dan form tambah artikel
+  bool _isTambahArtikel = false;
 
   final List<Map<String, String>> _articles = [
     {
@@ -39,6 +43,17 @@ class _AdminArtikelPageState extends State<AdminArtikelPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Jika tombol "+ Tambah Artikel" diklik, tampilkan form AdminTambahArtikelPage
+    if (_isTambahArtikel) {
+      return AdminTambahArtikelPage(
+        onBack: () {
+          setState(() {
+            _isTambahArtikel = false; // Kembali ke daftar artikel
+          });
+        },
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       body: SafeArea(
@@ -47,7 +62,7 @@ class _AdminArtikelPageState extends State<AdminArtikelPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER KUSTOM DENGAN TOMBOL BACK
+              // HEADER KUSTOM DENGAN TOMBOL BACK KE BERANDA
               Row(
                 children: [
                   GestureDetector(
@@ -78,11 +93,15 @@ class _AdminArtikelPageState extends State<AdminArtikelPage> {
               ),
               const SizedBox(height: 16),
 
-              // Tombol Tambah Artikel
+              // Tombol Tambah Artikel (Bisa Dipencet & Membuka Form)
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    setState(() {
+                      _isTambahArtikel = true; // Buka form Tambah Artikel
+                    });
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF536DFE),
                     shape: RoundedRectangleBorder(
@@ -226,14 +245,32 @@ class _AdminArtikelPageState extends State<AdminArtikelPage> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  InkWell(
-                                    onTap: () {},
-                                    child: const Icon(Icons.edit, size: 18, color: Colors.black87),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () {
+                                        // Aksi Edit Artikel
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(6.0),
+                                        child: Icon(Icons.edit, size: 18, color: Colors.black87),
+                                      ),
+                                    ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  InkWell(
-                                    onTap: () {},
-                                    child: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                  const SizedBox(width: 12),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () {
+                                        // Aksi Hapus Artikel
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(6.0),
+                                        child: Icon(Icons.delete, size: 18, color: Colors.red),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
