@@ -46,10 +46,9 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
           _webImageThumbnail = bytes;
           _imageNameThumbnail = pickedFile.name;
         });
-        _showSnackBar("Thumbnail berhasil dipilih dari galeri! 🖼️", Colors.green);
       }
     } catch (e) {
-      _showSnackBar("Gagal mengambil gambar: $e", Colors.red);
+      debugPrint("Gagal mengambil gambar: $e");
     }
   }
 
@@ -61,14 +60,13 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
         setState(() {
           _isiController.text += "\n[Gambar Disisipkan: ${pickedFile.name}]\n";
         });
-        _showSnackBar("Gambar berhasil disisipkan ke isi artikel! 📸", Colors.blue);
       }
     } catch (e) {
-      _showSnackBar("Gagal menyisipkan gambar: $e", Colors.red);
+      debugPrint("Gagal menyisipkan gambar: $e");
     }
   }
 
-  // FUNGSI 3: FORMAT TOOLBAR TEKS
+  // FUNGSI 3: FORMAT TOOLBAR TEKS (TANPA POP-UP / SNACKBAR)
   void _formatTeks(String action) {
     setState(() {
       if (action == 'bold') _isBoldActive = !_isBoldActive;
@@ -86,22 +84,9 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
         _isiController.text += " [Tautan URL] ";
       }
     });
-    _showSnackBar("Format teks diterapkan ($action)", Colors.indigo);
   }
 
-  void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
-  // POPUP SUKSES SUPER ESTETIK
+  // POPUP SUKSES SAAT KLIK SIMPAN ARTIKEL
   void _tampilkanPopupSukses() {
     showDialog(
       context: context,
@@ -117,8 +102,8 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEFF6FF),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -175,7 +160,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9), // Latar belakang abu-abu terang modern
+      backgroundColor: const Color(0xFFF1F5F9),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
@@ -260,7 +245,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // --- 2. THUMBNAIL (BERFUNGSI AMBIL DARI GALERI) ---
+                    // --- 2. THUMBNAIL (BISA PILIH DARI GALERI) ---
                     const Text(
                       'Thumbnail Artikel',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
@@ -268,7 +253,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                     const SizedBox(height: 8),
                     InkWell(
                       borderRadius: BorderRadius.circular(16),
-                      onTap: _pickThumbnailFromGallery, // <-- TERHUBUNG KE GALERI PERANGKAT
+                      onTap: _pickThumbnailFromGallery,
                       child: Container(
                         width: double.infinity,
                         height: _webImageThumbnail != null ? 180 : 130,
@@ -295,7 +280,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                                     style: TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text('Format: JPG, PNG (Maks 2 MB)', style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),),
+                                  const Text('Format: JPG, PNG (Maks 2 MB)', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                                 ],
                               )
                             : Align(
@@ -311,7 +296,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // --- 3. ISI ARTIKEL & TOOLBAR AKTIF PENUH ---
+                    // --- 3. ISI ARTIKEL & TOOLBAR (TANPA SNACKBAR) ---
                     const Text(
                       'Isi Artikel',
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
@@ -325,7 +310,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                       ),
                       child: Column(
                         children: [
-                          // Toolbar Interaktif Berfungsi
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
@@ -343,7 +327,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage> {
                                 _buildToolbarButton(Icons.format_align_center, 'center', false),
                                 _buildToolbarButton(Icons.format_list_bulleted, 'bullet', _isBulletActive),
                                 _buildToolbarButton(Icons.link, 'link', false),
-                                // Tombol Gambar di Toolbar (Berfungsi Ambil Gambar Galeri)
                                 IconButton(
                                   icon: const Icon(Icons.image_rounded, size: 20, color: Color(0xFF2563EB)),
                                   onPressed: _insertImageToContent,
