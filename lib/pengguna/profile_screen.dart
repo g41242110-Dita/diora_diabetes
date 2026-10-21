@@ -101,32 +101,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         body: SafeArea(
           child: _isLoading
               ? const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
-                )
+            child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+          )
               : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Header & Kartu Mengambang
-                      Stack(
-                        clipBehavior: Clip.none,
-                        alignment: Alignment.center,
-                        children: [
-                          _buildTopGradientHeader(),
-                          Positioned(
-                            top: 85,
-                            left: 20,
-                            right: 20,
-                            child: _buildFloatingCard(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 155),
-                      // Menu Navigasi
-                      _buildMenuList(),
-                      const SizedBox(height: 36),
-                    ],
-                  ),
+            child: Column(
+              children: [
+                // Header & Kartu Mengambang
+                Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    _buildTopGradientHeader(),
+                    Positioned(
+                      top: 75,
+                      left: 20,
+                      right: 20,
+                      child: _buildFloatingCard(),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 110), // Jarak dirapikan agar tidak terlalu jauh
+                // Menu Navigasi
+                _buildMenuList(),
+                const SizedBox(height: 100), // Memberi ruang ekstra untuk navbar bawah
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -136,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildTopGradientHeader() {
     return Container(
       width: double.infinity,
-      height: 180,
+      height: 170,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -145,8 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
       ),
       child: Row(
@@ -177,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 2. Kartu Profil Mengambang (Nama & Email yang diperjelas warnanya)
+  // 2. Kartu Profil Mengambang
   Widget _buildFloatingCard() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -186,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -194,12 +194,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          _buildAvatar(size: 84),
+          _buildAvatar(size: 80),
           const SizedBox(height: 12),
           Text(
             'Halo, $_namaDisplay 👋',
             style: const TextStyle(
-              color: Color(0xFF0F172A), // Hitam arang pekat (Slate 900)
+              color: Color(0xFF0F172A),
               fontSize: 18,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.2,
@@ -208,11 +208,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             _emailDisplay,
             style: const TextStyle(
-              color: Color(0xFF334155), // Abu-abu gelap tegas (Slate 700)
+              color: Color(0xFF334155),
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
             ),
@@ -226,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 3. Avatar Foto / Inisial
-  Widget _buildAvatar({double size = 88}) {
+  Widget _buildAvatar({double size = 80}) {
     if (_base64Image != null && _base64Image!.isNotEmpty) {
       try {
         return Container(
@@ -235,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             border: Border.all(color: const Color(0xFFEEF2FF), width: 4),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4F46E5).withOpacity(0.15),
+                color: const Color(0xFF4F46E5).withValues(alpha: 0.15),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -267,7 +267,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: Colors.white, width: 4),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F46E5).withOpacity(0.15),
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -344,7 +344,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
-          const SizedBox(height: 6),
           _buildMenuItem(
             icon: Icons.logout_rounded,
             iconColor: const Color(0xFFEF4444),
@@ -381,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
