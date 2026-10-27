@@ -19,7 +19,7 @@ class _DokterCurvedNavBarState extends State<DokterCurvedNavBar>
   late AnimationController _animationController;
   late Animation<double> _curveAnimation;
 
-  // 5 Menu Utama Dokter (Beranda, Skrining, Konsultasi, Lokasi, Profil)
+  // 5 Menu Utama Dokter
   static const List<_NavItemData> _items = [
     _NavItemData(
       index: 0,
