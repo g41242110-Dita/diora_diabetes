@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// Model sederhana untuk data pasien skrining
+// Model data pasien skrining
 class PatientScreening {
   final String id;
   final String name;
@@ -24,7 +24,7 @@ class PatientScreening {
 }
 
 class DokterSkriningPage extends StatefulWidget {
-  const DokterSkriningPage({Key? key}) : super(key: key);
+  const DokterSkriningPage({super.key});
 
   @override
   State<DokterSkriningPage> createState() => _DokterSkriningPageState();
@@ -77,26 +77,25 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Menghitung jumlah masing-masing kategori
     int positiveCount = allPatients.where((p) => p.isPositive).length;
     int negativeCount = allPatients.where((p) => !p.isPositive).length;
 
-    // Filter data pasien
+    // Filter data pasien berdasarkan pencarian dan filter tab
     List<PatientScreening> filteredPatients = allPatients.where((patient) {
       bool matchesSearch = patient.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
           patient.id.toLowerCase().contains(searchQuery.toLowerCase());
-      
+
       if (!matchesSearch) return false;
 
       if (selectedFilterIndex == 1) return patient.isPositive;
       if (selectedFilterIndex == 2) return !patient.isPositive;
-      return true; // Semua
+      return true;
     }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,14 +111,14 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                         Text(
                           'Triase & Skrining Pasien',
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E2761),
                           ),
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Daftar kuesioner risiko diabetes masuk dari aplikasi pasien',
+                          'Daftar kuesioner risiko diabetes masuk',
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey,
@@ -129,9 +128,9 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8EEFF),
+                      color: const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -139,20 +138,20 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF4C6FFF),
+                        color: Color(0xFF4F46E5),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // Search Input Field
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFF4C6FFF), width: 1.2),
+                  border: Border.all(color: const Color(0xFF4F46E5).withValues(alpha: 0.3), width: 1.2),
                 ),
                 child: TextField(
                   onChanged: (val) {
@@ -162,46 +161,48 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                   },
                   decoration: const InputDecoration(
                     hintText: 'Cari nama pasien atau ID Skrining',
-                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                    prefixIcon: Icon(Icons.search, color: Color(0xFF4C6FFF)),
+                    hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: Color(0xFF4F46E5), size: 20),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Filter Tabs (Dibuat horizontal scroll agar tidak overflow)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFilterTab(0, 'Semua (${allPatients.length})'),
+                    const SizedBox(width: 8),
+                    _buildFilterTab(1, 'Positif ($positiveCount)'),
+                    const SizedBox(width: 8),
+                    _buildFilterTab(2, 'Negatif ($negativeCount)'),
+                  ],
                 ),
               ),
               const SizedBox(height: 14),
 
-              // Filter Tabs (Semua, Positif, Negatif)
-              Row(
-                children: [
-                  _buildFilterTab(0, 'Semua (${allPatients.length})'),
-                  const SizedBox(width: 8),
-                  _buildFilterTab(1, 'Positif ($positiveCount)'),
-                  const SizedBox(width: 8),
-                  _buildFilterTab(2, 'Negatif ($negativeCount)'),
-                ],
+              // Daftar Kartu Pasien (Di-wrap Expanded + BouncingScrollPhysics agar lancar)
+              Expanded(
+                child: filteredPatients.isEmpty
+                    ? const Center(
+                  child: Text(
+                    'Tidak ada data pasien ditemukan',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                )
+                    : ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: filteredPatients.length,
+                  itemBuilder: (context, index) {
+                    return _buildPatientCard(filteredPatients[index]);
+                  },
+                ),
               ),
-              const SizedBox(height: 16),
-
-              // List of Patient Cards
-              filteredPatients.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 40.0),
-                        child: Text(
-                          'Tidak ada data pasien ditemukan',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: filteredPatients.length,
-                      itemBuilder: (context, index) {
-                        return _buildPatientCard(filteredPatients[index]);
-                      },
-                    ),
             ],
           ),
         ),
@@ -218,21 +219,22 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
           selectedFilterIndex = index;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF5C7CFA) : Colors.white,
+          color: isSelected ? const Color(0xFF4F46E5) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF5C7CFA) : Colors.grey.shade300,
+            color: isSelected ? const Color(0xFF4F46E5) : Colors.grey.shade300,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : Colors.grey.shade600,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : Colors.grey.shade700,
           ),
         ),
       ),
@@ -241,7 +243,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
   // Widget Kartu Pasien
   Widget _buildPatientCard(PatientScreening patient) {
-    Color statusColor = patient.isPositive ? Colors.red : Colors.green;
+    Color statusColor = patient.isPositive ? Colors.redAccent : Colors.green;
     String statusText = patient.isPositive ? 'Positif' : 'Negatif';
 
     return Container(
@@ -249,12 +251,12 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -273,17 +275,17 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                     Text(
                       patient.name,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'ID: ${patient.id} • ${patient.gender}, ${patient.age} th',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade600,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -323,7 +325,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 children: [
                   const Text(
                     'Prediksi',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                    style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -341,7 +343,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 children: [
                   const Text(
                     'Gejala Afirmatif',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                    style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -349,7 +351,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ],
@@ -359,21 +361,21 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 children: [
                   const Text(
                     'Tanggal',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                    style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     patient.date,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Colors.black87,
+                      color: Color(0xFF0F172A),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // Action Buttons: Rincian & Chat
           Row(
@@ -382,20 +384,19 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 child: SizedBox(
                   height: 32,
                   child: OutlinedButton(
-                    onPressed: () {
-                      // Action rincian
-                    },
+                    onPressed: () {},
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF4C6FFF)),
+                      side: const BorderSide(color: Color(0xFF4F46E5)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: const Text(
                       'Rincian',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF4C6FFF),
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4F46E5),
                       ),
                     ),
                   ),
@@ -406,20 +407,19 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 child: SizedBox(
                   height: 32,
                   child: OutlinedButton(
-                    onPressed: () {
-                      // Action chat
-                    },
+                    onPressed: () {},
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF4C6FFF)),
+                      side: const BorderSide(color: Color(0xFF4F46E5)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: const Text(
                       'Chat',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF4C6FFF),
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4F46E5),
                       ),
                     ),
                   ),
