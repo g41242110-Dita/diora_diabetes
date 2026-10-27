@@ -13,12 +13,11 @@ class _DokterBerandaPageState extends State<DokterBerandaPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 5 Halaman Utama Dokter
     final List<Widget> pages = [
-      const _DokterDashboardView(), // Tampilan Dashboard Utama Dokter
-      const Center(child: Text('Halaman Hasil Skrining Pasien')),
+      const _DokterDashboardContentView(),
+      const Center(child: Text('Halaman Skrining Pasien')),
       const Center(child: Text('Halaman Konsultasi Chat')),
-      const Center(child: Text('Halaman Lokasi Praktek / Faskes')),
+      const Center(child: Text('Halaman Lokasi Praktek')),
       const Center(child: Text('Halaman Profil Dokter')),
     ];
 
@@ -40,203 +39,377 @@ class _DokterBerandaPageState extends State<DokterBerandaPage> {
   }
 }
 
-// Widget Khusus Tampilan Dashboard Dokter
-class _DokterDashboardView extends StatelessWidget {
-  const _DokterDashboardView();
+class _DokterDashboardContentView extends StatelessWidget {
+  const _DokterDashboardContentView();
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Menyapa Dokter
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          // -----------------------------------------------------------------
+          // 1. HEADER + BANNER DALAM 1 INTEGRATED CONTAINER (Presisi & Rapi)
+          // -----------------------------------------------------------------
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(
+              top: 54.0,
+              left: 20.0,
+              right: 20.0,
+              bottom: 20.0,
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
+              ),
+            ),
+            child: Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Selamat Datang, 👋',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
+                // Baris Info Profil Dokter & Notifikasi
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Color(0xFFEEF2FF),
+                        child: Icon(Icons.person, color: Color(0xFF4F46E5), size: 26),
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      'dr. Amanda Putri',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Halo, dr. Amanda Putri, Sp.PD',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Dokter Spesialis Penyakit Dalam • Klinik Sentosa',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Color(0xFFE0E7FF),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: Colors.white,
+                        size: 24,
                       ),
                     ),
                   ],
                 ),
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Color(0xFFEEF2FF),
-                  child: Icon(
-                    Icons.person_rounded,
-                    color: Color(0xFF4F46E5),
-                    size: 28,
+
+                const SizedBox(height: 18),
+
+                // Card Panel Kendali (Menjadi bagian langsung dari header)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Panel Kendali Dokter',
+                              style: TextStyle(
+                                color: Color(0xFF4F46E5),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'SIP : 446/SIP/2024',
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Ada 4 pasien berisiko tinggi yang membutuhkan verifikasi skrining & anjuran lab hari ini.',
+                        style: TextStyle(
+                          color: Color(0xFF334155),
+                          fontSize: 12,
+                          height: 1.35,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+          ),
 
-            // Kartu Ringkasan Statistik
-            Row(
+          const SizedBox(height: 20),
+
+          // -----------------------------------------------------------------
+          // 2. GRID KARTU STATISTIK DOKTER
+          // -----------------------------------------------------------------
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.35,
               children: [
-                Expanded(
-                  child: _buildStatCard(
-                    title: 'Total Pasien',
-                    count: '24',
-                    icon: Icons.people_alt_rounded,
-                    color: const Color(0xFF4F46E5),
-                  ),
+                _buildStatGridCard(
+                  icon: Icons.chat_bubble_rounded,
+                  accentColor: const Color(0xFF6366F1),
+                  bgGradient: const [Color(0xFFEEF2FF), Color(0xFFF5F3FF)],
+                  count: '3',
+                  title: 'Antrean Konsul',
+                  subtitle: '1 Pasien Baru',
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    title: 'Perlu Review',
-                    count: '5',
-                    icon: Icons.assignment_late_rounded,
-                    color: const Color(0xFFF59E0B),
-                  ),
+                _buildStatGridCard(
+                  icon: Icons.assignment_turned_in_rounded,
+                  accentColor: const Color(0xFF8B5CF6),
+                  bgGradient: const [Color(0xFFF3E8FF), Color(0xFFFAF5FF)],
+                  count: '4',
+                  title: 'Skrining Masuk',
+                  subtitle: '2 Positif',
+                ),
+                _buildStatGridCard(
+                  icon: Icons.groups_rounded,
+                  accentColor: const Color(0xFF0EA5E9),
+                  bgGradient: const [Color(0xFFE0F2FE), Color(0xFFF0F9FF)],
+                  count: '13',
+                  title: 'Pasien Hari Ini',
+                  subtitle: 'Klinik Sentosa',
+                ),
+                _buildStatGridCard(
+                  icon: Icons.calendar_today_rounded,
+                  accentColor: const Color(0xFFEC4899),
+                  bgGradient: const [Color(0xFFFCE7F3), Color(0xFFFDF2F8)],
+                  count: '08-14',
+                  title: 'Jadwal Praktik',
+                  subtitle: 'WIB',
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+          ),
 
-            // Judul Bagian Konsultasi
-            Row(
+          const SizedBox(height: 20),
+
+          // -----------------------------------------------------------------
+          // 3. ANTREAN KONSULTASI PASIEN
+          // -----------------------------------------------------------------
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Konsultasi Terbaru',
+                  'Antrean Konsultasi Pasien',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                TextButton(
-                  onPressed: () {},
+                GestureDetector(
+                  onTap: () {},
                   child: const Text(
                     'Lihat Semua',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                       color: Color(0xFF4F46E5),
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 10),
+          _buildConsultationItem(
+            name: 'Aurelia Prislla',
+            ageGender: '20 th • Perempuan',
+            time: '09:17',
+            status: 'Positif',
+            message: 'Dok, saya ingin menanyakan hasil skrining',
+          ),
+          _buildConsultationItem(
+            name: 'Budi Hartono',
+            ageGender: '48 th • Laki-Laki',
+            time: '08:17',
+            status: 'Positif',
+            message: 'Baik dok, besok pagi jam 8 saya akan datang ke klinik ...',
+          ),
 
-            // Item Daftar Pasien Konsultasi
-            _buildPatientItem(
-              name: 'Budi Santoso',
-              desc: 'Hasil gula darah puasa: 180 mg/dL',
-              time: '10:30 WIB',
-              statusColor: Colors.red,
-            ),
-            _buildPatientItem(
-              name: 'Siti Rahma',
-              desc: 'Minta penyesuaian dosis obat harian',
-              time: '09:15 WIB',
-              statusColor: Colors.orange,
-            ),
-            _buildPatientItem(
-              name: 'Ahmad Dahlan',
-              desc: 'Skrining mingguan selesai',
-              time: 'Kemarin',
-              statusColor: Colors.green,
-            ),
-          ],
-        ),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 
-  // Helper Card Statistik
-  Widget _buildStatCard({
-    required String title,
-    required String count,
+  Widget _buildStatGridCard({
     required IconData icon,
-    required Color color,
+    required Color accentColor,
+    required List<Color> bgGradient,
+    required String count,
+    required String title,
+    required String subtitle,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: bgGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.15),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: accentColor.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: accentColor, size: 18),
+              ),
+              Text(
+                count,
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                  color: accentColor,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            count,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // Helper List Item Pasien
-  Widget _buildPatientItem({
+  Widget _buildConsultationItem({
     required String name,
-    required String desc,
+    required String ageGender,
     required String time,
-    required Color statusColor,
+    required String status,
+    required String message,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.025),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -244,49 +417,80 @@ class _DokterDashboardView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: statusColor.withValues(alpha: 0.12),
-            child: Text(
-              name[0],
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: statusColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      time,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      status,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      ageGender,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Text(
-                  desc,
+                  message,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF64748B),
+                    fontSize: 11.5,
+                    color: Color(0xFF94A3B8),
                   ),
                 ),
               ],
             ),
           ),
-          Text(
-            time,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF94A3B8),
-            ),
+          const SizedBox(width: 8),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: Color(0xFF4F46E5),
+            size: 24,
           ),
         ],
       ),
