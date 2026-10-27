@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dokter_curved_nav_bar.dart';
+import 'dokter_konsultasi_page.dart'; // IMPORT FILE KONSULTASI
 
 class DokterBerandaPage extends StatefulWidget {
   const DokterBerandaPage({super.key});
@@ -16,7 +17,7 @@ class _DokterBerandaPageState extends State<DokterBerandaPage> {
     final List<Widget> pages = [
       const _DokterDashboardContentView(),
       const Center(child: Text('Halaman Skrining Pasien')),
-      const Center(child: Text('Halaman Konsultasi Chat')),
+      const DokterKonsultasiPage(), // TERHUBUNG KE HALAMAN KONSULTASI
       const Center(child: Text('Halaman Lokasi Praktek')),
       const Center(child: Text('Halaman Profil Dokter')),
     ];
