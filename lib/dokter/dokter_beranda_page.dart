@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'dokter_curved_nav_bar.dart';
 import 'dokter_skrining_page.dart';
 import 'dokter_konsultasi_page.dart';
+import 'dokter_lokasi_page.dart'; // HALAMAN LOKASI SUDAH TERHUBUNG
 import 'dokter_profil_page.dart';
 
 class DokterBerandaPage extends StatefulWidget {
@@ -22,7 +23,7 @@ class _DokterBerandaPageState extends State<DokterBerandaPage> {
       const _DokterDashboardContentView(), // Index 0: Beranda/Dashboard
       const DokterSkriningPage(),           // Index 1: Skrining Pasien
       const DokterKonsultasiPage(),         // Index 2: Konsultasi Chat
-      const Center(child: Text('Halaman Lokasi Praktek')), // Index 3: Lokasi
+      const DokterLokasiPage(),             // Index 3: Lokasi Praktik & Faskes (FIKS)
       const DokterProfilPage(),             // Index 4: Profil Dokter
     ];
 
@@ -209,7 +210,6 @@ class _DokterDashboardContentView extends StatelessWidget {
             ],
           ),
 
-          // Jarak makin rapat dari banner ke 4 Kotak Statistik (36px)
           const SizedBox(height: 36),
 
           // -----------------------------------------------------------------
@@ -295,7 +295,7 @@ class _DokterDashboardContentView extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _buildConsultationItem(
-            name: 'Aurelia Prislla',
+            name: 'Aurelia Priscilla',
             ageGender: '20 th • Perempuan',
             time: '09:17',
             status: 'Positif',
