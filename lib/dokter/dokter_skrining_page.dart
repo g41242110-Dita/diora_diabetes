@@ -120,79 +120,88 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () {
+            // Aksi kembali ke Beranda atau halaman sebelumnya
+            Navigator.pop(context);
+          },
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'Triase & Skrining Pasien',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E2761)),
+            ),
+            Text(
+              'Daftar kuesioner risiko diabetes masuk',
+              style: TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(12)),
+                  child: Text('${allPatients.length} Pasien', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF4F46E5))),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF4F46E5).withOpacity(0.3), width: 1.2),
+              ),
+              child: TextField(
+                onChanged: (val) => setState(() => searchQuery = val),
+                decoration: const InputDecoration(
+                  hintText: 'Cari nama pasien atau ID Skrining',
+                  hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey),
+                  prefixIcon: Icon(Icons.search, color: Color(0xFF4F46E5), size: 20),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Triase & Skrining Pasien',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E2761)),
-                        ),
-                        SizedBox(height: 2),
-                        Text('Daftar kuesioner risiko diabetes masuk', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(12)),
-                    child: Text('${allPatients.length} Pasien', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF4F46E5))),
-                  ),
+                  _buildFilterTab(0, 'Semua (${allPatients.length})'),
+                  const SizedBox(width: 8),
+                  _buildFilterTab(1, 'Positif ($positiveCount)'),
+                  const SizedBox(width: 8),
+                  _buildFilterTab(2, 'Negatif ($negativeCount)'),
                 ],
               ),
-              const SizedBox(height: 14),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFF4F46E5).withOpacity(0.3), width: 1.2),
-                ),
-                child: TextField(
-                  onChanged: (val) => setState(() => searchQuery = val),
-                  decoration: const InputDecoration(
-                    hintText: 'Cari nama pasien atau ID Skrining',
-                    hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey),
-                    prefixIcon: Icon(Icons.search, color: Color(0xFF4F46E5), size: 20),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    _buildFilterTab(0, 'Semua (${allPatients.length})'),
-                    const SizedBox(width: 8),
-                    _buildFilterTab(1, 'Positif ($positiveCount)'),
-                    const SizedBox(width: 8),
-                    _buildFilterTab(2, 'Negatif ($negativeCount)'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: filteredPatients.isEmpty
-                    ? const Center(child: Text('Tidak ada data pasien ditemukan', style: TextStyle(color: Colors.grey, fontSize: 13)))
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: filteredPatients.length,
-                        itemBuilder: (context, index) => _buildPatientCard(filteredPatients[index]),
-                      ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: filteredPatients.isEmpty
+                  ? const Center(child: Text('Tidak ada data pasien ditemukan', style: TextStyle(color: Colors.grey, fontSize: 13)))
+                  : ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: filteredPatients.length,
+                      itemBuilder: (context, index) => _buildPatientCard(filteredPatients[index]),
+                    ),
+            ),
+          ],
         ),
       ),
     );
@@ -484,7 +493,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 }
 
 // =========================================================================
-// HALAMAN DETAIL HASIL SKRINING (Dokumen Lengkap - Tombol Chat Dihapus)
+// HALAMAN DETAIL HASIL SKRINING (Dokumen Lengkap)
 // =========================================================================
 class DetailHasilSkriningPage extends StatelessWidget {
   final PatientScreening patient;
