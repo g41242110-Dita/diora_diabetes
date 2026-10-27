@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+
+// IMPORT SELURUH HALAMAN DOKTER SESUAI STRUKTUR FOLDER
 import 'dokter_curved_nav_bar.dart';
-import 'dokter_konsultasi_page.dart'; // IMPORT FILE KONSULTASI
+import 'dokter_skrining_page.dart';
+import 'dokter_konsultasi_page.dart';
+import 'dokter_profil_page.dart';
 
 class DokterBerandaPage extends StatefulWidget {
   const DokterBerandaPage({super.key});
@@ -14,12 +18,13 @@ class _DokterBerandaPageState extends State<DokterBerandaPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 5 HALAMAN DOKTER SESUAI URUTAN BOTTOM NAV BAR
     final List<Widget> pages = [
-      const _DokterDashboardContentView(),
-      const Center(child: Text('Halaman Skrining Pasien')),
-      const DokterKonsultasiPage(), // TERHUBUNG KE HALAMAN KONSULTASI
-      const Center(child: Text('Halaman Lokasi Praktek')),
-      const Center(child: Text('Halaman Profil Dokter')),
+      const _DokterDashboardContentView(), // Index 0: Beranda/Dashboard
+      const DokterSkriningPage(),           // Index 1: Skrining Pasien
+      const DokterKonsultasiPage(),         // Index 2: Konsultasi Chat
+      const Center(child: Text('Halaman Lokasi Praktek')), // Index 3: Lokasi (Placeholder jika belum ada file)
+      const DokterProfilPage(),             // Index 4: Profil Dokter
     ];
 
     return Scaffold(
@@ -50,7 +55,7 @@ class _DokterDashboardContentView extends StatelessWidget {
       child: Column(
         children: [
           // -----------------------------------------------------------------
-          // 1. HEADER + BANNER DALAM 1 INTEGRATED CONTAINER (Presisi & Rapi)
+          // 1. HEADER + BANNER DALAM 1 INTEGRATED CONTAINER
           // -----------------------------------------------------------------
           Container(
             width: double.infinity,
@@ -73,7 +78,6 @@ class _DokterDashboardContentView extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Baris Info Profil Dokter & Notifikasi
                 Row(
                   children: [
                     Container(
@@ -132,7 +136,6 @@ class _DokterDashboardContentView extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                // Card Panel Kendali (Menjadi bagian langsung dari header)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
