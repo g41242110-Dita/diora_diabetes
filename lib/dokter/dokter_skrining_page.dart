@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 
+// Model Pertanyaan Kuesioner
+class QuestionItem {
+  final int number;
+  final String question;
+  final bool isYes; // true untuk "Ya", false untuk "Tidak"
+
+  QuestionItem({
+    required this.number,
+    required this.question,
+    required this.isYes,
+  });
+}
+
 // Model data pasien skrining
 class PatientScreening {
   final String id;
@@ -10,6 +23,7 @@ class PatientScreening {
   final int affirmativeSymptoms;
   final int totalSymptoms;
   final String date;
+  final List<QuestionItem> questionnaireAnswers;
 
   PatientScreening({
     required this.id,
@@ -20,6 +34,7 @@ class PatientScreening {
     required this.affirmativeSymptoms,
     this.totalSymptoms = 7,
     required this.date,
+    required this.questionnaireAnswers,
   });
 }
 
@@ -35,7 +50,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
   int selectedFilterIndex = 0;
   String searchQuery = "";
 
-  // Data Dummy sesuai desain visual
+  // Data Dummy lengkap dengan 14 pertanyaan kuesioner (Belum ke Database)
   final List<PatientScreening> allPatients = [
     PatientScreening(
       id: 'GS-20250917-001',
@@ -45,6 +60,22 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       isPositive: true,
       affirmativeSymptoms: 5,
       date: '17 September 2025',
+      questionnaireAnswers: [
+        QuestionItem(number: 1, question: 'Apakah kamu sering buang air kecil (BAK)?', isYes: true),
+        QuestionItem(number: 2, question: 'Apakah kamu sering merasa haus?', isYes: true),
+        QuestionItem(number: 3, question: 'Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?', isYes: false),
+        QuestionItem(number: 4, question: 'Apakah kamu sering merasa lemas atau mudah lelah?', isYes: true),
+        QuestionItem(number: 5, question: 'Apakah kamu sering merasa lapar meskipun sudah makan?', isYes: true),
+        QuestionItem(number: 6, question: 'Apakah kamu sering mengalami infeksi jamur, terutama di area genital?', isYes: true),
+        QuestionItem(number: 7, question: 'Apakah penglihatan kamu sering terasa kabur?', isYes: false),
+        QuestionItem(number: 8, question: 'Apakah kamu sering mengalami gatal-gatal pada kulit?', isYes: true),
+        QuestionItem(number: 9, question: 'Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?', isYes: true),
+        QuestionItem(number: 10, question: 'Apakah luka pada tubuh kamu sulit sembuh?', isYes: false),
+        QuestionItem(number: 11, question: 'Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?', isYes: true),
+        QuestionItem(number: 12, question: 'Apakah kamu sering mengalami kaku atau tegang pada otot?', isYes: true),
+        QuestionItem(number: 13, question: 'Apakah kamu mengalami kerontokan rambut yang tidak biasa?', isYes: false),
+        QuestionItem(number: 14, question: 'Apakah berat badan kamu termasuk berlebih/obesitas?', isYes: true),
+      ],
     ),
     PatientScreening(
       id: 'GS-20250917-002',
@@ -54,6 +85,22 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       isPositive: true,
       affirmativeSymptoms: 6,
       date: '17 September 2025',
+      questionnaireAnswers: [
+        QuestionItem(number: 1, question: 'Apakah kamu sering buang air kecil (BAK)?', isYes: true),
+        QuestionItem(number: 2, question: 'Apakah kamu sering merasa haus?', isYes: true),
+        QuestionItem(number: 3, question: 'Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?', isYes: true),
+        QuestionItem(number: 4, question: 'Apakah kamu sering merasa lemas atau mudah lelah?', isYes: true),
+        QuestionItem(number: 5, question: 'Apakah kamu sering merasa lapar meskipun sudah makan?', isYes: false),
+        QuestionItem(number: 6, question: 'Apakah kamu sering mengalami infeksi jamur, terutama di area genital?', isYes: true),
+        QuestionItem(number: 7, question: 'Apakah penglihatan kamu sering terasa kabur?', isYes: true),
+        QuestionItem(number: 8, question: 'Apakah kamu sering mengalami gatal-gatal pada kulit?', isYes: false),
+        QuestionItem(number: 9, question: 'Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?', isYes: true),
+        QuestionItem(number: 10, question: 'Apakah luka pada tubuh kamu sulit sembuh?', isYes: false),
+        QuestionItem(number: 11, question: 'Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?', isYes: false),
+        QuestionItem(number: 12, question: 'Apakah kamu sering mengalami kaku atau tegang pada otot?', isYes: false),
+        QuestionItem(number: 13, question: 'Apakah kamu mengalami kerontokan rambut yang tidak biasa?', isYes: false),
+        QuestionItem(number: 14, question: 'Apakah berat badan kamu termasuk berlebih/obesitas?', isYes: false),
+      ],
     ),
     PatientScreening(
       id: 'GS-20250916-003',
@@ -63,6 +110,22 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       isPositive: true,
       affirmativeSymptoms: 3,
       date: '16 September 2025',
+      questionnaireAnswers: [
+        QuestionItem(number: 1, question: 'Apakah kamu sering buang air kecil (BAK)?', isYes: true),
+        QuestionItem(number: 2, question: 'Apakah kamu sering merasa haus?', isYes: true),
+        QuestionItem(number: 3, question: 'Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?', isYes: false),
+        QuestionItem(number: 4, question: 'Apakah kamu sering merasa lemas atau mudah lelah?', isYes: true),
+        QuestionItem(number: 5, question: 'Apakah kamu sering merasa lapar meskipun sudah makan?', isYes: false),
+        QuestionItem(number: 6, question: 'Apakah kamu sering mengalami infeksi jamur, terutama di area genital?', isYes: false),
+        QuestionItem(number: 7, question: 'Apakah penglihatan kamu sering terasa kabur?', isYes: false),
+        QuestionItem(number: 8, question: 'Apakah kamu sering mengalami gatal-gatal pada kulit?', isYes: false),
+        QuestionItem(number: 9, question: 'Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?', isYes: false),
+        QuestionItem(number: 10, question: 'Apakah luka pada tubuh kamu sulit sembuh?', isYes: false),
+        QuestionItem(number: 11, question: 'Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?', isYes: false),
+        QuestionItem(number: 12, question: 'Apakah kamu sering mengalami kaku atau tegang pada otot?', isYes: false),
+        QuestionItem(number: 13, question: 'Apakah kamu mengalami kerontokan rambut yang tidak biasa?', isYes: false),
+        QuestionItem(number: 14, question: 'Apakah berat badan kamu termasuk berlebih/obesitas?', isYes: false),
+      ],
     ),
     PatientScreening(
       id: 'GS-20250916-008',
@@ -72,6 +135,22 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       isPositive: false,
       affirmativeSymptoms: 1,
       date: '16 September 2025',
+      questionnaireAnswers: [
+        QuestionItem(number: 1, question: 'Apakah kamu sering buang air kecil (BAK)?', isYes: false),
+        QuestionItem(number: 2, question: 'Apakah kamu sering merasa haus?', isYes: false),
+        QuestionItem(number: 3, question: 'Apakah berat badan kamu turun secara drastis tanpa sebab yang jelas?', isYes: false),
+        QuestionItem(number: 4, question: 'Apakah kamu sering merasa lemas atau mudah lelah?', isYes: true),
+        QuestionItem(number: 5, question: 'Apakah kamu sering merasa lapar meskipun sudah makan?', isYes: false),
+        QuestionItem(number: 6, question: 'Apakah kamu sering mengalami infeksi jamur, terutama di area genital?', isYes: false),
+        QuestionItem(number: 7, question: 'Apakah penglihatan kamu sering terasa kabur?', isYes: false),
+        QuestionItem(number: 8, question: 'Apakah kamu sering mengalami gatal-gatal pada kulit?', isYes: false),
+        QuestionItem(number: 9, question: 'Apakah kamu mudah merasa marah atau mengalami perubahan suasana hati?', isYes: false),
+        QuestionItem(number: 10, question: 'Apakah luka pada tubuh kamu sulit sembuh?', isYes: false),
+        QuestionItem(number: 11, question: 'Apakah kamu pernah mengalami kelemahan pada sebagian tubuh?', isYes: false),
+        QuestionItem(number: 12, question: 'Apakah kamu sering mengalami kaku atau tegang pada otot?', isYes: false),
+        QuestionItem(number: 13, question: 'Apakah kamu mengalami kerontokan rambut yang tidak biasa?', isYes: false),
+        QuestionItem(number: 14, question: 'Apakah berat badan kamu termasuk berlebih/obesitas?', isYes: false),
+      ],
     ),
   ];
 
@@ -190,18 +269,18 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
               Expanded(
                 child: filteredPatients.isEmpty
                     ? const Center(
-                  child: Text(
-                    'Tidak ada data pasien ditemukan',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                )
+                        child: Text(
+                          'Tidak ada data pasien ditemukan',
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      )
                     : ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: filteredPatients.length,
-                  itemBuilder: (context, index) {
-                    return _buildPatientCard(filteredPatients[index]);
-                  },
-                ),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: filteredPatients.length,
+                        itemBuilder: (context, index) {
+                          return _buildPatientCard(filteredPatients[index]);
+                        },
+                      ),
               ),
             ],
           ),
@@ -384,7 +463,10 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 child: SizedBox(
                   height: 32,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Membuka Pop-up Laporan Hasil Skrining ketika Rincian diklik
+                      _showScreeningReportModal(context, patient);
+                    },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFF4F46E5)),
                       shape: RoundedRectangleBorder(
@@ -407,7 +489,9 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 child: SizedBox(
                   height: 32,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // Aksi Chat
+                    },
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFF4F46E5)),
                       shape: RoundedRectangleBorder(
@@ -429,6 +513,222 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
           ),
         ],
       ),
+    );
+  }
+
+  // Fungsi untuk menampilkan Pop-up Laporan Hasil Skrining (14 Pertanyaan)
+  void _showScreeningReportModal(BuildContext context, PatientScreening patient) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            width: double.infinity,
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Dialog & Tombol Close (X)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Laporan Hasil Skrining',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E2761)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Nomor Dokumen: ${patient.id}',
+                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Info Profil Pasien di dalam Modal
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Color(0xFFFFE5D0),
+                        child: Icon(Icons.person, color: Colors.orange, size: 26),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              patient.name,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${patient.gender}, ${patient.age} tahun',
+                              style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: patient.isPositive ? const Color(0xFFFFD8D8) : const Color(0xFFD3F9D8),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 5,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: patient.isPositive ? Colors.red : Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              patient.isPositive ? 'Positif' : 'Negatif',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: patient.isPositive ? Colors.red.shade700 : Colors.green.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                Text(
+                  'Tanggal Skrining: ${patient.date}',
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                const SizedBox(height: 10),
+
+                const Text(
+                  'Rincian Jawaban Kuesioner Pasien (14 Pertanyaan)',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                ),
+                const SizedBox(height: 8),
+
+                // Daftar List 14 Pertanyaan Kuesioner
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: patient.questionnaireAnswers.length,
+                    itemBuilder: (context, index) {
+                      final item = patient.questionnaireAnswers[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.grey.shade200,
+                              child: Text(
+                                '${item.number}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black87),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                item.question,
+                                style: const TextStyle(fontSize: 11, color: Colors.black87),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: item.isYes ? const Color(0xFFFFD8D8) : const Color(0xFFD3F9D8),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                item.isYes ? 'Ya' : 'Tidak',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: item.isYes ? Colors.red.shade700 : Colors.green.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Tombol Bawah Modal: Mulai Chat & Hasil Skrining
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 38,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            // Aksi Mulai Chat
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.black87),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                          child: const Text('Mulai Chat', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SizedBox(
+                        height: 38,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Aksi Hasil Skrining
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4F46E5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                          child: const Text('HASIL SKRINING', style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
