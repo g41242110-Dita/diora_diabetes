@@ -18,12 +18,11 @@ class _DokterBerandaPageState extends State<DokterBerandaPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 5 HALAMAN DOKTER SESUAI URUTAN BOTTOM NAV BAR
     final List<Widget> pages = [
       const _DokterDashboardContentView(), // Index 0: Beranda/Dashboard
       const DokterSkriningPage(),           // Index 1: Skrining Pasien
       const DokterKonsultasiPage(),         // Index 2: Konsultasi Chat
-      const Center(child: Text('Halaman Lokasi Praktek')), // Index 3: Lokasi (Placeholder jika belum ada file)
+      const Center(child: Text('Halaman Lokasi Praktek')), // Index 3: Lokasi
       const DokterProfilPage(),             // Index 4: Profil Dokter
     ];
 
@@ -55,30 +54,32 @@ class _DokterDashboardContentView extends StatelessWidget {
       child: Column(
         children: [
           // -----------------------------------------------------------------
-          // 1. HEADER + BANNER DALAM 1 INTEGRATED CONTAINER
+          // 1. HEADER + FLOATING BANNER
           // -----------------------------------------------------------------
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.only(
-              top: 54.0,
-              left: 20.0,
-              right: 20.0,
-              bottom: 20.0,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Background Ungu Melengkung
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(
+                  top: 68.0,
+                  left: 20.0,
+                  right: 20.0,
+                  bottom: 80.0,
+                ),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(28),
+                    bottomRight: Radius.circular(28),
+                  ),
+                ),
+                child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(2),
@@ -93,10 +94,10 @@ class _DokterDashboardContentView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Halo, dr. Amanda Putri, Sp.PD',
                             maxLines: 1,
@@ -133,20 +134,23 @@ class _DokterDashboardContentView extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 18),
-
-                Container(
-                  width: double.infinity,
+              // Card Melayang
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: -40,
+                child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -201,11 +205,12 @@ class _DokterDashboardContentView extends StatelessWidget {
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 20),
+          // Jarak makin rapat dari banner ke 4 Kotak Statistik (36px)
+          const SizedBox(height: 36),
 
           // -----------------------------------------------------------------
           // 2. GRID KARTU STATISTIK DOKTER
