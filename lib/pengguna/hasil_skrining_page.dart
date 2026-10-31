@@ -1,8 +1,8 @@
-import 'dart:async';
-import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class HasilSkriningPage extends StatefulWidget {
   final String docId;
@@ -31,17 +31,298 @@ class HasilSkriningPage extends StatefulWidget {
 }
 
 class _HasilSkriningPageState extends State<HasilSkriningPage> {
-  // MEMINDAHKAN NAVIGASI KE HALAMAN PROSES KIRIM UNTUK MEMICU BACKEND PYTHON (COLAB)
-  void _navigateToProsesKirim() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProsesKirimEmailPage(
-          docId: widget.docId,
-          userEmail: FirebaseAuth.instance.currentUser?.email ?? '',
-        ),
+  // FUNGSI UNTUK GENERATE DOKUMEN PDF (SUDAH DISAMAKAN PERSIS)
+  Future<Uint8List> _generatePdf() async {
+    final pdf = pw.Document();
+    final DateTime now = DateTime.now();
+    final String tanggal =
+        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+    final String jam =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    final String statusStr = widget.isPositif
+        ? 'Risiko Tinggi (Positif)'
+        : 'Risiko Rendah (Negatif)';
+
+    final String ringkasanText = widget.isPositif
+        ? 'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.'
+        : 'Berdasarkan hasil skrining, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap jaga pola makan dan gaya hidup sehat.';
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Header Laporan
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Diora',
+                        style: pw.TextStyle(
+                          fontSize: 22,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColor.fromHex('#6679F4'),
+                        ),
+                      ),
+                      pw.Text(
+                        'Kenali Risiko, Jaga Masa Depanmu',
+                        style: const pw.TextStyle(
+                            fontSize: 10, color: PdfColors.grey700),
+                      ),
+                    ],
+                  ),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(tanggal,
+                          style: const pw.TextStyle(
+                              fontSize: 10, color: PdfColors.grey700)),
+                      pw.Text(jam,
+                          style: const pw.TextStyle(
+                              fontSize: 10, color: PdfColors.grey700)),
+                    ],
+                  ),
+                ],
+              ),
+              pw.Divider(thickness: 1, color: PdfColors.grey300),
+              pw.SizedBox(height: 12),
+
+              // Judul Laporan
+              pw.Center(
+                child: pw.Text(
+                  'LAPORAN HASIL SKRINING DIABETES',
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Data Pengguna & Ringkasan Hasil
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Container(
+                      padding: const pw.EdgeInsets.all(10),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: PdfColors.grey300),
+                        borderRadius: pw.BorderRadius.circular(8),
+                      ),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Data Pengguna',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 11)),
+                          pw.SizedBox(height: 6),
+                          pw.Text('Nama: ${widget.nama}',
+                              style: const pw.TextStyle(fontSize: 9.5)),
+                          pw.Text('Usia: ${widget.umur} Tahun',
+                              style: const pw.TextStyle(fontSize: 9.5)),
+                          pw.Text('Kelamin: ${widget.jenisKelamin}',
+                              style: const pw.TextStyle(fontSize: 9.5)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 10),
+                  pw.Expanded(
+                    child: pw.Container(
+                      padding: const pw.EdgeInsets.all(10),
+                      decoration: pw.BoxDecoration(
+                        border: pw.Border.all(color: PdfColors.grey300),
+                        borderRadius: pw.BorderRadius.circular(8),
+                      ),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Ringkasan Hasil',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontSize: 11)),
+                          pw.SizedBox(height: 6),
+                          pw.Text(ringkasanText,
+                              style: const pw.TextStyle(fontSize: 9.5)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 14),
+
+              // Status Hasil Card
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: widget.isPositif
+                      ? PdfColor.fromHex('#FFEBEE')
+                      : PdfColor.fromHex('#E8F5E9'),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Center(
+                  child: pw.Text(
+                    'Status: $statusStr',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 12,
+                      color: widget.isPositif
+                          ? PdfColors.red800
+                          : PdfColors.green800,
+                    ),
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // TABEL DETAIL JAWABAN SKRINING (SEKARANG DISAMAKAN)
+              pw.Text('Detail Jawaban Skrining:',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 11)),
+              pw.SizedBox(height: 6),
+
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(4),
+                  1: pw.FlexColumnWidth(1.2),
+                },
+                children: [
+                  pw.TableRow(
+                    decoration:
+                    const pw.BoxDecoration(color: PdfColors.grey100),
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Pertanyaan',
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Jawaban',
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                      ),
+                    ],
+                  ),
+                  ...widget.tableData.map(
+                        (item) => pw.TableRow(
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(item['q'] ?? '',
+                              style: const pw.TextStyle(fontSize: 9.5)),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(
+                            item['a'] ?? '',
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: pw.FontWeight.bold,
+                              color: (item['a'] == 'Ya' || item['a'] == 'Iya')
+                                  ? PdfColors.red700
+                                  : PdfColors.green700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 16),
+
+              // Rekomendasi Tindakan
+              pw.Text('Rekomendasi Tindakan:',
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 11)),
+              pw.SizedBox(height: 6),
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey50,
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: widget.isPositif
+                      ? [
+                    pw.Text(
+                        '• Cek kadar gula darah puasa & 2 jam setelah makan',
+                        style: const pw.TextStyle(fontSize: 9.5)),
+                    pw.Text(
+                        '• Lakukan pemeriksaan HbA1c jika diperlukan',
+                        style: const pw.TextStyle(fontSize: 9.5)),
+                    pw.Text(
+                        '• Konsultasi dengan dokter spesialis penyakit dalam/endokrin',
+                        style: const pw.TextStyle(fontSize: 9.5)),
+                  ]
+                      : [
+                    pw.Text('• Pertahankan pola makan gizi seimbang',
+                        style: const pw.TextStyle(fontSize: 9.5)),
+                    pw.Text(
+                        '• Rutin melakukan aktivitas fisik atau olahraga',
+                        style: const pw.TextStyle(fontSize: 9.5)),
+                    pw.Text('• Lakukan tes gula darah secara berkala',
+                        style: const pw.TextStyle(fontSize: 9.5)),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 16),
+
+              // Catatan Penting
+              pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#ECEEFE'),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Text(
+                  'Catatan Penting: Hasil skrining ini bukan diagnosis medis resmi. Harap berkonsultasi dengan tenaga medis profesional untuk penanganan akurat.',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
+
+    return pdf.save();
+  }
+
+  // FUNGSI SHARE DOKUMEN PDF KE GMAIL / APPS LAIN
+  Future<void> _kirimPdfLangsung() async {
+    try {
+      final Uint8List pdfBytes = await _generatePdf();
+
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: 'Laporan_Skrining_${widget.nama}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuat PDF: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -340,7 +621,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
               ),
             ),
 
-            // TOMBOL UTAMA UNTUK KIRIM EMAIL
+            // TOMBOL UNTUK GENERATE & SEND FILE PDF
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -354,9 +635,9 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: _navigateToProsesKirim,
+                  onPressed: _kirimPdfLangsung,
                   child: const Text(
-                    'Kirim Hasil ke Email',
+                    'Kirim Laporan PDF',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -492,263 +773,6 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-// HALAMAN PROSES MONITORING UNTUK VERIFIKASI SELESAI KIRIM EMAIL
-class ProsesKirimEmailPage extends StatefulWidget {
-  final String docId;
-  final String userEmail;
-
-  const ProsesKirimEmailPage({
-    super.key,
-    this.docId = '',
-    this.userEmail = '',
-  });
-
-  @override
-  State<ProsesKirimEmailPage> createState() => _ProsesKirimEmailPageState();
-}
-
-class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
-  bool _isFinished = false;
-  double _progress = 0.2;
-  StreamSubscription<DocumentSnapshot>? _emailSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _triggerEmailSend();
-  }
-
-  Future<void> _triggerEmailSend() async {
-    try {
-      if (widget.docId.isNotEmpty) {
-        await FirebaseFirestore.instance
-            .collection('screening_results')
-            .doc(widget.docId)
-            .update({
-          'email_target': widget.userEmail,
-          'status_email': 'request_send',
-        });
-
-        if (mounted) setState(() => _progress = 0.5);
-
-        _emailSubscription = FirebaseFirestore.instance
-            .collection('screening_results')
-            .doc(widget.docId)
-            .snapshots()
-            .listen((snapshot) {
-          if (!snapshot.exists) return;
-          final dataMap = snapshot.data();
-
-          if (dataMap != null && dataMap['status_email'] == 'completed') {
-            if (mounted) {
-              setState(() {
-                _progress = 1.0;
-                _isFinished = true;
-              });
-            }
-            _emailSubscription?.cancel();
-          }
-        });
-      } else {
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          setState(() {
-            _progress = 1.0;
-            _isFinished = true;
-          });
-        }
-      }
-    } catch (e, stack) {
-      developer.log('Gagal trigger email', error: e, stackTrace: stack);
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: _isFinished ? _buildSuccessView() : _buildProgressView(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressView() {
-    final String displayEmail = widget.userEmail.isNotEmpty
-        ? widget.userEmail
-        : (FirebaseAuth.instance.currentUser?.email ?? 'email Anda');
-
-    return Column(
-      children: [
-        const Spacer(flex: 2),
-        Center(
-          child: Container(
-            width: 180,
-            height: 180,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8F0FE),
-              shape: BoxShape.circle,
-            ),
-            child: const Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.mark_email_read_outlined,
-                  size: 90,
-                  color: Color(0xFF4285F4),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 36),
-        const Text(
-          'Mengirim Email',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Mohon tunggu sebentar, kami sedang\nmengirimkan hasil skrining Anda ke email:\n$displayEmail',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            height: 1.4,
-          ),
-        ),
-        const Spacer(flex: 3),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: _progress,
-            minHeight: 8,
-            backgroundColor: const Color(0xFFE5E7EB),
-            color: const Color(0xFF6679F4),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${(_progress * 100).toInt()}%',
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-
-  // TAMPILAN BERHASIL: SEKARANG MENGGUNAKAN POP SEHINGGA TETAP DI HALAMAN HASIL SKRINING
-  Widget _buildSuccessView() {
-    final String displayEmail = widget.userEmail.isNotEmpty
-        ? widget.userEmail
-        : (FirebaseAuth.instance.currentUser?.email ?? 'email Anda');
-
-    return Column(
-      children: [
-        const Spacer(flex: 2),
-        Center(
-          child: Container(
-            width: 180,
-            height: 180,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8F0FE),
-              shape: BoxShape.circle,
-            ),
-            child: const Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.mark_email_unread_rounded,
-                  size: 90,
-                  color: Color(0xFF4285F4),
-                ),
-                Positioned(
-                  bottom: 25,
-                  right: 25,
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    size: 44,
-                    color: Color(0xFF22C55E),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 36),
-        const Text(
-          'Berhasil Dikirim!',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Hasil skrining Anda telah berhasil\ndikirimkan ke email:\n$displayEmail',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            height: 1.4,
-          ),
-        ),
-        const Spacer(flex: 3),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6679F4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () {
-              // MENUTUP HALAMAN PROSES & KEMBALI KE HASIL SKRINING
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Kembali ke Hasil Skrining',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-      ],
     );
   }
 }
