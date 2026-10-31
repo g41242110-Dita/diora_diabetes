@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'hasil_skrining_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'proses_skrining_page.dart';
 
 class Skrining2Page extends StatefulWidget {
   final String nama;
@@ -101,26 +102,36 @@ class _Skrining2PageState extends State<Skrining2Page> {
       return;
     }
 
-    int totalIya = _jawaban.values.where((val) => val == true).length;
-    bool isPositif = totalIya >= 5;
+    // Susun Map 16 Fitur SAMA PERSIS dengan Key yang diminta Python Colab
+    final Map<String, dynamic> answersData = {
+      'Nama': widget.nama,
+      'Umur': int.tryParse(widget.umur) ?? 0,
+      'Jenis Kelamin': widget.jenisKelamin.toLowerCase() == 'laki-laki' ? 1 : 0,
+      'Sering BAK': _jawaban[1] == true ? 1 : 0,
+      'Sering haus': _jawaban[2] == true ? 1 : 0,
+      'BB turun drastis': _jawaban[3] == true ? 1 : 0,
+      'Sering lemas': _jawaban[4] == true ? 1 : 0,
+      'Sering lapar': _jawaban[5] == true ? 1 : 0,
+      'Infeksi Jamur': _jawaban[6] == true ? 1 : 0,
+      'Penglihatan Kabur': _jawaban[7] == true ? 1 : 0,
+      'Gatal gatal': _jawaban[8] == true ? 1 : 0,
+      'Mudah marah': _jawaban[9] == true ? 1 : 0,
+      'Luka sulit sembuh': _jawaban[10] == true ? 1 : 0,
+      'Kelemahan sebagian tubuh': _jawaban[11] == true ? 1 : 0,
+      'Kaku otot': _jawaban[12] == true ? 1 : 0,
+      'Rambut rontok': _jawaban[13] == true ? 1 : 0,
+      'Obesitas': _jawaban[14] == true ? 1 : 0,
+    };
 
-    List<Map<String, String>> formattedTableData = [];
-    _pertanyaanText.forEach((no, qText) {
-      formattedTableData.add({
-        'q': qText,
-        'a': _jawaban[no] == true ? 'Iya' : 'Tidak',
-      });
-    });
+    String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'guest_user';
 
+    // Arahkan ke ProsesSkriningPage untuk simpan ke Firestore & tunggu balasan AI Colab
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => HasilSkriningPage(
-          nama: widget.nama,
-          umur: widget.umur,
-          jenisKelamin: widget.jenisKelamin,
-          isPositif: isPositif,
-          tableData: formattedTableData,
+        builder: (context) => ProsesSkriningPage(
+          userId: currentUserId,
+          answers: answersData,
         ),
       ),
     );
@@ -166,7 +177,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: const LinearProgressIndicator(
-                        value: 1.0, // Diubah ke 1.0 agar penuh 100%
+                        value: 1.0,
                         minHeight: 8,
                         backgroundColor: Color(0xFFE2E8F0),
                         valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6679F4)),
@@ -256,7 +267,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
     );
   }
 
-  // Widget Pertanyaan
+  // Widget Pertanyaan (Bebas Deprecation Warning)
   Widget _buildQuestionItem(int no, String pertanyaan) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -280,7 +291,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
           const SizedBox(height: 12),
           RadioGroup<bool>(
             groupValue: _jawaban[no],
-            onChanged: (val) {
+            onChanged: (bool? val) {
               setState(() {
                 _jawaban[no] = val;
               });
