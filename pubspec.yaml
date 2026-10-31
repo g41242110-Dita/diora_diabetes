@@ -24,6 +24,10 @@ dependencies:
   shared_preferences: ^2.5.2
   image_picker: ^1.1.2
 
+  # PDF Generator & Printing Packages
+  pdf: ^3.11.1
+  printing: ^5.13.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
