@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DetailArtikelPage extends StatefulWidget {
   final String title;
@@ -24,6 +26,40 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
   String _bannerSubtitle = '';
   bool _isSuccessBanner = true;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkBookmarkStatus();
+  }
+
+  // Mengecek apakah artikel ini sudah ada di database saat halaman dibuka
+  Future<void> _checkBookmarkStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Membuat ID dokumen yang unik berdasarkan judul artikel
+    final articleId = widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+
+    try {
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('saved_articles')
+          .doc(articleId)
+          .get();
+
+      if (docSnapshot.exists && mounted) {
+        final data = docSnapshot.data();
+        // Cek apakah data ini milik user yang sedang login
+        if (data != null && data['userId'] == user.uid) {
+          setState(() {
+            _isBookmarked = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking bookmark: $e");
+    }
+  }
+
   void _zoomIn() {
     setState(() {
       if (_fontSize < 22.0) _fontSize += 2.0;
@@ -36,7 +72,27 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     });
   }
 
-  void _toggleBookmark() {
+  // Fungsi untuk Menyimpan atau Menghapus data dari Database
+  Future<void> _toggleBookmark() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        _showBanner = true;
+        _isSuccessBanner = false;
+        _bannerTitle = 'Gagal Menyimpan!';
+        _bannerSubtitle = 'Silakan login terlebih dahulu untuk menyimpan artikel.';
+      });
+      return;
+    }
+
+    // ID Dokumen (menggantikan 'ID_ARTIKEL_TIPS' agar dinamis sesuai judul artikel)
+    final articleId = widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+
+    // Mengarah langsung ke koleksi 'saved_articles' yang ada di Firebase Anda
+    final docRef = FirebaseFirestore.instance
+        .collection('saved_articles')
+        .doc(articleId);
+
     setState(() {
       _isBookmarked = !_isBookmarked;
       _showBanner = true;
@@ -51,6 +107,29 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
         _bannerSubtitle = 'Artikel telah dihapus dari bookmark.';
       }
     });
+
+    try {
+      if (_isBookmarked) {
+        // PERINTAH MENYIMPAN KE DATABASE FIREBASE:
+        // Ini akan membuat dokumen baru di dalam koleksi 'saved_articles'
+        await docRef.set({
+          'userId': user.uid, // Untuk mencatat siapa yang menyimpan
+          'articleId': articleId,
+          'title': widget.title,
+          'snippet': widget.content.length > 100
+              ? '${widget.content.substring(0, 100)}...'
+              : widget.content,
+          'content': widget.content,
+          'imageUrl': widget.imageUrl,
+          'saved_at': FieldValue.serverTimestamp(), // Sesuai field di database Anda
+        });
+      } else {
+        // PERINTAH MENGHAPUS DARI DATABASE FIREBASE
+        await docRef.delete();
+      }
+    } catch (e) {
+      debugPrint("Error database: $e");
+    }
 
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -334,15 +413,14 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => maxHeight;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
   bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
     return maxHeight != oldDelegate.maxHeight ||
         minHeight != oldDelegate.minHeight ||
         child != oldDelegate.child;
+  }
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
   }
 }
