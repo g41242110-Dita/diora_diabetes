@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'beranda_page.dart';
 
 class HasilSkriningPage extends StatefulWidget {
   final String docId;
@@ -341,7 +340,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
               ),
             ),
 
-            // TOMBOL KIRIM EMAIL (DIBETULKAN PANGGILAN ONPRESSED-NYA)
+            // TOMBOL UTAMA UNTUK KIRIM EMAIL
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -355,7 +354,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: _navigateToProsesKirim, // Dipanggil ke handler trigger Firestore
+                  onPressed: _navigateToProsesKirim,
                   child: const Text(
                     'Kirim Hasil ke Email',
                     style: TextStyle(
@@ -497,7 +496,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
   }
 }
 
-// CLASS HALAMAN PROSES LOGIC DAN UI MONITORING EMAIL
+// HALAMAN PROSES MONITORING UNTUK VERIFIKASI SELESAI KIRIM EMAIL
 class ProsesKirimEmailPage extends StatefulWidget {
   final String docId;
   final String userEmail;
@@ -526,7 +525,6 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
   Future<void> _triggerEmailSend() async {
     try {
       if (widget.docId.isNotEmpty) {
-        // Mengubah status di Firestore menjadi 'request_send' agar dibaca oleh Python Colab
         await FirebaseFirestore.instance
             .collection('screening_results')
             .doc(widget.docId)
@@ -537,7 +535,6 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
 
         if (mounted) setState(() => _progress = 0.5);
 
-        // Mendengarkan perubahan Firestore jika Python selesai mengirim PDF (status_email == 'completed')
         _emailSubscription = FirebaseFirestore.instance
             .collection('screening_results')
             .doc(widget.docId)
@@ -667,6 +664,7 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
     );
   }
 
+  // TAMPILAN BERHASIL: SEKARANG MENGGUNAKAN POP SEHINGGA TETAP DI HALAMAN HASIL SKRINING
   Widget _buildSuccessView() {
     final String displayEmail = widget.userEmail.isNotEmpty
         ? widget.userEmail
@@ -736,16 +734,11 @@ class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
               elevation: 0,
             ),
             onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BerandaPage(),
-                ),
-                    (route) => false,
-              );
+              // MENUTUP HALAMAN PROSES & KEMBALI KE HASIL SKRINING
+              Navigator.pop(context);
             },
             child: const Text(
-              'Kembali Ke Beranda',
+              'Kembali ke Hasil Skrining',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
