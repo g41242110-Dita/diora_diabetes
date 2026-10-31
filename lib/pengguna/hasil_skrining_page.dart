@@ -1,9 +1,6 @@
-import 'dart:async';
-import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'beranda_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HasilSkriningPage extends StatefulWidget {
   final String docId;
@@ -32,16 +29,58 @@ class HasilSkriningPage extends StatefulWidget {
 }
 
 class _HasilSkriningPageState extends State<HasilSkriningPage> {
-  void _navigateToProsesKirim() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProsesKirimEmailPage(
-          docId: widget.docId,
-          userEmail: FirebaseAuth.instance.currentUser?.email ?? '',
-        ),
-      ),
+  // FUNGSI LANGSUNG KIRIM EMAIL VIA URL_LAUNCHER
+  Future<void> _kirimEmailLangsung() async {
+    final String emailUser = FirebaseAuth.instance.currentUser?.email ?? '';
+    final String statusStr =
+    widget.isPositif ? 'Risiko Tinggi (Positif)' : 'Risiko Rendah (Negatif)';
+
+    final String isiPesan = '''
+Halo ${widget.nama},
+
+Berikut adalah Laporan Hasil Skrining Diabetes dari Aplikasi Diora:
+
+--------------------------------------------------
+DATA PENGGUNA:
+- Nama: ${widget.nama}
+- Usia: ${widget.umur} Tahun
+- Jenis Kelamin: ${widget.jenisKelamin}
+
+HASIL SKRINING:
+- Status: $statusStr
+
+REKOMENDASI:
+${widget.isPositif ? '• Cek kadar gula darah puasa & 2 jam setelah makan\n• Lakukan pemeriksaan HbA1c jika diperlukan\n• Konsultasi dengan dokter spesialis penyakit dalam' : '• Pertahankan pola makan gizi seimbang\n• Rutin melakukan aktivitas fisik/olahraga\n• Lakukan tes gula darah secara berkala'}
+--------------------------------------------------
+
+*Catatan: Hasil skrining ini bukan diagnosis medis resmi. Harap berkonsultasi dengan tenaga medis profesional.
+
+Salam sehat,
+Tim Diora
+''';
+
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: emailUser,
+      queryParameters: {
+        'subject': 'Laporan Hasil Skrining Diabetes - Diora',
+        'body': isiPesan,
+      },
     );
+
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+      } else {
+        await launchUrl(emailUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuka aplikasi email: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -340,6 +379,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
               ),
             ),
 
+            // TOMBOL KIRIM EMAIL
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(
@@ -353,7 +393,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: _navigateToProsesKirim,
+                  onPressed: _kirimEmailLangsung,
                   child: const Text(
                     'Kirim Hasil ke Email',
                     style: TextStyle(
@@ -415,342 +455,82 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
   }
 
   Widget _buildQuestionsTable(List<dynamic> dataItems) {
-  return Container(
-  decoration: BoxDecoration(
-  border: Border.all(color: Colors.grey.shade300),
-  borderRadius: BorderRadius.circular(12),
-  ),
-  child: ClipRRect(
-  borderRadius: BorderRadius.circular(12),
-  child: Table(
-  columnWidths: const {
-  0: FlexColumnWidth(4),
-  1: FlexColumnWidth(1.2),
-  },
-  border: TableBorder(
-  horizontalInside:
-  BorderSide(color: Colors.grey.shade200, width: 0.5),
-  ),
-  children: [
-  TableRow(
-  decoration: BoxDecoration(color: Colors.grey.shade100),
-  children: const [
-  Padding(
-  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-  child: Text(
-  'Pertanyaan',
-  style: TextStyle(
-  fontWeight: FontWeight.bold,
-  fontSize: 11,
-  color: Colors.black87),
-  ),
-  ),
-  Padding(
-  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-  child: Text(
-  'Jawaban',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-  fontWeight: FontWeight.bold,
-  fontSize: 11,
-  color: Colors.black87),
-  ),
-  ),
-  ],
-  ),
-  ...dataItems.map(
-  (item) => TableRow(
-  children: [
-  Padding(
-  padding: const EdgeInsets.symmetric(
-  vertical: 8, horizontal: 10),
-  child: Text(
-  item['q'] ?? '',
-  style: const TextStyle(
-  fontSize: 10.5, color: Colors.black87),
-  ),
-  ),
-  Padding(
-  padding: const EdgeInsets.symmetric(
-  vertical: 8, horizontal: 10),
-  child: Text(
-  item['a'] ?? '',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-  fontSize: 10.5,
-  fontWeight: FontWeight.w600,
-  color: item['a'] == 'Ya' || item['a'] == 'Iya'
-  ? Colors.red.shade700
-      : Colors.green.shade700,
-  ),
-  ),
-  ),
-  ],
-  ),
-  ),
-  ],
-  ),
-  ),
-  );
-  }
-}
-
-class ProsesKirimEmailPage extends StatefulWidget {
-  final String docId;
-  final String userEmail;
-
-  const ProsesKirimEmailPage({
-    super.key,
-    this.docId = '',
-    this.userEmail = '',
-  });
-
-  @override
-  State<ProsesKirimEmailPage> createState() => _ProsesKirimEmailPageState();
-}
-
-class _ProsesKirimEmailPageState extends State<ProsesKirimEmailPage> {
-  bool _isFinished = false;
-  double _progress = 0.2;
-  StreamSubscription<DocumentSnapshot>? _emailSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _triggerEmailSend();
-  }
-
-  Future<void> _triggerEmailSend() async {
-    try {
-      if (widget.docId.isNotEmpty) {
-        await FirebaseFirestore.instance
-            .collection('screening_results')
-            .doc(widget.docId)
-            .update({
-          'email_target': widget.userEmail,
-          'status_email': 'request_send',
-        });
-
-        if (mounted) setState(() => _progress = 0.5);
-
-        _emailSubscription = FirebaseFirestore.instance
-            .collection('screening_results')
-            .doc(widget.docId)
-            .snapshots()
-            .listen((snapshot) {
-          if (!snapshot.exists) return;
-          final dataMap = snapshot.data();
-
-          if (dataMap != null && dataMap['status_email'] == 'completed') {
-            if (mounted) {
-              setState(() {
-                _progress = 1.0;
-                _isFinished = true;
-              });
-            }
-            _emailSubscription?.cancel();
-          }
-        });
-      } else {
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          setState(() {
-            _progress = 1.0;
-            _isFinished = true;
-          });
-        }
-      }
-    } catch (e, stack) {
-      developer.log('Gagal trigger email', error: e, stackTrace: stack);
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: _isFinished ? _buildSuccessView() : _buildProgressView(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressView() {
-    final String displayEmail = widget.userEmail.isNotEmpty
-        ? widget.userEmail
-        : (FirebaseAuth.instance.currentUser?.email ?? 'email Anda');
-
-    return Column(
-      children: [
-        const Spacer(flex: 2),
-        Center(
-          child: Container(
-            width: 180,
-            height: 180,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8F0FE),
-              shape: BoxShape.circle,
-            ),
-            child: const Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.mark_email_read_outlined,
-                  size: 90,
-                  color: Color(0xFF4285F4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Table(
+          columnWidths: const {
+            0: FlexColumnWidth(4),
+            1: FlexColumnWidth(1.2),
+          },
+          border: TableBorder(
+            horizontalInside:
+            BorderSide(color: Colors.grey.shade200, width: 0.5),
+          ),
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey.shade100),
+              children: const [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  child: Text(
+                    'Pertanyaan',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: Colors.black87),
+                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 36),
-        const Text(
-          'Mengirim Email',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Mohon tunggu sebentar, kami sedang\nmengirimkan hasil skrining Anda ke email:\n$displayEmail',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            height: 1.4,
-          ),
-        ),
-        const Spacer(flex: 3),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: _progress,
-            minHeight: 8,
-            backgroundColor: const Color(0xFFE5E7EB),
-            color: const Color(0xFF6679F4),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${(_progress * 100).toInt()}%',
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 30),
-      ],
-    );
-  }
-
-  Widget _buildSuccessView() {
-    final String displayEmail = widget.userEmail.isNotEmpty
-        ? widget.userEmail
-        : (FirebaseAuth.instance.currentUser?.email ?? 'email Anda');
-
-    return Column(
-      children: [
-        const Spacer(flex: 2),
-        Center(
-          child: Container(
-            width: 180,
-            height: 180,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8F0FE),
-              shape: BoxShape.circle,
-            ),
-            child: const Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.mark_email_unread_rounded,
-                  size: 90,
-                  color: Color(0xFF4285F4),
-                ),
-                Positioned(
-                  bottom: 25,
-                  right: 25,
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    size: 44,
-                    color: Color(0xFF22C55E),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  child: Text(
+                    'Jawaban',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: Colors.black87),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(height: 36),
-        const Text(
-          'Berhasil Dikirim!',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Hasil skrining Anda telah berhasil\ndikirimkan ke email:\n$displayEmail',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.black87,
-            height: 1.4,
-          ),
-        ),
-        const Spacer(flex: 3),
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6679F4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BerandaPage(),
-                ),
-                    (route) => false,
-              );
-            },
-            child: const Text(
-              'Kembali Ke Beranda',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            ...dataItems.map(
+                  (item) => TableRow(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8, horizontal: 10),
+                    child: Text(
+                      item['q'] ?? '',
+                      style: const TextStyle(
+                          fontSize: 10.5, color: Colors.black87),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8, horizontal: 10),
+                    child: Text(
+                      item['a'] ?? '',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: item['a'] == 'Ya' || item['a'] == 'Iya'
+                            ? Colors.red.shade700
+                            : Colors.green.shade700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ),
-        const SizedBox(height: 30),
-      ],
+      ),
     );
   }
 }
