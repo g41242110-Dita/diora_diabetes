@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import 'doctor_model.dart';
-import 'chat_message_model.dart';
-import 'konsultasi_selesai_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatKonsultasiPage extends StatefulWidget {
-  final Doctor doctor;
-  final String namaUser;
-  final String? jamBooking;
+  final String roomId;
+  final String currentUserId;
+  final String dokterNama;
+  final int jamMulai;
+  final int jamSelesai;
 
   const ChatKonsultasiPage({
     super.key,
-    required this.doctor,
-    this.namaUser = 'Pengguna',
-    this.jamBooking,
+    required this.roomId,
+    required this.currentUserId,
+    required this.dokterNama,
+    this.jamMulai = 0,
+    this.jamSelesai = 24,
   });
 
   @override
@@ -21,66 +23,22 @@ class ChatKonsultasiPage extends StatefulWidget {
 
 class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
   final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
 
-  final List<ChatMessage> _messages = [];
-
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    final now = DateTime.now();
-    final timeStr =
-        "${now.hour.toString().padLeft(2, '0')}.${now.minute.toString().padLeft(2, '0')}";
-
-    setState(() {
-      _messages.add(ChatMessage(
-        text: text,
-        time: timeStr,
-        isMe: true,
-      ));
-    });
-
     _messageController.clear();
-    _scrollToBottom();
 
-    // SIMULASI BALASAN DOKTER / PESAN OTOMATIS SISTEM
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        final jamText = widget.jamBooking ?? 'terjadwal';
-
-        // Jika pesan dikirim di luar jam sesi booking,
-        // sistem memberikan info waktu tunggu respons dokter.
-        setState(() {
-          _messages.add(ChatMessage(
-            text:
-            "Pesan Anda telah diterima. Dokter ${widget.doctor.nama} akan membalas saat sesi konsultasi Anda aktif pada jam $jamText.",
-            time: timeStr,
-            isMe: false,
-          ));
-        });
-        _scrollToBottom();
-      }
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(widget.roomId)
+        .collection('messages')
+        .add({
+      'senderId': widget.currentUserId,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
     });
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -91,297 +49,163 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF4F46E5), size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        titleSpacing: 0,
         title: Row(
           children: [
             const CircleAvatar(
-              radius: 18,
-              backgroundColor: Color(0xFFE2E7FF),
-              child: Icon(Icons.person, size: 24, color: Color(0xFF6679F4)),
+              radius: 16,
+              backgroundColor: Color(0xFFEEF2FF),
+              child: Icon(Icons.person_rounded, size: 20, color: Color(0xFF4F46E5)),
             ),
             const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.doctor.nama,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.dokterNama,
+                  style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE6F4EA),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Online',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 4),
+                    const Text('Sesi Berlangsung', style: TextStyle(color: Color(0xFF22C55E), fontSize: 10, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Banner Jam Booking
-            if (widget.jamBooking != null)
-              Container(
-                width: double.infinity,
-                color: const Color(0xFFECEEFE),
-                padding:
-                const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.access_time_filled,
-                        size: 16, color: Color(0xFF4A5BD0)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Jadwal Konsultasi Terjadwal: ${widget.jamBooking}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4A5BD0),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('chats')
+                  .doc(widget.roomId)
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            Expanded(
-              child: _messages.isEmpty
-                  ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Stack(
-                      alignment: Alignment.center,
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.chat_bubble,
-                          size: 90,
-                          color: const Color(0xFF5D83EC)
-                              .withValues(alpha: 0.9),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: const BoxDecoration(color: Color(0xFFEEF2FF), shape: BoxShape.circle),
+                          child: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF4F46E5), size: 36),
                         ),
-                        const Positioned(
-                          right: 8,
-                          bottom: 8,
-                          child: Icon(
-                            Icons.chat_bubble,
-                            size: 60,
-                            color: Color(0xFF91B1FF),
-                          ),
-                        ),
+                        const SizedBox(height: 12),
+                        const Text('Belum ada percakapan', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                        const SizedBox(height: 4),
+                        const Text('Mulai sapa dokter Anda untuk berkonsultasi!', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Mulai Percakapan',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Sampaikan keluhan/pertanyaan Anda.\nDokter akan merespons pada jam ${widget.jamBooking ?? "sesi konsultasi"}.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  return _buildChatBubble(msg);
-                },
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.white,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: const InputDecoration(
-                          hintText: 'Tulis pesan...',
-                          hintStyle:
-                          TextStyle(color: Colors.grey, fontSize: 13),
-                          border: InputBorder.none,
+                  );
+                }
+
+                final docs = snapshot.data!.docs;
+
+                return ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    final isMe = data['senderId'] == widget.currentUserId;
+
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isMe ? const Color(0xFF4F46E5) : Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(14),
+                            topRight: const Radius.circular(14),
+                            bottomLeft: isMe ? const Radius.circular(14) : Radius.zero,
+                            bottomRight: isMe ? Radius.zero : const Radius.circular(14),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        onSubmitted: (_) => _sendMessage(),
+                        child: Text(
+                          data['text'] ?? '',
+                          style: TextStyle(
+                            color: isMe ? Colors.white : const Color(0xFF0F172A),
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: _sendMessage,
-                    child: const CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Color(0xFF5D83EC),
-                      child: Icon(
-                        Icons.send_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                    );
+                  },
+                );
+              },
             ),
-            if (_messages.isNotEmpty)
-              Container(
-                width: double.infinity,
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5D83EC),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      _showDialogAkhiriKonsultasi(context);
-                    },
-                    child: const Text(
-                      'Akhiri Konsultasi',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChatBubble(ChatMessage message) {
-    return Align(
-      alignment: message.isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: message.isMe ? const Color(0xFF7190F0) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: message.isMe
-              ? null
-              : Border.all(color: Colors.grey.shade200, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.text,
-              style: TextStyle(
-                color: message.isMe ? Colors.white : Colors.black87,
-                fontSize: 13,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Text(
-                message.time,
-                style: TextStyle(
-                  color: message.isMe ? Colors.white70 : Colors.grey,
-                  fontSize: 10,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showDialogAkhiriKonsultasi(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Akhiri Konsultasi?'),
-        content: const Text('Sesi percakapan dengan dokter akan diakhiri.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF5D83EC),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
             ),
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => KonsultasiSelesaiPage(
-                    doctor: widget.doctor,
-                    namaUser: widget.namaUser,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      style: const TextStyle(fontSize: 13),
+                      decoration: const InputDecoration(
+                        hintText: 'Tulis pesan konsultasi...',
+                        hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
-            child: const Text('Ya, Akhiri',
-                style: TextStyle(color: Colors.white)),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _sendMessage,
+                  borderRadius: BorderRadius.circular(24),
+                  child: const CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Color(0xFF4F46E5),
+                    child: Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
