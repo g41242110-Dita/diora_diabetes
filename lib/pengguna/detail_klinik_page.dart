@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'beranda_page.dart';
+import 'halaman_utama.dart';
 import 'curved_nav_bar.dart';
 
 class DetailKlinikPage extends StatefulWidget {
@@ -17,7 +17,7 @@ class DetailKlinikPage extends StatefulWidget {
     required this.alamatKlinik,
     required this.jarakKlinik,
     this.nomorTelepon = '081296738118',
-    this.namaUser = 'Pian',
+    this.namaUser = 'Pengguna',
   });
 
   @override
@@ -43,10 +43,14 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
   ];
 
   Future<void> _openGoogleMaps() async {
-    final Uri googleMapsUrl = Uri.https('www.google.com', '/maps/search/', {
-      'api': '1',
-      'query': '${widget.namaKlinik}, ${widget.alamatKlinik}',
-    });
+    final Uri googleMapsUrl = Uri.https(
+      'www.google.com',
+      '/maps/search/',
+      {
+        'api': '1',
+        'query': '${widget.namaKlinik}, ${widget.alamatKlinik}',
+      },
+    );
 
     try {
       bool launched = await launchUrl(
@@ -55,7 +59,10 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
       );
 
       if (!launched) {
-        launched = await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+        launched = await launchUrl(
+          googleMapsUrl,
+          mode: LaunchMode.platformDefault,
+        );
       }
 
       if (!launched && mounted) {
@@ -73,7 +80,8 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
   }
 
   Future<void> _openDialer() async {
-    final String cleanPhone = widget.nomorTelepon.replaceAll(RegExp(r'[^\d+]'), '');
+    final String cleanPhone =
+    widget.nomorTelepon.replaceAll(RegExp(r'[^\d+]'), '');
     final Uri phoneUrl = Uri(scheme: 'tel', path: cleanPhone);
 
     try {
@@ -99,7 +107,7 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => BerandaPage(
+        builder: (context) => HalamanUtama(
           namaUser: widget.namaUser,
           initialIndex: index,
         ),
@@ -117,19 +125,28 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
         elevation: 0,
         toolbarHeight: 45,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color(0xFF6679F4),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
           child: Container(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.black12, width: 1),
+              border: Border.all(
+                color: Colors.black12,
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
@@ -162,7 +179,11 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return const Center(
-                          child: Icon(Icons.business_rounded, size: 48, color: Colors.grey),
+                          child: Icon(
+                            Icons.business_rounded,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                         );
                       },
                     ),
@@ -185,7 +206,11 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                       height: 38,
                       child: ElevatedButton.icon(
                         onPressed: _openGoogleMaps,
-                        icon: const Icon(Icons.near_me_outlined, size: 16, color: Colors.white),
+                        icon: const Icon(
+                          Icons.near_me_outlined,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                         label: const Text(
                           'Rute',
                           style: TextStyle(
@@ -209,7 +234,11 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                       height: 38,
                       child: OutlinedButton.icon(
                         onPressed: _openDialer,
-                        icon: const Icon(Icons.call_outlined, size: 16, color: Colors.black87),
+                        icon: const Icon(
+                          Icons.call_outlined,
+                          size: 16,
+                          color: Colors.black87,
+                        ),
                         label: const Text(
                           'Telp',
                           style: TextStyle(
@@ -220,7 +249,10 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                         ),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: const Color(0xFFEEEEEE),
-                          side: const BorderSide(color: Colors.black12, width: 1),
+                          side: const BorderSide(
+                            color: Colors.black12,
+                            width: 1,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -231,7 +263,11 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFE2E8F0),
+                ),
                 const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -256,7 +292,11 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFE2E8F0),
+                ),
                 const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -277,11 +317,29 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Senin - Kamis', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(
+                            'Senin - Kamis',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text('Jumat - Sabtu', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(
+                            'Jumat - Sabtu',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text('Minggu', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(
+                            'Minggu',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -289,18 +347,40 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('08.00 - 14.00 WIB', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(
+                            '08.00 - 14.00 WIB',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text('07.00 - 13.00 WIB', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(
+                            '07.00 - 13.00 WIB',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text('Libur', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                          Text(
+                            'Libur',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFE2E8F0),
+                ),
                 const SizedBox(height: 12),
                 const Align(
                   alignment: Alignment.centerLeft,
@@ -320,8 +400,9 @@ class _DetailKlinikPageState extends State<DetailKlinikPage> {
                   itemCount: _dokterList.length,
                   itemBuilder: (context, index) {
                     final dokter = _dokterList[index];
+
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Row(
                         children: [
                           Container(
