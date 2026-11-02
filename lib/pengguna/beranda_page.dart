@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'profile_screen.dart';
 import 'konsultasi_page.dart';
@@ -29,39 +30,12 @@ class _BerandaPageState extends State<BerandaPage> {
   late int _selectedIndex;
   late PageController _pageController;
 
-  final List<Map<String, String>> _daftarArtikel = [
-    {
-      'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
-      'content':
-      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\nKadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\nPada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\nGlukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
-      'imageUrl': 'https://picsum.photos/400/200?random=1',
-    },
-    {
-      'title': 'Pentingnya Olahraga Rutin Bagi Penderita Diabetes',
-      'content':
-      'Aktivitas fisik secara teratur dapat membantu meningkatkan sensitivitas insulin, sehingga sel-sel tubuh lebih mudah menggunakan glukosa dalam darah.\n\nJenis olahraga yang disarankan meliputi jalan cepat, bersepeda, berenang, dan senam aerobik ringan selama minimal 150 menit per minggu.',
-      'imageUrl': 'https://picsum.photos/400/200?random=2',
-    },
-    {
-      'title': 'Pola Makan Sehat Pencegah Diabetes Tipe 2',
-      'content':
-      'Mengatur pola makan dengan mengonsumsi makanan berindeks glikemik rendah seperti gandum, sayuran hijau, dan kacang-kacangan sangat efektif dalam menjaga kestabilan kadar gula darah.\n\nHindari konsumsi minuman manis kemasan dan kurangi karbohidrat olahan untuk mencegah risiko terkena diabetes tipe 2.',
-      'imageUrl': 'https://picsum.photos/400/200?random=3',
-    },
-    {
-      'title': 'Mengenal Pemeriksaan Kadar Gula Darah Rutin',
-      'content':
-      'Pemeriksaan gula darah secara mandiri maupun medis sangat penting dilakukan secara berkala. Hal ini membantu kita memantau pola lonjakan gula darah dan mengevaluasi efektivitas terapi atau diet harian yang sedang dijalankan.',
-      'imageUrl': 'https://picsum.photos/400/200?random=4',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(
-      initialPage: 1000,
+      initialPage: 0,
       viewportFraction: 0.85,
     );
   }
@@ -238,7 +212,6 @@ class _BerandaPageState extends State<BerandaPage> {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              // Header Background
               Container(
                 height: 185,
                 width: double.infinity,
@@ -316,8 +289,6 @@ class _BerandaPageState extends State<BerandaPage> {
                   ],
                 ),
               ),
-
-              // Floating Card Skrining
               Positioned(
                 top: 125,
                 left: 16,
@@ -407,11 +378,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ],
           ),
-
-          // Jarak ke Layanan & Menu
           const SizedBox(height: 75),
-
-          // Section 1: Layanan & Menu
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -482,11 +449,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ],
             ),
           ),
-
-          // Spasi ke Progres Kesehatan
           const SizedBox(height: 22),
-
-          // Section 2: Banner Progres Kesehatan
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Material(
@@ -557,11 +520,7 @@ class _BerandaPageState extends State<BerandaPage> {
               ),
             ),
           ),
-
-          // Spasi ke Artikel Terbaru
           const SizedBox(height: 22),
-
-          // Section 3: Artikel Terbaru
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -596,95 +555,122 @@ class _BerandaPageState extends State<BerandaPage> {
           const SizedBox(height: 12),
           SizedBox(
             height: 185,
-            child: PageView.builder(
-              controller: _pageController,
-              itemBuilder: (context, index) {
-                final actualIndex = index % _daftarArtikel.length;
-                final item = _daftarArtikel[actualIndex];
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('articles')
+                  .orderBy('created_at', descending: true)
+                  .limit(5)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+                  );
+                }
 
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailArtikelPage(
-                          title: item['title']!,
-                          content: item['content']!,
-                          imageUrl: item['imageUrl']!,
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Belum ada artikel terbaru',
+                      style: TextStyle(color: Colors.black54, fontSize: 12),
+                    ),
+                  );
+                }
+
+                final docs = snapshot.data!.docs;
+
+                return PageView.builder(
+                  controller: _pageController,
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data() as Map<String, dynamic>;
+                    final title = data['title'] ?? '';
+                    final content = data['content'] ?? '';
+                    final imageUrl = data['thumbnail'] ?? data['imageUrl'] ?? '';
+
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailArtikelPage(
+                              title: title,
+                              content: content,
+                              imageUrl: imageUrl,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(16)),
+                              child: Image.network(
+                                imageUrl,
+                                height: 95,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      height: 95,
+                                      color: const Color(0xFFE2E7FF),
+                                      child: const Icon(Icons.article_outlined,
+                                          color: Color(0xFF6679F4), size: 30),
+                                    ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    content,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.black54,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
                   },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(16)),
-                          child: Image.network(
-                            item['imageUrl']!,
-                            height: 95,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  height: 95,
-                                  color: const Color(0xFFE2E7FF),
-                                  child: const Icon(Icons.article_outlined,
-                                      color: Color(0xFF6679F4), size: 30),
-                                ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item['title']!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                item['content']!,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.black54,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 );
               },
             ),
           ),
-
-          // Bottom Padding ekstra agar scroll bisa turun pas di atas CurvedNavBar
           const SizedBox(height: 40),
         ],
       ),
