@@ -12,6 +12,27 @@ class TimeSlot {
     required this.startMinute,
     this.isBooked = false,
   });
+
+  // Konversi dari JSON / Firestore Map
+  factory TimeSlot.fromMap(Map<String, dynamic> map, String docId) {
+    return TimeSlot(
+      id: docId,
+      timeText: map['timeText'] ?? '',
+      startHour: map['startHour'] ?? 0,
+      startMinute: map['startMinute'] ?? 0,
+      isBooked: map['isBooked'] ?? false,
+    );
+  }
+
+  // Konversi ke Map untuk disimpan ke Firestore
+  Map<String, dynamic> toMap() {
+    return {
+      'timeText': timeText,
+      'startHour': startHour,
+      'startMinute': startMinute,
+      'isBooked': isBooked,
+    };
+  }
 }
 
 class Doctor {
@@ -47,6 +68,49 @@ class Doctor {
       '13.00 - 13.30',
       '13.30 - 14.00',
     ],
-    required this.slots,
+    this.slots = const [],
   });
+
+  // Factory untuk membuat objek Doctor langsung dari dokumen Firestore
+  factory Doctor.fromFirestore(Map<String, dynamic> data, String docId) {
+    var rawSlots = data['slots'] as List<dynamic>? ?? [];
+    List<TimeSlot> parsedSlots = rawSlots.map((s) {
+      if (s is Map<String, dynamic>) {
+        return TimeSlot.fromMap(s, s['id'] ?? '');
+      }
+      return TimeSlot(id: '', timeText: '', startHour: 0, startMinute: 0);
+    }).toList();
+
+    return Doctor(
+      id: docId,
+      nama: data['nama'] ?? data['name'] ?? '',
+      spesialis: data['spesialis'] ?? data['specialist'] ?? '',
+      rating: data['rating']?.toString() ?? '5.0',
+      ulasan: data['ulasan']?.toString() ?? data['reviews']?.toString() ?? '0',
+      isOnline: data['isOnline'] ?? false,
+      isBusyInChat: data['isBusyInChat'] ?? false,
+      tentangDokter: data['tentangDokter'] ?? '',
+      jamMulai: data['jamMulai'] ?? 7,
+      jamSelesai: data['jamSelesai'] ?? 15,
+      availableSlots: List<String>.from(data['availableSlots'] ?? []),
+      slots: parsedSlots,
+    );
+  }
+
+  // Konversi dari Doctor ke Map untuk keperluan Upload / Seeder ke Firestore
+  Map<String, dynamic> toFirestore() {
+    return {
+      'nama': nama,
+      'spesialis': spesialis,
+      'rating': rating,
+      'ulasan': ulasan,
+      'isOnline': isOnline,
+      'isBusyInChat': isBusyInChat,
+      'tentangDokter': tentangDokter,
+      'jamMulai': jamMulai,
+      'jamSelesai': jamSelesai,
+      'availableSlots': availableSlots,
+      'slots': slots.map((s) => s.toMap()).toList(),
+    };
+  }
 }
