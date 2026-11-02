@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'detail_artikel_page.dart'; // <-- PASTIKAN IMPORT INI ADA DI PALING ATAS
+import 'detail_artikel_page.dart';
 
 class ArtikelTersimpanPage extends StatefulWidget {
   const ArtikelTersimpanPage({super.key});
@@ -20,23 +20,30 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
     super.dispose();
   }
 
-  // Fungsi untuk membatalkan/menghapus bookmark langsung dari halaman tersimpan
-  Future<void> _removeBookmark(String articleId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
+  // Fungsi untuk membatalkan/menghapus bookmark langsung menggunakan doc.id
+  Future<void> _removeBookmark(String docId) async {
     try {
-      // Menghapus data dari koleksi 'saved_articles' berdasarkan ID dokumennya
       await FirebaseFirestore.instance
           .collection('saved_articles')
-          .doc(articleId)
+          .doc(docId)
           .delete();
 
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Artikel dihapus dari bookmark'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.bookmark_remove_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text('Artikel dihapus dari bookmark.'),
+              ],
+            ),
+            backgroundColor: const Color(0xFFD97706),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -125,12 +132,12 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
             ),
             const SizedBox(height: 16),
 
-            // Mengambil Data Secara Real-Time dari Firestore
+            // StreamBuilder untuk Mengambil Data Real-Time
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('saved_articles')
-                    .where('userId', isEqualTo: user.uid) // Filter sesuai user yang login
+                    .where('userId', isEqualTo: user.uid)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -151,11 +158,10 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
                     );
                   }
 
-                  // Filter pencarian judul artikel dari database
                   final docs = snapshot.data!.docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final title = (data['title'] ?? '').toLowerCase();
-                    final snippet = (data['snippet'] ?? '').toLowerCase();
+                    final title = (data['title'] ?? '').toString().toLowerCase();
+                    final snippet = (data['snippet'] ?? '').toString().toLowerCase();
                     return title.contains(_searchQuery.toLowerCase()) ||
                         snippet.contains(_searchQuery.toLowerCase());
                   }).toList();
@@ -174,7 +180,6 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
 
                   return Column(
                     children: [
-                      // Sub-header Jumlah Artikel
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
@@ -201,7 +206,6 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      // List View Artikel dari Firestore
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -209,7 +213,7 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
                           itemBuilder: (context, index) {
                             final doc = docs[index];
                             final data = doc.data() as Map<String, dynamic>;
-                            final articleId = data['articleId'] ?? doc.id;
+                            final docId = doc.id; // Menggunakan doc.id asli dari Firestore
                             final title = data['title'] ?? '';
                             final snippet = data['snippet'] ?? '';
                             final content = data['content'] ?? '';
@@ -309,7 +313,7 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
                                             alignment: Alignment.bottomRight,
                                             child: InkWell(
                                               borderRadius: BorderRadius.circular(20),
-                                              onTap: () => _removeBookmark(articleId),
+                                              onTap: () => _removeBookmark(docId),
                                               child: const Padding(
                                                 padding: EdgeInsets.all(4.0),
                                                 child: Icon(
