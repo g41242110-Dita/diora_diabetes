@@ -172,6 +172,23 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       } else {
         // Mode Tambah
         await FirebaseFirestore.instance.collection('articles').add(data);
+
+        // OTOMATIS KIRIM NOTIFIKASI KE SEMUA USER JIKA DIPUBLIKASIKAN
+        if (_status == 'Publis') {
+          QuerySnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').get();
+
+          for (var doc in userSnapshot.docs) {
+            String userId = doc.id;
+
+            await FirebaseFirestore.instance.collection('notifications').add({
+              'user_id': userId,
+              'title': 'Artikel Terbaru 📚',
+              'body': 'Artikel baru telah diterbitkan: $judul',
+              'is_read': false,
+              'created_at': FieldValue.serverTimestamp(),
+            });
+          }
+        }
       }
 
       if (mounted) {
@@ -545,22 +562,12 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                           _buildSectionCard(
                             icon: Icons.publish_rounded,
                             title: 'Status Publikasi',
-                            child: RadioGroup<String>(
-                              groupValue: _status,
-                              onChanged: (String? value) {
-                                if (value != null) {
-                                  setState(() {
-                                    _status = value;
-                                  });
-                                }
-                              },
-                              child: Row(
-                                children: [
-                                  Expanded(child: _buildStatusCard('Draf', 'Simpan Draf')),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: _buildStatusCard('Publis', 'Publikasikan')),
-                                ],
-                              ),
+                            child: Row(
+                              children: [
+                                Expanded(child: _buildStatusCard('Draf', 'Simpan Draf')),
+                                const SizedBox(width: 12),
+                                Expanded(child: _buildStatusCard('Publis', 'Publikasikan')),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 28),
@@ -696,26 +703,20 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              height: 18,
-              width: 18,
-              child: Radio<String>(
-                value: value,
-                activeColor: const Color(0xFF2563EB),
-              ),
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+              size: 18,
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: const Color(0xFF0F172A),
-                ),
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
               ),
             ),
           ],
