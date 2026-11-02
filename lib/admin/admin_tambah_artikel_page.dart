@@ -1,11 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminTambahArtikelPage extends StatefulWidget {
   final VoidCallback? onBack;
+  final String? docId;
+  final Map<String, dynamic>? dataArtikel;
 
-  const AdminTambahArtikelPage({Key? key, this.onBack}) : super(key: key);
+  const AdminTambahArtikelPage({
+    super.key,
+    this.onBack,
+    this.docId,
+    this.dataArtikel,
+  });
 
   @override
   State<AdminTambahArtikelPage> createState() => _AdminTambahArtikelPageState();
@@ -13,23 +21,23 @@ class AdminTambahArtikelPage extends StatefulWidget {
 
 class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     with SingleTickerProviderStateMixin {
-  final TextEditingController _judulController = TextEditingController();
-  final TextEditingController _isiController = TextEditingController();
+  late TextEditingController _judulController;
+  late TextEditingController _isiController;
 
-  String _status = 'Publis'; // 'Draf' atau 'Publis'
+  late String _status;
+  bool _isLoading = false;
 
-  // State Format Teks Aktif
+  // Format Teks Aktif
   bool _isBoldActive = false;
   bool _isItalicActive = false;
   bool _isUnderlineActive = false;
   TextAlign _textAlign = TextAlign.left;
 
-  // Variabel untuk Gambar Thumbnail & Gambar di dalam Isi Artikel
+  // Gambar Thumbnail
   Uint8List? _webImageThumbnail;
-  String? _imageNameThumbnail;
+  String? _existingImageUrl;
   final ImagePicker _picker = ImagePicker();
 
-  // Controller untuk animasi masuk yang mulus dan estetik
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -37,6 +45,12 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
   @override
   void initState() {
     super.initState();
+    // Isi data jika dalam mode edit
+    _judulController = TextEditingController(text: widget.dataArtikel?['title'] ?? '');
+    _isiController = TextEditingController(text: widget.dataArtikel?['content'] ?? '');
+    _status = widget.dataArtikel?['status'] ?? 'Publis';
+    _existingImageUrl = widget.dataArtikel?['thumbnail'] ?? widget.dataArtikel?['imageUrl'];
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -60,7 +74,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     super.dispose();
   }
 
-  // FUNGSI 1: AMBIL GAMBAR DARI GALERI UNTUK THUMBNAIL
   Future<void> _pickThumbnailFromGallery() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -68,7 +81,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
         var bytes = await pickedFile.readAsBytes();
         setState(() {
           _webImageThumbnail = bytes;
-          _imageNameThumbnail = pickedFile.name;
         });
       }
     } catch (e) {
@@ -76,7 +88,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     }
   }
 
-  // FUNGSI 2: AMBIL GAMBAR UNTUK SISIPAN ISI ARTIKEL
   Future<void> _insertImageToContent() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -88,7 +99,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     }
   }
 
-  // FUNGSI AMAN: Sisipkan Teks di Posisi Kursor/Gantikan Teks Terblok Tanpa Memilih Paksa
   void _insertTextAtCursor(String insertText) {
     final text = _isiController.text;
     final selection = _isiController.selection;
@@ -105,20 +115,17 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     }
   }
 
-  // FUNGSI 3: FORMAT TOOLBAR TEKS
   void _formatTeks(String action) {
     setState(() {
       if (action == 'bold') _isBoldActive = !_isBoldActive;
       if (action == 'italic') _isItalicActive = !_isItalicActive;
       if (action == 'underline') _isUnderlineActive = !_isUnderlineActive;
 
-      // Tata Letak Teks (Alignment)
       if (action == 'align_left') _textAlign = TextAlign.left;
       if (action == 'align_center') _textAlign = TextAlign.center;
       if (action == 'align_right') _textAlign = TextAlign.right;
       if (action == 'align_justify') _textAlign = TextAlign.justify;
 
-      // Sisipkan Bullet / Numbering / Link dengan Rapi
       if (action == 'bullet') {
         _insertTextAtCursor('• ');
       } else if (action == 'number') {
@@ -129,7 +136,66 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     });
   }
 
-  // POPUP SUKSES SAAT KLIK SIMPAN ARTIKEL
+  Future<void> _simpanArtikelKeFirestore() async {
+    final judul = _judulController.text.trim();
+    final isi = _isiController.text.trim();
+
+    if (judul.isEmpty || isi.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Judul dan isi artikel tidak boleh kosong!'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      String imageUrl = _existingImageUrl ?? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=400';
+
+      final data = {
+        'title': judul,
+        'content': isi,
+        'thumbnail': imageUrl,
+        'status': _status,
+        'created_at': widget.dataArtikel?['created_at'] ?? FieldValue.serverTimestamp(),
+        'updated_at': FieldValue.serverTimestamp(),
+      };
+
+      if (widget.docId != null) {
+        // Mode Update
+        await FirebaseFirestore.instance.collection('articles').doc(widget.docId).update(data);
+      } else {
+        // Mode Tambah
+        await FirebaseFirestore.instance.collection('articles').add(data);
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _tampilkanPopupSukses();
+      }
+    } catch (e) {
+      debugPrint("Gagal menyimpan artikel: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan artikel: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
   void _tampilkanPopupSukses() {
     showDialog(
       context: context,
@@ -145,8 +211,8 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
               children: [
                 Container(
                   padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
                       colors: [Color(0xFFE0E7FF), Color(0xFFBFDBFE)],
                     ),
                     shape: BoxShape.circle,
@@ -190,7 +256,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                       if (widget.onBack != null) widget.onBack!();
                     },
                     child: const Text(
-                      'Kembali ke Beranda Artikel',
+                      'Kembali ke Kelola Artikel',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ),
@@ -205,6 +271,8 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
 
   @override
   Widget build(BuildContext context) {
+    final isEditMode = widget.docId != null;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -217,7 +285,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- HEADER KURVA BERGRADIEN BIRU PENUH (ALA PROFIL ADMIN) ---
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -235,7 +302,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tombol Kembali & Judul Header
                         Row(
                           children: [
                             InkWell(
@@ -264,9 +330,9 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                               ),
                             ),
                             const SizedBox(width: 16),
-                            const Text(
-                              'Tambah Artikel',
-                              style: TextStyle(
+                            Text(
+                              isEditMode ? 'Edit Artikel' : 'Tambah Artikel',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 22,
@@ -276,8 +342,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                           ],
                         ),
                         const SizedBox(height: 20),
-
-                        // Mini Banner di dalam Header Biru
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -286,11 +350,11 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                           ),
-                          child: Row(
+                          child: const Row(
                             children: [
-                              const Icon(Icons.favorite_rounded, color: Color(0xFFFCA5A5), size: 22),
-                              const SizedBox(width: 12),
-                              const Expanded(
+                              Icon(Icons.favorite_rounded, color: Color(0xFFFCA5A5), size: 22),
+                              SizedBox(width: 12),
+                              Expanded(
                                 child: Text(
                                   'Buat konten edukasi kesehatan & pencegahan diabetes terpercaya.',
                                   style: TextStyle(
@@ -307,8 +371,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                       ],
                     ),
                   ),
-
-                  // --- KONTEN UTAMA DENGAN KARTU SEGMEN BERGRADASI ESTETIK ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                     child: Container(
@@ -328,7 +390,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // --- 1. JUDUL ARTIKEL ---
                           _buildSectionCard(
                             icon: Icons.title_rounded,
                             title: 'Judul Artikel',
@@ -357,8 +418,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // --- 2. THUMBNAIL (AMBIL DARI GALERI) ---
                           _buildSectionCard(
                             icon: Icons.image_rounded,
                             title: 'Thumbnail Artikel',
@@ -367,16 +426,18 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                               onTap: _pickThumbnailFromGallery,
                               child: Container(
                                 width: double.infinity,
-                                height: _webImageThumbnail != null ? 170 : 120,
+                                height: (_webImageThumbnail != null || _existingImageUrl != null) ? 170 : 120,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: const Color(0xFF93C5FD), width: 1.5),
                                   image: _webImageThumbnail != null
                                       ? DecorationImage(image: MemoryImage(_webImageThumbnail!), fit: BoxFit.cover)
+                                      : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
+                                      ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
                                       : null,
                                 ),
-                                child: _webImageThumbnail == null
+                                child: (_webImageThumbnail == null && _existingImageUrl == null)
                                     ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -410,8 +471,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // --- 3. ISI ARTIKEL & TOOLBAR TEKS ---
                           _buildSectionCard(
                             icon: Icons.edit_note_rounded,
                             title: 'Isi Artikel',
@@ -424,14 +483,13 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Toolbar Rapat & Bersih
                                   Container(
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                                      border: Border(bottom: BorderSide(color: const Color(0xFFE2E8F0))),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                                      border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                                     ),
                                     child: SingleChildScrollView(
                                       scrollDirection: Axis.horizontal,
@@ -441,23 +499,15 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                           _buildToolbarButton(Icons.format_bold, 'bold', _isBoldActive),
                                           _buildToolbarButton(Icons.format_italic, 'italic', _isItalicActive),
                                           _buildToolbarButton(Icons.format_underlined, 'underline', _isUnderlineActive),
-
                                           Container(height: 16, width: 1, color: const Color(0xFFCBD5E1), margin: const EdgeInsets.symmetric(horizontal: 4)),
-
-                                          // Alignment
                                           _buildToolbarButton(Icons.format_align_left, 'align_left', _textAlign == TextAlign.left),
                                           _buildToolbarButton(Icons.format_align_center, 'align_center', _textAlign == TextAlign.center),
                                           _buildToolbarButton(Icons.format_align_right, 'align_right', _textAlign == TextAlign.right),
                                           _buildToolbarButton(Icons.format_align_justify, 'align_justify', _textAlign == TextAlign.justify),
-
                                           Container(height: 16, width: 1, color: const Color(0xFFCBD5E1), margin: const EdgeInsets.symmetric(horizontal: 4)),
-
-                                          // Poin/Numbered List
                                           _buildToolbarButton(Icons.format_list_bulleted, 'bullet', false),
                                           _buildToolbarButton(Icons.format_list_numbered, 'number', false),
-
                                           _buildToolbarButton(Icons.link, 'link', false),
-
                                           IconButton(
                                             icon: const Icon(Icons.image_rounded, size: 18, color: Color(0xFF2563EB)),
                                             onPressed: _insertImageToContent,
@@ -492,22 +542,28 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             ),
                           ),
                           const SizedBox(height: 20),
-
-                          // --- 4. STATUS PUBLIKASI ---
                           _buildSectionCard(
                             icon: Icons.publish_rounded,
                             title: 'Status Publikasi',
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildStatusRadio('Draf', 'Simpan Draf')),
-                                const SizedBox(width: 12),
-                                Expanded(child: _buildStatusRadio('Publis', 'Publikasikan')),
-                              ],
+                            child: RadioGroup<String>(
+                              groupValue: _status,
+                              onChanged: (String? value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _status = value;
+                                  });
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  Expanded(child: _buildStatusCard('Draf', 'Simpan Draf')),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: _buildStatusCard('Publis', 'Publikasikan')),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 28),
-
-                          // --- 5. TOMBOL AKSI BAWAH ---
                           Row(
                             children: [
                               Expanded(
@@ -535,10 +591,16 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                     padding: const EdgeInsets.symmetric(vertical: 14),
                                     elevation: 0,
                                   ),
-                                  onPressed: _tampilkanPopupSukses,
-                                  child: const Text(
-                                    'Simpan Artikel',
-                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                  onPressed: _isLoading ? null : _simpanArtikelKeFirestore,
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                      : Text(
+                                    isEditMode ? 'Simpan Perubahan' : 'Simpan Artikel',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                                   ),
                                 ),
                               ),
@@ -557,7 +619,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     );
   }
 
-  // Widget Pembantu: Kartu Segmen dengan Nuansa Gradien Biru Lembut yang Estetik
   Widget _buildSectionCard({required IconData icon, required String title, required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -619,7 +680,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     );
   }
 
-  Widget _buildStatusRadio(String value, String label) {
+  Widget _buildStatusCard(String value, String label) {
     bool isSelected = _status == value;
     return InkWell(
       onTap: () => setState(() => _status = value),
@@ -642,9 +703,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
               width: 18,
               child: Radio<String>(
                 value: value,
-                groupValue: _status,
                 activeColor: const Color(0xFF2563EB),
-                onChanged: (val) => setState(() => _status = val!),
               ),
             ),
             const SizedBox(width: 6),
