@@ -11,6 +11,7 @@ import 'artikel_page.dart';
 import 'hasil_skrining_page.dart';
 import 'detail_artikel_page.dart';
 import 'curved_nav_bar.dart';
+import 'notifikasi_page.dart'; // <--- 1. IMPORT HALAMAN NOTIFIKASI DI SINI
 
 class BerandaPage extends StatefulWidget {
   final String namaUser;
@@ -282,10 +283,18 @@ class _BerandaPageState extends State<BerandaPage> {
                         ),
                       ),
                     ),
+                    // --- 2. HUBUNGKAN IKON LONCENG DI SINI ---
                     IconButton(
                       icon: const Icon(Icons.notifications_none_rounded,
                           color: Colors.white, size: 26),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotifikasiPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

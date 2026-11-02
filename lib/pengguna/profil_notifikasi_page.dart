@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // ==========================================
 // 1. HALAMAN NOTIFIKASI APLIKASI (PROFIL 10)
@@ -13,6 +15,49 @@ class NotifikasiAplikasiPage extends StatefulWidget {
 class _NotifikasiAplikasiPageState extends State<NotifikasiAplikasiPage> {
   bool _aktifkanNotifikasi = true;
   bool _tipsDanArtikel = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  // Mengambil status pengaturan dari Firestore saat halaman dibuka
+  Future<void> _loadSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          setState(() {
+            _aktifkanNotifikasi = data['aktifkan_notifikasi'] ?? true;
+            _tipsDanArtikel = data['tips_dan_artikel'] ?? false;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error loading settings: $e');
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  // Menyimpan perubahan status ke Firestore
+  Future<void> _updateNotificationSetting(String field, bool value) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          field: value,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Error updating setting: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +71,9 @@ class _NotifikasiAplikasiPageState extends State<NotifikasiAplikasiPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6679F4)))
+          : SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
@@ -84,10 +131,11 @@ class _NotifikasiAplikasiPageState extends State<NotifikasiAplikasiPage> {
                             activeTrackColor: const Color(0xFF6679F4),
                             inactiveThumbColor: Colors.white,
                             inactiveTrackColor: const Color(0xFFCBD5E1),
-                            onChanged: (value) {
+                            onChanged: (value) async {
                               setState(() {
                                 _aktifkanNotifikasi = value;
                               });
+                              await _updateNotificationSetting('aktifkan_notifikasi', value);
                             },
                           ),
                         ],
@@ -127,10 +175,11 @@ class _NotifikasiAplikasiPageState extends State<NotifikasiAplikasiPage> {
                             activeTrackColor: const Color(0xFF6679F4),
                             inactiveThumbColor: Colors.white,
                             inactiveTrackColor: const Color(0xFFCBD5E1),
-                            onChanged: (value) {
+                            onChanged: (value) async {
                               setState(() {
                                 _tipsDanArtikel = value;
                               });
+                              await _updateNotificationSetting('tips_dan_artikel', value);
                             },
                           ),
                         ],
@@ -160,6 +209,49 @@ class NotifikasiEmailPage extends StatefulWidget {
 class _NotifikasiEmailPageState extends State<NotifikasiEmailPage> {
   bool _aktifkanNotifikasiEmail = true;
   bool _hasilSkreening = true;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  // Mengambil status pengaturan email dari Firestore
+  Future<void> _loadSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          setState(() {
+            _aktifkanNotifikasiEmail = data['aktifkan_notifikasi_email'] ?? true;
+            _hasilSkreening = data['hasil_skreening_email'] ?? true;
+          });
+        }
+      } catch (e) {
+        debugPrint('Error loading email settings: $e');
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  // Menyimpan perubahan status email ke Firestore
+  Future<void> _updateNotificationSetting(String field, bool value) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          field: value,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Error updating email setting: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +265,9 @@ class _NotifikasiEmailPageState extends State<NotifikasiEmailPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF6679F4)))
+          : SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
@@ -231,10 +325,11 @@ class _NotifikasiEmailPageState extends State<NotifikasiEmailPage> {
                             activeTrackColor: const Color(0xFF6679F4),
                             inactiveThumbColor: Colors.white,
                             inactiveTrackColor: const Color(0xFFCBD5E1),
-                            onChanged: (value) {
+                            onChanged: (value) async {
                               setState(() {
                                 _aktifkanNotifikasiEmail = value;
                               });
+                              await _updateNotificationSetting('aktifkan_notifikasi_email', value);
                             },
                           ),
                         ],
@@ -274,10 +369,11 @@ class _NotifikasiEmailPageState extends State<NotifikasiEmailPage> {
                             activeTrackColor: const Color(0xFF6679F4),
                             inactiveThumbColor: Colors.white,
                             inactiveTrackColor: const Color(0xFFCBD5E1),
-                            onChanged: (value) {
+                            onChanged: (value) async {
                               setState(() {
                                 _hasilSkreening = value;
                               });
+                              await _updateNotificationSetting('hasil_skreening_email', value);
                             },
                           ),
                         ],
