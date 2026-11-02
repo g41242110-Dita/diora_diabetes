@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io'; // Diperlukan untuk File gambar
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart'; // Diperlukan untuk memilih gambar dari galeri
 
 import 'profil_informasi_pribadi_page.dart';
 import 'profil_artikel_tersimpan_page.dart';
@@ -28,6 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _emailDisplay = '';
   String? _base64Image;
   bool _isLoading = true;
+  bool _isUploadingImage = false; // Indikator saat proses kompres & unggah foto
 
   @override
   void initState() {
@@ -68,6 +71,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  // Fungsi untuk memilih gambar dari galeri dan menyimpannya sebagai Base64 ke Firestore
+  Future<void> _pickAndUploadImage() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70, // Kompres kualitas gambar agar ukuran base64 efisien
+        maxWidth: 500,
+        maxHeight: 500,
+      );
+
+      if (image == null) return; // Batal jika pengguna tidak memilih gambar
+
+      setState(() {
+        _isUploadingImage = true;
+      });
+
+      File imageFile = File(image.path);
+      List<int> imageBytes = await imageFile.readAsBytes();
+      String base64String = base64Encode(imageBytes);
+
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'photoBase64': base64String,
+        }, SetOptions(merge: true));
+
+        setState(() {
+          _base64Image = base64String;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto profil berhasil diperbarui!'),
+              backgroundColor: Color(0xFF10B981),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error mengunggah foto: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memperbarui foto profil: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
     }
   }
 
@@ -129,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: _buildMenuList(),
                     ),
-                    const SizedBox(height: 12), // Memberikan sisa jarak pas di atas bottom nav
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -202,7 +264,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          _buildAvatar(size: 80),
+          // Bagian Avatar dengan aksi klik untuk ambil foto dari galeri
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              GestureDetector(
+                onTap: _isUploadingImage ? null : _pickAndUploadImage,
+                child: _buildAvatar(size: 80),
+              ),
+              if (_isUploadingImage)
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black45,
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 10),
           Text(
             'Halo, $_namaDisplay 👋',
@@ -294,7 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 4. Daftar Menu Pilihan (Diposisikan dengan jarak merata)
+  // 4. Daftar Menu Pilihan
   Widget _buildMenuList() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
