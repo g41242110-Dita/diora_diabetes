@@ -14,12 +14,10 @@ class DaftarKlinikPage extends StatefulWidget {
 class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  // Variabel untuk menyimpan teks lokasi real-time
   String _lokasiTerkini = 'Mendeteksi posisi GPS...';
   bool _isLoadingLocation = false;
 
-  // Daftar lengkap seluruh fasilitas kesehatan di Kabupaten Jember (31 Kecamatan)
-  final _allKlinikList = [
+  final List<Map<String, String>> _allKlinikList = const [
     {
       'nama': 'Jember Klinik (RS Perkebunan)',
       'alamat': 'Jl. Bedadung No.2, Jemberlor, Patrang',
@@ -238,17 +236,15 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
     },
   ];
 
-  // Menggunakan var untuk menghindari error penulisan kurung siku tipe data
-  late var _filteredKlinikList;
+  late List<Map<String, String>> _filteredKlinikList;
 
   @override
   void initState() {
     super.initState();
     _filteredKlinikList = List.from(_allKlinikList);
-    _getCurrentLocation(); // Mendapatkan posisi GPS perangkat
+    _getCurrentLocation();
   }
 
-  // Fungsi mengambil koordinat GPS perangkat secara real-time
   Future<void> _getCurrentLocation() async {
     setState(() {
       _isLoadingLocation = true;
@@ -285,11 +281,14 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       setState(() {
-        _lokasiTerkini = 'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)} (Jember)';
+        _lokasiTerkini =
+        'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)} (Jember)';
         _isLoadingLocation = false;
       });
     } catch (e) {
@@ -368,7 +367,8 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                           style: const TextStyle(
                               fontSize: 13, color: Colors.black),
                           decoration: InputDecoration(
-                            hintText: 'Cari Klinik / Kecamatan (cth: Ambulu, Tanggul)...',
+                            hintText:
+                            'Cari Klinik / Kecamatan (cth: Ambulu, Tanggul)...',
                             hintStyle: const TextStyle(
                               fontSize: 12,
                               color: Colors.black38,
@@ -395,8 +395,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Widget Panel Lokasi GPS Dinamis Pengguna di Jember
                     Container(
                       height: 150,
                       width: double.infinity,
@@ -488,7 +486,6 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
