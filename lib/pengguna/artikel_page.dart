@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detail_artikel_page.dart';
 
 class ArtikelPage extends StatefulWidget {
@@ -19,55 +20,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  final List<Map<String, String>> _articles = [
-    {
-      'title': 'Diabetes - Gejala, Penyebab, dan Pengobatan',
-      'snippet':
-      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi ...',
-      'image':
-      'https://images.unsplash.com/photo-1615461066841-6116e61058f4?q=80&w=400',
-      'content':
-      'Diabetes adalah penyakit kronis yang ditandai dengan tingginya kadar gula di dalam darah. Glukosa atau gula adalah sumber energi utama bagi tubuh. Namun, pada penderita diabetes, glukosa tidak dapat digunakan oleh tubuh dengan efektif.\n\n'
-          'Kadar gula dalam darah diatur oleh hormon insulin yang diproduksi pankreas. Hormon ini membantu sel tubuh menyerap gula darah sehingga kadar gula darah tetap dalam batas normal.\n\n'
-          'Pada penderita diabetes, pankreas tidak mampu memproduksi insulin, atau tubuh tidak bisa menggunakan insulin dengan optimal. Akibatnya, sel-sel tubuh tidak dapat menyerap dan mengolah glukosa menjadi energi.\n\n'
-          'Glukosa yang tidak diserap sel tubuh dengan baik akan menumpuk dalam darah dan menimbulkan berbagai gangguan kesehatan. Jika tidak ditangani dengan baik, diabetes dapat menimbulkan berbagai komplikasi.',
-    },
-    {
-      'title': 'Diabetes Ancaman Nyata Generasi Muda',
-      'snippet':
-      'Penyebab Diabetes pada Generasi Muda: 1. Malnutrisi (mengalami masalah gizi) sejak lahir · 2. Pola makan tidak seimbang · 3. Kurangnya aktivitas ...',
-      'image':
-      'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=400',
-      'content':
-      'Diabetes kini bukan hanya menyerang lansia, tetapi juga generasi muda. Perubahan gaya hidup, pola makan serba instan, dan kurangnya aktivitas fisik menjadi pemicu utama.\n\n'
-          'Penyebab Diabetes pada Generasi Muda:\n'
-          '1. Malnutrisi atau masalah gizi sejak dini.\n'
-          '2. Pola makan tinggi gula dan lemak jenuh.\n'
-          '3. Jarang berolahraga dan terlalu banyak duduk.\n\n'
-          'Pencegahan sejak dini sangat penting dengan menerapkan pola hidup sehat, rajin bergerak, dan rutin memeriksakan kadar gula darah.',
-    },
-    {
-      'title': 'diabetes melitus tipe 2 ; artikel review',
-      'snippet':
-      'Diabetes Mellitus Tipe 2 adalah penyakit gangguan metabolik yang di tandai oleh kenaikan gula darah akibat penurunan sekresi insulin oleh sel beta pankreas ...',
-      'image':
-      'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=400',
-      'content':
-      'Diabetes Mellitus Tipe 2 merupakan gangguan metabolik yang paling sering ditemui. Kondisi ini ditandai dengan resistensi insulin atau penurunan produksi insulin oleh pankreas.\n\n'
-          'Faktor risiko meliputi genetik, obesitas, serta gaya hidup tidak sehat. Penanganan dilakukan melalui kombinasi edukasi, terapi nutrisi medis, latihan fisik, dan konsumsi obat hipoglikemik sesuai anjuran dokter.',
-    },
-    {
-      'title': 'Diabetes Melitus',
-      'snippet':
-      'Diabetes melitus merupakan salah satu masalah kesehatan didunia yang patut diperhatikan. Prevalensi dari diabetes melitus setiap tahunnya selalu ...',
-      'image':
-      'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?q=80&w=400',
-      'content':
-      'Diabetes Melitus menjadi salah satu tantangan kesehatan global terbesar saat ini. Angka penderitanya terus meningkat setiap tahun baik di negara berkembang maupun negara maju.\n\n'
-          'Edukasi publik mengenai bahaya komplikasi diabetes—seperti kerusakan ginjal, gangguan penglihatan, dan penyakit jantung—sangat diperlukan untuk menekan angka kasus baru.',
-    },
-  ];
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -76,13 +28,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredArticles = _articles.where((article) {
-      final title = article['title']!.toLowerCase();
-      final snippet = article['snippet']!.toLowerCase();
-      return title.contains(_searchQuery.toLowerCase()) ||
-          snippet.contains(_searchQuery.toLowerCase());
-    }).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FE),
       body: Column(
@@ -136,23 +81,6 @@ class _ArtikelPageState extends State<ArtikelPage> {
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${filteredArticles.length} Bacaan',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
                       ),
                     ),
                   ],
@@ -217,46 +145,86 @@ class _ArtikelPageState extends State<ArtikelPage> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: filteredArticles.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEEF2FF),
-                      shape: BoxShape.circle,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('articles')
+                  .orderBy('created_at', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'Belum ada artikel tersedia.',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
                     ),
-                    child: const Icon(
-                      Icons.search_off_rounded,
-                      size: 36,
-                      color: Color(0xFF6679F4),
+                  );
+                }
+
+                final filteredArticles = snapshot.data!.docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final title = (data['title'] ?? '').toString().toLowerCase();
+                  final content = (data['content'] ?? '').toString().toLowerCase();
+                  return title.contains(_searchQuery.toLowerCase()) ||
+                      content.contains(_searchQuery.toLowerCase());
+                }).toList();
+
+                if (filteredArticles.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.search_off_rounded,
+                            size: 36,
+                            color: Color(0xFF6679F4),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Artikel tidak ditemukan',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Artikel tidak ditemukan',
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            )
-                : ListView.builder(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: filteredArticles.length,
-              itemBuilder: (context, index) {
-                final article = filteredArticles[index];
-                return _buildAestheticCard(
-                  title: article['title']!,
-                  snippet: article['snippet']!,
-                  content: article['content']!,
-                  imageUrl: article['image']!,
+                  );
+                }
+
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: filteredArticles.length,
+                  itemBuilder: (context, index) {
+                    final data = filteredArticles[index].data() as Map<String, dynamic>;
+                    final title = data['title'] ?? '';
+                    final content = data['content'] ?? '';
+                    final imageUrl = data['thumbnail'] ?? data['imageUrl'] ?? '';
+                    final snippet = content.length > 100
+                        ? '${content.substring(0, 100)}...'
+                        : content;
+
+                    return _buildAestheticCard(
+                      title: title,
+                      snippet: snippet,
+                      content: content,
+                      imageUrl: imageUrl,
+                    );
+                  },
                 );
               },
             ),
