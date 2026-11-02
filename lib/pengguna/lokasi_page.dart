@@ -57,7 +57,7 @@ class _LokasiPageState extends State<LokasiPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Teks Deskripsi Permission
+                  // Teks Deskripsi Permission (Diubah dari Redera ke Diora)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: RichText(
@@ -71,8 +71,8 @@ class _LokasiPageState extends State<LokasiPage> {
                         children: [
                           TextSpan(text: 'Izinkan '),
                           TextSpan(
-                            text: 'Redera ',
-                            style: TextStyle(color: Color(0xFFC07060), fontWeight: FontWeight.w500),
+                            text: 'Diora ',
+                            style: TextStyle(color: Color(0xFF6679F4), fontWeight: FontWeight.bold),
                           ),
                           TextSpan(text: 'mengakses lokasi kamu untuk menemukan klinik terdekat.'),
                         ],
@@ -103,7 +103,7 @@ class _LokasiPageState extends State<LokasiPage> {
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: _selectedOption == 0
-                                        ? const Color(0xFF1A73E8)
+                                        ? const Color(0xFF6679F4)
                                         : Colors.transparent,
                                     width: 2.5,
                                   ),
@@ -116,7 +116,7 @@ class _LokasiPageState extends State<LokasiPage> {
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
                                         color: const Color(0xFFE8F0FE),
-                                        child: const Icon(Icons.my_location, color: Color(0xFF1A73E8)),
+                                        child: const Icon(Icons.my_location, color: Color(0xFF6679F4)),
                                       );
                                     },
                                   ),
@@ -151,7 +151,7 @@ class _LokasiPageState extends State<LokasiPage> {
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: _selectedOption == 1
-                                        ? const Color(0xFF1A73E8)
+                                        ? const Color(0xFF6679F4)
                                         : Colors.transparent,
                                     width: 2.5,
                                   ),
@@ -191,18 +191,21 @@ class _LokasiPageState extends State<LokasiPage> {
                   const Divider(height: 1, thickness: 1, color: Color(0xFFD1D5DB)),
 
                   // Tombol 1: Izinkan
-                  InkWell(
-                    onTap: () => _navigateToDaftarKlinik(true),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Izinkan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _navigateToDaftarKlinik(true),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Izinkan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),
@@ -210,18 +213,21 @@ class _LokasiPageState extends State<LokasiPage> {
                   const Divider(height: 1, thickness: 1, color: Color(0xFFD1D5DB)),
 
                   // Tombol 2: Izinkan saat aplikasi digunakan
-                  InkWell(
-                    onTap: () => _navigateToDaftarKlinik(true),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Izinkan saat aplikasi digunakan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _navigateToDaftarKlinik(true),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Izinkan saat aplikasi digunakan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),
@@ -229,18 +235,21 @@ class _LokasiPageState extends State<LokasiPage> {
                   const Divider(height: 1, thickness: 1, color: Color(0xFFD1D5DB)),
 
                   // Tombol 3: Jangan izinkan
-                  InkWell(
-                    onTap: () => _navigateToDaftarKlinik(false),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Jangan izinkan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _navigateToDaftarKlinik(false),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'Jangan izinkan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),
