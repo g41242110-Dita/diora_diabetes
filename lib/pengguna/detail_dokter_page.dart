@@ -15,99 +15,80 @@ class DetailDokterPage extends StatefulWidget {
 class _DetailDokterPageState extends State<DetailDokterPage> {
   TimeSlot? _selectedSlot;
 
+  // Menghasilkan List Item yang berisi Slot Konsultasi & Slot Istirahat
+  List _generateSlotsAndBreak() {
+    final List itemList = [];
+    int currentMinutes = widget.doctor.jamMulai * 60;
+
+    for (int i = 0; i < 20; i++) {
+      // Sisipkan 1 Jam Istirahat di Tengah Shift (setelah pasien ke-10)
+      if (i == 10) {
+        int breakStart = currentMinutes;
+        int breakEnd = currentMinutes + 60;
+
+        int bsh = (breakStart ~/ 60) % 24;
+        int bsm = breakStart % 60;
+        int beh = (breakEnd ~/ 60) % 24;
+        int bem = breakEnd % 60;
+
+        String breakTimeText =
+            '${bsh.toString().padLeft(2, '0')}.${bsm.toString().padLeft(2, '0')} - ${beh.toString().padLeft(2, '0')}.${bem.toString().padLeft(2, '0')}';
+
+        itemList.add({
+          'isBreak': true,
+          'timeText': breakTimeText,
+        });
+
+        currentMinutes += 60; // Waktu istirahat 1 jam
+      }
+
+      int startMins = currentMinutes;
+      int endMins = currentMinutes + 20;
+
+      int sh = (startMins ~/ 60) % 24;
+      int sm = startMins % 60;
+      int eh = (endMins ~/ 60) % 24;
+      int em = endMins % 60;
+
+      String timeText =
+          '${sh.toString().padLeft(2, '0')}.${sm.toString().padLeft(2, '0')} - ${eh.toString().padLeft(2, '0')}.${em.toString().padLeft(2, '0')}';
+
+      itemList.add({
+        'isBreak': false,
+        'slot': TimeSlot(
+          id: 's_$i',
+          timeText: timeText,
+          startHour: sh,
+          startMinute: sm,
+          isBooked: false, // Semua slot terbuka untuk uji coba
+        ),
+      });
+
+      currentMinutes += 20;
+    }
+
+    return itemList;
+  }
+
   void _prosesBooking() {
     if (_selectedSlot == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pilih slot konsultasi yang masih tersedia.'),
+          content: Text('Pilih slot konsultasi terlebih dahulu.'),
           backgroundColor: Colors.orangeAccent,
         ),
       );
       return;
     }
 
-    final now = DateTime.now();
-    final DateTime sessionTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      _selectedSlot!.startHour,
-      _selectedSlot!.startMinute,
-    );
-
-    final DateTime notificationTime = sessionTime.subtract(const Duration(minutes: 5));
-    final String timeReminderStr =
-        '${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')}';
-
-    final bool isSessionNow = now.isAfter(sessionTime) &&
-        now.isBefore(sessionTime.add(const Duration(minutes: 30)));
-
-    if (widget.doctor.isOnline && isSessionNow && !widget.doctor.isBusyInChat) {
-      final String roomId = '${widget.namaUser}_${widget.doctor.nama}';
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChatKonsultasiPage(
-            roomId: roomId,
-            currentUserId: widget.namaUser,
-            dokterNama: widget.doctor.nama,
-          ),
-        ),
-      );
-    } else {
-      // Menampilkan Modal Popup Aesthetic (Foto 3)
-      _showBookingSuccessDialog(timeReminderStr);
-    }
-  }
-
-  void _showBookingSuccessDialog(String timeReminderStr) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEEF2FF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_circle_rounded, color: Color(0xFF4F46E5), size: 40),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'Booking Berhasil!',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Slot ${_selectedSlot!.timeText} berhasil dipesan.\n\nNotifikasi pengingat akan dikirim pukul $timeReminderStr WIB (5 menit sebelum sesi).',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 42,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Mengerti', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+    final String roomId = '${widget.namaUser}_${widget.doctor.nama}';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatKonsultasiPage(
+          roomId: roomId,
+          currentUserId: widget.namaUser,
+          dokterNama: widget.doctor.nama,
         ),
       ),
     );
@@ -115,12 +96,16 @@ class _DetailDokterPageState extends State<DetailDokterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final allItems = _generateSlotsAndBreak();
+    final totalSlotsCount = allItems.where((item) => item['isBreak'] == false).length;
+
+    final startShift = widget.doctor.jamMulai.toString().padLeft(2, '0');
+    final endShift = widget.doctor.jamSelesai.toString().padLeft(2, '0');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Detail & Booking Dokter', style: TextStyle(color: Color(0xFF0F172A), fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text('Booking Jadwal Dokter', style: TextStyle(color: Color(0xFF0F172A), fontSize: 16, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -138,7 +123,7 @@ class _DetailDokterPageState extends State<DetailDokterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Card Dokter
+                    // KARTU PROFIL DOKTER
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -173,38 +158,130 @@ class _DetailDokterPageState extends State<DetailDokterPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
 
-                    // Pilih Slot Jam
-                    const Text('Pilih Slot Jam Konsultasi (30 Menit)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    const Text('*Slot otomatis "Sold" jika sudah dibooking atau dokter sedang dalam sesi chat.', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                    // TENTANG DOKTER
+                    if (widget.doctor.tentangDokter.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Tentang Dokter', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                            const SizedBox(height: 6),
+                            Text(
+                              widget.doctor.tentangDokter,
+                              style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569), height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // KOTAK KUOTA PASIEN
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.group_rounded, color: Color(0xFF16A34A), size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Kuota Pasien Hari Ini',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                    color: Color(0xFF14532D),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Tersedia $totalSlotsCount slot waktu (Siap Diuji Coba)',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF166534)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // JUDUL SHIFT JAM KONSULTASI
+                    Text(
+                      'Pilih Sesi Jam Konsultasi (Shift ($startShift.00 - $endShift.00)):',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
                     const SizedBox(height: 12),
 
+                    // GRID SLOT KONSULTASI & ISTIRAHAT
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 2.8,
+                        childAspectRatio: 2.3,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
                       ),
-                      itemCount: widget.doctor.slots.length,
+                      itemCount: allItems.length,
                       itemBuilder: (context, index) {
-                        final slot = widget.doctor.slots[index];
+                        final item = allItems[index];
 
-                        // Logika Otomatis Slot Sold jika dokter sedang chat di jam tersebut
-                        final isCurrentActiveSlot = now.hour == slot.startHour && (now.minute >= slot.startMinute && now.minute < slot.startMinute + 30);
-                        final bool isSold = slot.isBooked || (widget.doctor.isBusyInChat && isCurrentActiveSlot);
+                        if (item['isBreak'] == true) {
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFFEDD5)),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  item['timeText'],
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFC2410C),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'Istirahat Dokter',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFEA580C),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
-                        final bool isSelected = _selectedSlot == slot;
+                        final TimeSlot slot = item['slot'];
+                        final bool isSelected = _selectedSlot?.id == slot.id;
 
                         return InkWell(
                           borderRadius: BorderRadius.circular(12),
-                          onTap: isSold
-                              ? null
-                              : () {
+                          onTap: () {
                             setState(() {
                               _selectedSlot = slot;
                             });
@@ -212,61 +289,45 @@ class _DetailDokterPageState extends State<DetailDokterPage> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              color: isSold
-                                  ? const Color(0xFFF1F5F9)
-                                  : (isSelected ? const Color(0xFF4F46E5) : Colors.white),
+                              color: isSelected ? const Color(0xFFEEF2FF) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isSold
-                                    ? const Color(0xFFE2E8F0)
-                                    : (isSelected ? const Color(0xFF4F46E5) : const Color(0xFFCBD5E1)),
+                                color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFCBD5E1),
+                                width: isSelected ? 1.8 : 1,
                               ),
                             ),
-                            alignment: Alignment.center,
-                            child: Row(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   slot.timeText,
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSold
-                                        ? const Color(0xFF94A3B8)
-                                        : (isSelected ? Colors.white : const Color(0xFF1E293B)),
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected ? const Color(0xFF4338CA) : const Color(0xFF334155),
                                   ),
                                 ),
-                                if (isSold) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE2E8F0),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: const Text('Sold', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isSelected ? 'Dipilih' : 'Tersedia',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF16A34A),
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ),
                         );
                       },
                     ),
-                    const SizedBox(height: 20),
-
-                    const Text('Tentang Dokter', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.doctor.tentangDokter,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.4),
-                    ),
                   ],
                 ),
               ),
             ),
 
-            // Tombol Konfirmasi
+            // TOMBOL KONFIRMASI BOOKING
             Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -279,7 +340,7 @@ class _DetailDokterPageState extends State<DetailDokterPage> {
                     elevation: 0,
                   ),
                   onPressed: _prosesBooking,
-                  child: const Text('Konfirmasi Booking', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: const Text('Konfirmasi Booking & Masuk Chat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
               ),
             ),
