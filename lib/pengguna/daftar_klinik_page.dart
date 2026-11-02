@@ -13,50 +13,52 @@ class DaftarKlinikPage extends StatefulWidget {
 class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, String>> _allKlinikList = [
-    {
-      'nama': 'Klinik Sehat Sentosa',
-      'alamat': 'Jl. Merdeka No. 15',
-      'jarak': '1.2 KM',
-      'telp': '081296738118',
-      'jam': '08.00 - 20.00',
-      'status': 'Buka',
-    },
-    {
-      'nama': 'Pratama Medika',
-      'alamat': 'Jl. Cempaka No. 28',
-      'jarak': '2.1 KM',
-      'telp': '081234567890',
-      'jam': '07.30 - 21.00',
-      'status': 'Buka',
-    },
-    {
-      'nama': 'Klinik Harmoni',
-      'alamat': 'Jl. Anggrek No. 7',
-      'jarak': '2.8 KM',
-      'telp': '089876543210',
-      'jam': 'Libur hari ini',
-      'status': 'Tutup',
-    },
-    {
-      'nama': 'Sentra Kesehatan Utama',
-      'alamat': 'Jl. Diponegoro No. 42',
-      'jarak': '3.4 KM',
-      'telp': '081122334455',
-      'jam': '24 Jam',
-      'status': 'Buka',
-    },
-    {
-      'nama': 'Klinik Bina Sehat',
-      'alamat': 'Jl. Sukajadi No. 19',
-      'jarak': '4.1 KM',
-      'telp': '085566778899',
-      'jam': '08.00 - 17.00',
-      'status': 'Buka',
-    },
+  // PERBAIKAN: Menggunakan tipe data lengkap List>
+  final _allKlinikList = [
+  {
+  'nama': 'Jember Klinik (RS Perkebunan)',
+  'alamat': 'Jl. Bedadung No.2, Jemberlor, Patrang',
+  'jarak': '1.2 KM',
+  'telp': '0331487104',
+  'jam': '08.00 - 20.00',
+  'status': 'Buka',
+  },
+  {
+  'nama': 'Klinik Pratama Rolas Medika',
+  'alamat': 'Jl. Gajah Mada No.15, Kaliwates',
+  'jarak': '2.1 KM',
+  'telp': '081234567890',
+  'jam': '07.30 - 21.00',
+  'status': 'Buka',
+  },
+  {
+  'nama': 'Klinik Rawat Inap dr. M. Suherman',
+  'alamat': 'Jl. Karimata No.49, Sumbersari',
+  'jarak': '2.8 KM',
+  'telp': '0331331234',
+  'jam': 'Libur hari ini',
+  'status': 'Tutup',
+  },
+  {
+  'nama': 'Klinik Pratama Polres Jember',
+  'alamat': 'Jl. Letjen S. Parman / Panjaitan',
+  'jarak': '3.4 KM',
+  'telp': '081122334455',
+  'jam': '24 Jam',
+  'status': 'Buka',
+  },
+  {
+  'nama': 'Klinik Bina Sehat',
+  'alamat': 'Jl. Jayanegara No.7, Kaliwates',
+  'jarak': '4.1 KM',
+  'telp': '085566778899',
+  'jam': '08.00 - 17.00',
+  'status': 'Buka',
+  },
   ];
 
-  List<Map<String, String>> _filteredKlinikList = [];
+  // PERBAIKAN: Menggunakan tipe data lengkap List>
+  List<dynamic> _filteredKlinikList = [];
 
   @override
   void initState() {
@@ -106,7 +108,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                 child: Column(
                   children: [
                     const Text(
-                      'Lokasi Klinik',
+                      'Lokasi Klinik Jember',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -115,7 +117,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Temukan klinik terdekat',
+                      'Temukan klinik terdekat di wilayah Jember',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.black87,
@@ -132,7 +134,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                           style: const TextStyle(
                               fontSize: 13, color: Colors.black),
                           decoration: InputDecoration(
-                            hintText: 'Cari Klinik atau Area . . .',
+                            hintText: 'Cari Klinik atau Area di Jember . . .',
                             hintStyle: const TextStyle(
                               fontSize: 13,
                               color: Colors.black38,
@@ -159,6 +161,8 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
+
+                    // Bagian Widget Peta
                     Container(
                       height: 160,
                       width: double.infinity,
@@ -169,7 +173,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                         children: [
                           Positioned.fill(
                             child: Image.network(
-                              'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000',
+                              'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=1000',
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
@@ -184,7 +188,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                           ),
                           Positioned.fill(
                             child: Container(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.black.withValues(alpha: 0.1),
                             ),
                           ),
                           Center(
@@ -212,7 +216,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                                           size: 12, color: Color(0xFF1A73E8)),
                                       SizedBox(width: 4),
                                       Text(
-                                        'Lokasi Anda',
+                                        'Jember, Jawa Timur',
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
@@ -257,6 +261,7 @@ class _DaftarKlinikPageState extends State<DaftarKlinikPage> {
                         ],
                       ),
                     ),
+
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
