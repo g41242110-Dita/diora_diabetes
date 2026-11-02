@@ -35,8 +35,9 @@ class _BerandaPageState extends State<BerandaPage> {
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    // Mengeset initialPage di posisi tengah agar pengguna juga bisa menggeser ke belakang jika diinginkan
     _pageController = PageController(
-      initialPage: 0,
+      initialPage: 1000,
       viewportFraction: 0.85,
     );
   }
@@ -298,77 +299,79 @@ class _BerandaPageState extends State<BerandaPage> {
                   ],
                 ),
               ),
+              // CARD FITUR UTAMA (TIDAK LAGI MEMBUNGKUS DENGAN GESTUREDETECTOR)
               Positioned(
                 top: 125,
                 left: 16,
                 right: 16,
-                child: GestureDetector(
-                  onTap: _bukaHalamanSkrining,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 15,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFECEBFF),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'FITUR UTAMA',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6679F4),
-                                  ),
-                                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECEBFF),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Skrining Gejala Diabetes',
+                              child: const Text(
+                                'FITUR UTAMA',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: Color(0xFF6679F4),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 3),
-                              const Text(
-                                'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black54,
-                                  height: 1.3,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Skrining Gejala Diabetes',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
-                            ],
-                          ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
+                            const Text(
+                              'Cek potensi risiko kesehatanmu dalam beberapa langkah mudah.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black54,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Container(
+                      ),
+                      const SizedBox(width: 12),
+                      // TOMBOL LINGKARAN MERAH (Satu-satunya area yang bisa diklik)
+                      GestureDetector(
+                        onTap: _bukaHalamanSkrining,
+                        child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: const BoxDecoration(
                             color: Color(0xFF6679F4),
@@ -380,8 +383,8 @@ class _BerandaPageState extends State<BerandaPage> {
                             size: 20,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -590,9 +593,11 @@ class _BerandaPageState extends State<BerandaPage> {
 
                 return PageView.builder(
                   controller: _pageController,
-                  itemCount: docs.length,
+                  // Menggunakan kelipatan besar agar carousel artikel bisa di-scroll terus-menerus tanpa mentok
+                  itemCount: docs.length * 1000,
                   itemBuilder: (context, index) {
-                    final data = docs[index].data() as Map<String, dynamic>;
+                    final realIndex = index % docs.length;
+                    final data = docs[realIndex].data() as Map<String, dynamic>;
                     final title = data['title'] ?? '';
                     final content = data['content'] ?? '';
                     final imageUrl = data['thumbnail'] ?? data['imageUrl'] ?? '';

@@ -14,6 +14,7 @@ class _SkriningPageState extends State<SkriningPage> {
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _umurController = TextEditingController();
   String? _jenisKelamin;
+  bool _showErrorBanner = false; // State untuk menampilkan banner peringatan
 
   @override
   void dispose() {
@@ -22,60 +23,21 @@ class _SkriningPageState extends State<SkriningPage> {
     super.dispose();
   }
 
-  // Fungsi untuk mengecek validasi sebelum pindah ke Skrining 2
+  // Validasi data dan navigasi
   void _validateAndNavigate() {
     String nama = _namaController.text.trim();
     String umur = _umurController.text.trim();
 
     if (nama.isEmpty || umur.isEmpty || _jenisKelamin == null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
-              SizedBox(width: 8),
-              Text(
-                'Data Belum Lengkap',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Harap isi Nama, Umur, dan Jenis Kelamin terlebih dahulu!',
-            style: TextStyle(fontSize: 13.5, color: Color(0xFF475569)),
-          ),
-          actionsPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6679F4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Mengerti',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+      setState(() {
+        _showErrorBanner = true;
+      });
       return;
     }
+
+    setState(() {
+      _showErrorBanner = false;
+    });
 
     Navigator.push(
       context,
@@ -91,14 +53,16 @@ class _SkriningPageState extends State<SkriningPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FE),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. HEADER ESTETIK DENGAN GRADIENT & TOMBOL KEMBALI
+          // 1. HEADER ESTETIK DENGAN GRADIENT & TOMBOL KEMBALI CLEAN
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+            padding: EdgeInsets.fromLTRB(16, topPadding, 20, 24),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
@@ -106,8 +70,8 @@ class _SkriningPageState extends State<SkriningPage> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+                bottomLeft: Radius.circular(28),
+                bottomRight: Radius.circular(28),
               ),
             ),
             child: Column(
@@ -115,41 +79,40 @@ class _SkriningPageState extends State<SkriningPage> {
               children: [
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        size: 24,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
                         if (widget.onBackToHome != null) {
-                          widget.onBackToHome!(); // Pindah ke tab Beranda
+                          widget.onBackToHome!();
                         } else if (Navigator.canPop(context)) {
                           Navigator.pop(context);
                         }
                       },
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Skrining Gejala Diabetes',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Text(
-                      'Skrining Gejala Diabetes',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
 
-                // PROGRESS BAR ESTETIK
+                // PROGRESS BAR (1/2)
                 Row(
                   children: [
                     Expanded(
@@ -157,9 +120,10 @@ class _SkriningPageState extends State<SkriningPage> {
                         borderRadius: BorderRadius.circular(10),
                         child: const LinearProgressIndicator(
                           value: 0.5,
-                          minHeight: 8,
+                          minHeight: 7,
                           backgroundColor: Color(0x33FFFFFF),
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       ),
                     ),
@@ -167,7 +131,7 @@ class _SkriningPageState extends State<SkriningPage> {
                     const Text(
                       '1/2',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 12,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -178,7 +142,7 @@ class _SkriningPageState extends State<SkriningPage> {
             ),
           ),
 
-          // 2. KONTEN UTAMA DIBUNGKUS KARTU PUTIH BERSIH
+          // 2. KONTEN FORM
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -190,13 +154,13 @@ class _SkriningPageState extends State<SkriningPage> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6679F4).withOpacity(0.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                   border: Border.all(
-                    color: const Color(0xFFEEF2F6),
+                    color: const Color(0xFFF1F5F9),
                     width: 1,
                   ),
                 ),
@@ -217,9 +181,42 @@ class _SkriningPageState extends State<SkriningPage> {
                       style: TextStyle(
                         fontSize: 12.5,
                         color: Color(0xFF64748B),
+                        height: 1.3,
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 16),
+
+                    // BANNER PERINGATAN KOTAK
+                    if (_showErrorBanner)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: const Color(0xFFFCA5A5), width: 1),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                color: Color(0xFFDC2626), size: 20),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Data belum lengkap! Semua data wajib diisi.',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF991B1B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                     // Input Nama Lengkap
                     _buildLabel('Nama Lengkap'),
@@ -240,7 +237,7 @@ class _SkriningPageState extends State<SkriningPage> {
                     ),
                     const SizedBox(height: 18),
 
-                    // Dropdown Jenis Kelamin
+                    // Dropdown Jenis Kelamin (Presisi & Bebas Mismatch)
                     _buildLabel('Jenis Kelamin'),
                     const SizedBox(height: 8),
                     Container(
@@ -251,33 +248,44 @@ class _SkriningPageState extends State<SkriningPage> {
                             color: const Color(0xFFE2E8F0), width: 1.2),
                       ),
                       child: DropdownButtonFormField<String>(
-                        value: _jenisKelamin,
+                        initialValue: _jenisKelamin,
                         dropdownColor: Colors.white,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          color: Color(0xFF1E293B),
+                          fontFamily: 'Roboto',
+                        ),
                         hint: const Text(
                           'Pilih jenis kelamin',
-                          style: TextStyle(color: Colors.grey, fontSize: 13.5),
+                          style: TextStyle(
+                              color: Color(0xFF94A3B8), fontSize: 13.5),
                         ),
                         decoration: const InputDecoration(
                           contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
+                              horizontal: 16, vertical: 12),
                           border: InputBorder.none,
                         ),
                         items: const [
                           DropdownMenuItem(
-                              value: 'Laki-laki', child: Text('Laki-laki')),
+                            value: 'Laki-laki',
+                            child: Text('Laki-laki'),
+                          ),
                           DropdownMenuItem(
-                              value: 'Perempuan', child: Text('Perempuan')),
+                            value: 'Perempuan',
+                            child: Text('Perempuan'),
+                          ),
                         ],
                         onChanged: (value) {
                           setState(() {
                             _jenisKelamin = value;
+                            if (_showErrorBanner) _showErrorBanner = false;
                           });
                         },
                       ),
                     ),
                     const SizedBox(height: 32),
 
-                    // Tombol Lanjutkan
+                    // TOMBOL LANJUTKAN DIBUAT BULAT (PILL SHAPE - RADIUS 25)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -285,7 +293,7 @@ class _SkriningPageState extends State<SkriningPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6679F4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(25),
                           ),
                           elevation: 0,
                         ),
@@ -336,11 +344,18 @@ class _SkriningPageState extends State<SkriningPage> {
         controller: controller,
         keyboardType: keyboardType,
         style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+        onChanged: (val) {
+          if (_showErrorBanner && val.isNotEmpty) {
+            setState(() {
+              _showErrorBanner = false;
+            });
+          }
+        },
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13.5),
+          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13.5),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: InputBorder.none,
         ),
       ),
