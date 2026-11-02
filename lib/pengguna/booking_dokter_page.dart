@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'notification_service.dart';
@@ -77,13 +78,29 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
           int.parse(jamMulaiStr.split(':')[1]),
         );
 
+        // 1. Jalankan notifikasi lokal (alarm HP)
         await NotificationService().scheduleReminder(
           id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
           dokterNama: widget.doctor.nama,
           waktuMulaiSesi: waktuMulaiSesi,
         );
 
-        // Pengecekan Guard Context Kedua setelah panggilan async notifikasi
+        // 2. Simpan ke database Firestore (koleksi notifications agar muncul di ikon lonceng)
+        try {
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? widget.namaUser;
+          await FirebaseFirestore.instance.collection('notifications').add({
+            'user_id': currentUserId,
+            'title': 'Jadwal Konsultasi Dikonfirmasi',
+            'body': 'Konsultasi Anda dengan ${widget.doctor.nama} pada pukul $_selectedSlot telah berhasil dijadwalkan.',
+            'type': 'booking',
+            'is_read': false,
+            'created_at': FieldValue.serverTimestamp(),
+          });
+        } catch (e) {
+          debugPrint('Gagal menyimpan notifikasi ke database: $e');
+        }
+
+        // Pengecekan Guard Context Kedua setelah panggilan async
         if (!mounted) return;
 
         final String roomId = '${widget.namaUser}_${widget.doctor.id}_${_selectedSlot!.replaceAll(' ', '')}';
