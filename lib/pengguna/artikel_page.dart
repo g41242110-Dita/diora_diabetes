@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detail_artikel_page.dart';
@@ -26,15 +27,76 @@ class _ArtikelPageState extends State<ArtikelPage> {
     super.dispose();
   }
 
+  // Helper untuk menampilkan gambar thumbnail (Base64 atau URL biasa)
+  Widget _buildThumbnailWidget(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return Container(
+        width: 78,
+        height: 78,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FF),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(
+          Icons.image_not_supported_rounded,
+          color: Color(0xFF6679F4),
+          size: 28,
+        ),
+      );
+    }
+
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final bytes = base64Decode(imageUrl.split(',').last);
+        return Image.memory(
+          bytes,
+          width: 78,
+          height: 78,
+          fit: BoxFit.cover,
+        );
+      } catch (e) {
+        return Container(
+          width: 78,
+          height: 78,
+          color: const Color(0xFFEEF2FF),
+          child: const Icon(Icons.broken_image_rounded, color: Color(0xFF6679F4), size: 28),
+        );
+      }
+    }
+
+    return Image.network(
+      imageUrl,
+      width: 78,
+      height: 78,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: 78,
+        height: 78,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FF),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(
+          Icons.image_not_supported_rounded,
+          color: Color(0xFF6679F4),
+          size: 28,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FE),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. HEADER DENGAN KOTAK PENCARIAN YANG SUDAH DIPERKECL THIN & RAMPING
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+            padding: EdgeInsets.fromLTRB(16, topPadding, 20, 18), // Padding bawah dikurangi dari 24 ke 18
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
@@ -42,8 +104,8 @@ class _ArtikelPageState extends State<ArtikelPage> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
             child: Column(
@@ -52,49 +114,51 @@ class _ArtikelPageState extends State<ArtikelPage> {
                 Row(
                   children: [
                     if (widget.showBackButton) ...[
-                      GestureDetector(
-                        onTap: () {
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          size: 24,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
                           if (widget.onBackToHome != null) {
                             widget.onBackToHome!();
-                          } else {
+                          } else if (Navigator.canPop(context)) {
                             Navigator.pop(context);
                           }
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            size: 22,
-                            color: Colors.white,
-                          ),
-                        ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 12),
                     ],
-                    const Text(
-                      'Artikel',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    const Expanded(
+                      child: Text(
+                        'Artikel Edukasi',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14), // Jarak dikurangi dari 20 ke 14
+
+                // KOTAK PENCARIAN ARTIKEL (LEBIH TIPIS & MINIMALIS)
                 Container(
+                  height: 44, // Ditentukan tinggi pasti agar tidak terlalu besar
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -105,7 +169,9 @@ class _ArtikelPageState extends State<ArtikelPage> {
                         _searchQuery = value;
                       });
                     },
+                    textAlignVertical: TextAlignVertical.center,
                     decoration: InputDecoration(
+                      isDense: true,
                       hintText: 'Cari Artikel . . .',
                       hintStyle: TextStyle(
                         color: Colors.grey.shade400,
@@ -115,13 +181,13 @@ class _ArtikelPageState extends State<ArtikelPage> {
                       prefixIcon: const Icon(
                         Icons.search_rounded,
                         color: Color(0xFF6679F4),
-                        size: 22,
+                        size: 20, // Icon disesuaikan ukurannya ke 20
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                         icon: const Icon(
                           Icons.cancel_rounded,
-                          size: 18,
+                          size: 16,
                           color: Colors.grey,
                         ),
                         onPressed: () {
@@ -134,8 +200,8 @@ class _ArtikelPageState extends State<ArtikelPage> {
                           : null,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 14,
+                        horizontal: 14,
+                        vertical: 10,
                       ),
                     ),
                   ),
@@ -144,6 +210,8 @@ class _ArtikelPageState extends State<ArtikelPage> {
             ),
           ),
           const SizedBox(height: 16),
+
+          // 2. DAFTAR ARTIKEL DARI FIRESTORE
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -214,6 +282,8 @@ class _ArtikelPageState extends State<ArtikelPage> {
                     final title = data['title'] ?? '';
                     final content = data['content'] ?? '';
                     final imageUrl = data['thumbnail'] ?? data['imageUrl'] ?? '';
+                    final inlineImages = data['inline_images'];
+
                     final snippet = content.length > 100
                         ? '${content.substring(0, 100)}...'
                         : content;
@@ -223,6 +293,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
                       snippet: snippet,
                       content: content,
                       imageUrl: imageUrl,
+                      inlineImages: inlineImages,
                     );
                   },
                 );
@@ -239,6 +310,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
     required String snippet,
     required String content,
     required String imageUrl,
+    dynamic inlineImages,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -270,6 +342,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
                   title: title,
                   content: content,
                   imageUrl: imageUrl,
+                  inlineImages: inlineImages,
                 ),
               ),
             );
@@ -281,25 +354,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.network(
-                    imageUrl,
-                    width: 78,
-                    height: 78,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 78,
-                      height: 78,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.image_not_supported_rounded,
-                        color: Color(0xFF6679F4),
-                        size: 28,
-                      ),
-                    ),
-                  ),
+                  child: _buildThumbnailWidget(imageUrl),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
