@@ -9,7 +9,7 @@ import 'pengguna/onboarding_page.dart';
 
 /// true  = setiap aplikasi dibuka SELALU harus login dulu
 /// false = sesi login terakhir dipertahankan (langsung masuk sesuai role)
-const bool wajibLoginSetiapBukaApp = false; // <-- Diubah jadi false!
+const bool wajibLoginSetiapBukaApp = false;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +18,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Buang sesi lama sebelum UI tampil, jika wajibLoginSetiapBukaApp bernilai true
   if (wajibLoginSetiapBukaApp) {
     await FirebaseAuth.instance.signOut();
   }
@@ -33,19 +32,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HalamanUtama(),
+      home: SplashScreen(),
     );
   }
 }
 
-class HalamanUtama extends StatefulWidget {
-  const HalamanUtama({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  State<HalamanUtama> createState() => _HalamanUtamaState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _HalamanUtamaState extends State<HalamanUtama> {
+class _SplashScreenState extends State<SplashScreen> {
   bool _gagalMemeriksa = false;
 
   @override
@@ -58,7 +57,6 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    // Jika wajibLoginSetiapBukaApp diaktifkan
     if (wajibLoginSetiapBukaApp && FirebaseAuth.instance.currentUser != null) {
       await FirebaseAuth.instance.signOut();
     }
@@ -136,8 +134,11 @@ class _HalamanUtamaState extends State<HalamanUtama> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off_rounded,
-                    size: 64, color: Color(0xFF5B71F5)),
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 64,
+                  color: Color(0xFF5B71F5),
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Tidak dapat memeriksa akun.',
@@ -180,16 +181,23 @@ class _HalamanUtamaState extends State<HalamanUtama> {
         if (shouldExit) SystemNavigator.pop();
       },
       child: Scaffold(
-        body: SizedBox.expand(
+        backgroundColor: Colors.white,
+        body: Center(
           child: Image.asset(
             'assets/HAL UTAMA.png',
-            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.contain, // Menjaga rasio & posisi desain agar tidak terdistorsi
+            filterQuality: FilterQuality.high, // Memaksa render anti-aliasing HD tinggi
             errorBuilder: (context, error, stackTrace) {
               return Container(
                 color: const Color(0xFF5B71F5),
                 child: const Center(
-                  child: Icon(Icons.medical_services_rounded,
-                      size: 100, color: Colors.white),
+                  child: Icon(
+                    Icons.medical_services_rounded,
+                    size: 100,
+                    color: Colors.white,
+                  ),
                 ),
               );
             },
