@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,12 +7,14 @@ class DetailArtikelPage extends StatefulWidget {
   final String title;
   final String content;
   final String imageUrl;
+  final dynamic inlineImages;
 
   const DetailArtikelPage({
     super.key,
     required this.title,
     required this.content,
     required this.imageUrl,
+    this.inlineImages,
   });
 
   @override
@@ -71,7 +74,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     });
   }
 
-  // BANNER PERSEGI PRESISI DENGAN ANGLED CORNER (16px)
   void _showTopNotification({
     required String title,
     required String message,
@@ -96,7 +98,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(16), // Bentuk kartu persegi bersudut halus
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isSuccess
                     ? const Color(0xFFA7F3D0)
@@ -114,7 +116,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
             ),
             child: Row(
               children: [
-                // Ikon Persegi Bersudut Halus
                 Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
@@ -128,8 +129,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-
-                // Teks Judul & Pesan
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,6 +218,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
               : widget.content,
           'content': widget.content,
           'imageUrl': widget.imageUrl,
+          'inline_images': widget.inlineImages,
           'saved_at': FieldValue.serverTimestamp(),
         });
       } else {
@@ -229,8 +229,113 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     }
   }
 
+  Widget _buildHeaderImage(String imgUrl) {
+    if (imgUrl.isEmpty) {
+      return Container(
+        height: 220,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FF),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(
+          child: Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
+        ),
+      );
+    }
+
+    if (imgUrl.startsWith('data:image')) {
+      try {
+        final bytes = base64Decode(imgUrl.split(',').last);
+        return Image.memory(
+          bytes,
+          height: 220,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        );
+      } catch (e) {
+        return Container(height: 220, color: Colors.grey[200]);
+      }
+    }
+
+    return Image.network(
+      imgUrl,
+      height: 220,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: 220,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEF2FF),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(
+          child: Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentWithImages(String rawContent) {
+    List<Widget> widgets = [];
+    Map<String, String> imagesMap = {};
+
+    if (widget.inlineImages != null && widget.inlineImages is Map) {
+      imagesMap = Map<String, String>.from(
+        (widget.inlineImages as Map).map((k, v) => MapEntry(k.toString(), v.toString())),
+      );
+    }
+
+    RegExp exp = RegExp(r'(\[FOTO_\d+\])');
+    List<String> parts = rawContent.split(exp);
+
+    for (String part in parts) {
+      String trimmed = part.trim();
+      if (imagesMap.containsKey(trimmed)) {
+        String base64Data = imagesMap[trimmed]!;
+        try {
+          final bytes = base64Decode(base64Data.split(',').last);
+          widgets.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.memory(
+                  bytes,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+        } catch (e) {
+          widgets.add(const SizedBox());
+        }
+      } else if (trimmed.isNotEmpty) {
+        widgets.add(
+          Text(
+            part,
+            style: TextStyle(
+              fontSize: _fontSize,
+              color: const Color(0xFF334155),
+              height: 1.8,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        );
+        widgets.add(const SizedBox(height: 10));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 8;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: CustomScrollView(
@@ -239,12 +344,12 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
           SliverPersistentHeader(
             pinned: true,
             delegate: _StickyHeaderDelegate(
-              minHeight: 110.0,
-              maxHeight: 140.0,
+              minHeight: topPadding + 44.0,
+              maxHeight: topPadding + 48.0,
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF6679F4), Color(0xFF8B5CF6)],
+                    colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -253,42 +358,71 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                     bottomRight: Radius.circular(24),
                   ),
                 ),
-                padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                padding: EdgeInsets.fromLTRB(16, topPadding, 16, 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 24,
                       ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded,
-                            color: Colors.white, size: 20),
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                      onPressed: () => Navigator.pop(context),
                     ),
                     Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.text_decrease_rounded,
-                              color: Colors.white, size: 20),
-                          onPressed: _zoomOut,
-                          tooltip: 'Kecilkan Teks',
+                        InkWell(
+                          onTap: _zoomOut,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'A-',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.text_increase_rounded,
-                              color: Colors.white, size: 20),
-                          onPressed: _zoomIn,
-                          tooltip: 'Besarkan Teks',
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: _zoomIn,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'A+',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: Icon(
                             _isBookmarked
                                 ? Icons.bookmark_rounded
                                 : Icons.bookmark_border_rounded,
                             color: Colors.white,
-                            size: 22,
+                            size: 24,
                           ),
                           onPressed: _toggleBookmark,
                         ),
@@ -318,21 +452,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        widget.imageUrl,
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 220,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(Icons.image_rounded,
-                              size: 48, color: Color(0xFF6679F4)),
-                        ),
-                      ),
+                      child: _buildHeaderImage(widget.imageUrl),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -352,27 +472,20 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // JUDUL SEKARANG MEMAKAI _fontSize + 3.0 (IKUT MEMBESAR/MENGECIL DINAMIS)
                         Text(
                           widget.title,
-                          style: const TextStyle(
-                            fontSize: 18,
+                          style: TextStyle(
+                            fontSize: _fontSize + 3.0,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
+                            color: const Color(0xFF0F172A),
                             height: 1.3,
                           ),
                         ),
                         const SizedBox(height: 12),
                         Divider(color: Colors.grey.shade200, thickness: 1),
                         const SizedBox(height: 12),
-                        Text(
-                          widget.content,
-                          style: TextStyle(
-                            fontSize: _fontSize,
-                            color: const Color(0xFF334155),
-                            height: 1.8,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                        _buildContentWithImages(widget.content),
                       ],
                     ),
                   ),
