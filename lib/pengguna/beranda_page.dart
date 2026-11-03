@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'profile_screen.dart';
 import 'konsultasi_page.dart';
@@ -11,7 +13,7 @@ import 'artikel_page.dart';
 import 'hasil_skrining_page.dart';
 import 'detail_artikel_page.dart';
 import 'curved_nav_bar.dart';
-import 'notifikasi_page.dart'; // <--- 1. IMPORT HALAMAN NOTIFIKASI DI SINI
+import 'notifikasi_page.dart';
 
 class BerandaPage extends StatefulWidget {
   final String namaUser;
@@ -31,15 +33,44 @@ class _BerandaPageState extends State<BerandaPage> {
   late int _selectedIndex;
   late PageController _pageController;
 
+  String _currentNamaUser = '';
+  String? _currentBase64Image;
+
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    // Mengeset initialPage di posisi tengah agar pengguna juga bisa menggeser ke belakang jika diinginkan
+    _currentNamaUser = widget.namaUser;
+    _fetchUserBerandaData();
+
     _pageController = PageController(
       initialPage: 1000,
       viewportFraction: 0.85,
     );
+  }
+
+  Future<void> _fetchUserBerandaData() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          if (mounted) {
+            setState(() {
+              if (data.containsKey('nama') && data['nama'].toString().isNotEmpty) {
+                _currentNamaUser = data['nama'];
+              }
+              if (data.containsKey('photoBase64')) {
+                _currentBase64Image = data['photoBase64'];
+              }
+            });
+          }
+        }
+      } catch (e) {
+        debugPrint("Error load beranda user data: $e");
+      }
+    }
   }
 
   @override
@@ -48,10 +79,21 @@ class _BerandaPageState extends State<BerandaPage> {
     super.dispose();
   }
 
-  void _bukaHalamanProfil() {
-    setState(() {
-      _selectedIndex = 4;
-    });
+  void _bukaHalamanProfil() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfileScreen(
+          namaUser: _currentNamaUser,
+          onBackToHome: () {
+            setState(() {
+              _selectedIndex = 0;
+            });
+          },
+        ),
+      ),
+    );
+    _fetchUserBerandaData();
   }
 
   void _bukaHalamanSkrining() {
@@ -82,8 +124,7 @@ class _BerandaPageState extends State<BerandaPage> {
             color: Colors.black87,
           ),
         ),
-        actionsPadding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
           SizedBox(
             width: double.infinity,
@@ -117,8 +158,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   height: 48,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                          color: Color(0xFF6679F4), width: 1.5),
+                      side: const BorderSide(color: Color(0xFF6679F4), width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -155,7 +195,7 @@ class _BerandaPageState extends State<BerandaPage> {
           });
         },
       ),
-      KonsultasiPage(namaUser: widget.namaUser),
+      KonsultasiPage(namaUser: _currentNamaUser),
       ArtikelPage(
         showBackButton: true,
         onBackToHome: () {
@@ -165,7 +205,7 @@ class _BerandaPageState extends State<BerandaPage> {
         },
       ),
       ProfileScreen(
-        namaUser: widget.namaUser,
+        namaUser: _currentNamaUser,
         onBackToHome: () {
           setState(() {
             _selectedIndex = 0;
@@ -200,6 +240,9 @@ class _BerandaPageState extends State<BerandaPage> {
             setState(() {
               _selectedIndex = index;
             });
+            if (index == 0) {
+              _fetchUserBerandaData();
+            }
           },
         ),
       ),
@@ -244,11 +287,15 @@ class _BerandaPageState extends State<BerandaPage> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const CircleAvatar(
+                              child: CircleAvatar(
                                 radius: 22,
-                                backgroundColor: Color(0xFFFFE5D9),
-                                child: Icon(Icons.person,
-                                    color: Colors.orange, size: 28),
+                                backgroundColor: const Color(0xFFFFE5D9),
+                                backgroundImage: (_currentBase64Image != null && _currentBase64Image!.isNotEmpty)
+                                    ? MemoryImage(base64Decode(_currentBase64Image!))
+                                    : null,
+                                child: (_currentBase64Image == null || _currentBase64Image!.isEmpty)
+                                    ? const Icon(Icons.person, color: Colors.orange, size: 28)
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -258,7 +305,7 @@ class _BerandaPageState extends State<BerandaPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Halo, ${widget.namaUser} 👋',
+                                    'Halo, $_currentNamaUser 👋',
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -283,10 +330,8 @@ class _BerandaPageState extends State<BerandaPage> {
                         ),
                       ),
                     ),
-                    // --- 2. HUBUNGKAN IKON LONCENG DI SINI ---
                     IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded,
-                          color: Colors.white, size: 26),
+                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 26),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -299,15 +344,13 @@ class _BerandaPageState extends State<BerandaPage> {
                   ],
                 ),
               ),
-              // CARD FITUR UTAMA (TIDAK LAGI MEMBUNGKUS DENGAN GESTUREDETECTOR)
               Positioned(
                 top: 125,
                 left: 16,
                 right: 16,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 18, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -327,8 +370,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFECEBFF),
                                 borderRadius: BorderRadius.circular(20),
@@ -368,7 +410,6 @@ class _BerandaPageState extends State<BerandaPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // TOMBOL LINGKARAN MERAH (Satu-satunya area yang bisa diklik)
                       GestureDetector(
                         onTap: _bukaHalamanSkrining,
                         child: Container(
@@ -427,8 +468,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const LokasiPage()),
+                          MaterialPageRoute(builder: (context) => const LokasiPage()),
                         );
                       },
                     ),
@@ -451,8 +491,7 @@ class _BerandaPageState extends State<BerandaPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => const HasilSkriningPage()),
+                          MaterialPageRoute(builder: (context) => const HasilSkriningPage()),
                         );
                       },
                     ),
@@ -472,8 +511,7 @@ class _BerandaPageState extends State<BerandaPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          ProgresKesehatanPage(username: widget.namaUser),
+                      builder: (context) => ProgresKesehatanPage(username: _currentNamaUser),
                     ),
                   );
                 },
@@ -495,8 +533,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.show_chart_rounded,
-                            color: Color(0xFFE65100), size: 22),
+                        child: const Icon(Icons.show_chart_rounded, color: Color(0xFFE65100), size: 22),
                       ),
                       const SizedBox(width: 14),
                       const Expanded(
@@ -524,8 +561,7 @@ class _BerandaPageState extends State<BerandaPage> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Colors.black45),
+                      const Icon(Icons.chevron_right_rounded, color: Colors.black45),
                     ],
                   ),
                 ),
@@ -593,7 +629,6 @@ class _BerandaPageState extends State<BerandaPage> {
 
                 return PageView.builder(
                   controller: _pageController,
-                  // Menggunakan kelipatan besar agar carousel artikel bisa di-scroll terus-menerus tanpa mentok
                   itemCount: docs.length * 1000,
                   itemBuilder: (context, index) {
                     final realIndex = index % docs.length;
@@ -632,20 +667,17 @@ class _BerandaPageState extends State<BerandaPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16)),
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                               child: Image.network(
                                 imageUrl,
                                 height: 95,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                      height: 95,
-                                      color: const Color(0xFFE2E7FF),
-                                      child: const Icon(Icons.article_outlined,
-                                          color: Color(0xFF6679F4), size: 30),
-                                    ),
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  height: 95,
+                                  color: const Color(0xFFE2E7FF),
+                                  child: const Icon(Icons.article_outlined, color: Color(0xFF6679F4), size: 30),
+                                ),
                               ),
                             ),
                             Padding(

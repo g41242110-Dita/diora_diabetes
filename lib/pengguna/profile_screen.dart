@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:io'; // Diperlukan untuk File gambar
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart'; // Diperlukan untuk memilih gambar dari galeri
+import 'package:image_picker/image_picker.dart';
 
 import 'profil_informasi_pribadi_page.dart';
 import 'profil_artikel_tersimpan_page.dart';
@@ -30,7 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _emailDisplay = '';
   String? _base64Image;
   bool _isLoading = true;
-  bool _isUploadingImage = false; // Indikator saat proses kompres & unggah foto
+  bool _isUploadingImage = false;
+  bool _isDataChanged = false;
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -74,18 +77,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Fungsi untuk memilih gambar dari galeri dan menyimpannya sebagai Base64 ke Firestore
-  Future<void> _pickAndUploadImage() async {
-    final ImagePicker picker = ImagePicker();
+  // Fungsi untuk mengambil dan mengunggah gambar dari Kamera atau Galeri
+  Future<void> _pickAndUploadImage(ImageSource source) async {
     try {
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 70, // Kompres kualitas gambar agar ukuran base64 efisien
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
         maxWidth: 500,
         maxHeight: 500,
       );
 
-      if (image == null) return; // Batal jika pengguna tidak memilih gambar
+      if (image == null) return;
 
       setState(() {
         _isUploadingImage = true;
@@ -103,6 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         setState(() {
           _base64Image = base64String;
+          _isDataChanged = true;
         });
 
         if (mounted) {
@@ -133,6 +136,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Menampilkan modal pilihan Kamera & Galeri (seperti WhatsApp / referensi)
+  void _showImagePickerModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: Wrap(
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Center(
+                    child: Text(
+                      'Foto profil',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.camera_alt, color: Color(0xFF4F46E5)),
+                    ),
+                    title: const Text('Kamera', style: TextStyle(fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickAndUploadImage(ImageSource.camera);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.photo_library, color: Color(0xFF4F46E5)),
+                    ),
+                    title: const Text('Galeri', style: TextStyle(fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickAndUploadImage(ImageSource.gallery);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   String _getInitials(String name) {
     if (name.trim().isEmpty) return 'U';
     List<String> names = name.trim().split(' ');
@@ -143,11 +224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _handleBackAction() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    } else if (widget.onBackToHome != null) {
-      widget.onBackToHome!();
-    }
+    Navigator.pop(context, _isDataChanged);
   }
 
   @override
@@ -167,7 +244,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           )
               : Column(
             children: [
-              // Header Gradien & Kartu Profil Mengambang
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
@@ -182,8 +258,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 105),
-
-              // Menu Navigasi yang didorong penuh ke bawah
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,7 +276,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 1. Header Gradien Atas
   Widget _buildTopGradientHeader() {
     return Container(
       width: double.infinity,
@@ -247,7 +320,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 2. Kartu Profil Mengambang
   Widget _buildFloatingCard() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
@@ -264,27 +336,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       child: Column(
         children: [
-          // Bagian Avatar dengan aksi klik untuk ambil foto dari galeri
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              GestureDetector(
-                onTap: _isUploadingImage ? null : _pickAndUploadImage,
-                child: _buildAvatar(size: 80),
-              ),
-              if (_isUploadingImage)
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black45,
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
+          GestureDetector(
+            onTap: _isUploadingImage ? null : _showImagePickerModal,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Stack(
+                  children: [
+                    _buildAvatar(size: 80),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4F46E5),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
+                if (_isUploadingImage)
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black45,
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -316,7 +408,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 3. Avatar Foto / Inisial
   Widget _buildAvatar({double size = 80}) {
     if (_base64Image != null && _base64Image!.isNotEmpty) {
       try {
@@ -377,7 +468,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 4. Daftar Menu Pilihan
   Widget _buildMenuList() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -390,11 +480,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             bgColor: const Color(0xFFEEF2FF),
             title: 'Informasi Pribadi',
             subtitle: 'Ubah data diri & akun',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final updated = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const InformasiPribadiPage()),
-              ).then((_) => _fetchUserData());
+              );
+              if (updated == true) {
+                _isDataChanged = true;
+                _fetchUserData();
+              }
             },
           ),
           _buildMenuItem(
@@ -455,7 +549,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 5. Item Menu Individual
   Widget _buildMenuItem({
     required IconData icon,
     required Color iconColor,
@@ -465,6 +558,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onTap,
     bool isLogout = false,
   }) {
+    // ignore: unnecessary_null_comparison
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

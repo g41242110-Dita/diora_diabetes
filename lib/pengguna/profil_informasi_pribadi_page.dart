@@ -216,6 +216,12 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
           _showSuccessAlert = true;
           _isSaving = false;
         });
+
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.pop(context, true);
+          }
+        });
       }
     } catch (e) {
       debugPrint("Gagal menyimpan data: $e");
@@ -241,7 +247,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true),
         ),
       ),
       body: SafeArea(
@@ -260,63 +266,47 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
               ),
             ),
             const SizedBox(height: 16),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
                   children: [
                     if (_showSuccessAlert)
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 300),
-                        builder: (context, value, child) {
-                          return Opacity(
-                            opacity: value,
-                            child: Transform.translate(
-                              offset: Offset(0, 10 * (1 - value)),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF86EFAC), width: 1),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.check_circle, color: Color(0xFF22C55E), size: 20),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Perubahan berhasil disimpan!',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF166534),
-                                    ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF86EFAC), width: 1),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle, color: Color(0xFF22C55E), size: 20),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Perubahan berhasil disimpan!',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF166534),
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _showSuccessAlert = false;
-                                    });
-                                  },
-                                  child: const Icon(Icons.close, size: 16, color: Color(0xFF166534)),
-                                ),
-                              ],
-                            ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _showSuccessAlert = false;
+                                  });
+                                },
+                                child: const Icon(Icons.close, size: 16, color: Color(0xFF166534)),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-
-                    // Kartu Profil Utama
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -398,8 +388,6 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Kartu Data Diri
                     _buildSectionCard(
                       title: 'Data Diri',
                       items: [
@@ -412,8 +400,6 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    // Kartu Informasi Profesi
                     _buildSectionCard(
                       title: 'Informasi Profesi',
                       items: [
@@ -423,8 +409,6 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-
-                    // Tombol Simpan Perubahan (Bulat)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -518,8 +502,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
             const Divider(height: 1, color: Color(0xFFF1F5F9)),
             itemBuilder: (context, index) {
               final item = items[index];
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+              return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
@@ -548,24 +531,19 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       ),
                     ),
                     Expanded(
-                      child: Focus(
-                        onFocusChange: (hasFocus) {
-                          setState(() {});
-                        },
-                        child: TextField(
-                          controller: item.controller,
-                          readOnly: item.readOnly,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: item.readOnly ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
-                          ),
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            border: InputBorder.none,
-                          ),
+                      child: TextField(
+                        controller: item.controller,
+                        readOnly: item.readOnly,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: item.readOnly ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                        ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          border: InputBorder.none,
                         ),
                       ),
                     ),

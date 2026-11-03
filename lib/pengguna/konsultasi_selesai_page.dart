@@ -2,41 +2,51 @@ import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'ringkasan_konsultasi_page.dart';
 import 'beranda_page.dart';
+import 'rating_dialog.dart';
 
 class KonsultasiSelesaiPage extends StatelessWidget {
   final Doctor doctor;
   final String namaUser;
+  final String roomId;
+  final String currentUserId;
 
   const KonsultasiSelesaiPage({
     super.key,
     required this.doctor,
     this.namaUser = 'Pengguna',
+    this.roomId = '',
+    this.currentUserId = '',
   });
 
   String _getFormattedDateTime() {
     final now = DateTime.now();
     final List<String> months = const [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember'
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     final day = now.day.toString().padLeft(2, '0');
     final month = months[now.month - 1];
     final year = now.year;
-
     final hour = now.hour.toString().padLeft(2, '0');
     final minute = now.minute.toString().padLeft(2, '0');
 
     return '$day $month $year   $hour.$minute';
+  }
+
+  void _openRatingDialog(BuildContext context, VoidCallback onFinish) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => RatingDialog(
+        doctor: doctor,
+        currentUserId: currentUserId,
+        namaUser: namaUser,
+      ),
+    );
+
+    if (context.mounted) {
+      onFinish();
+    }
   }
 
   @override
@@ -68,8 +78,6 @@ class KonsultasiSelesaiPage extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-
-              // Ilustrasi
               Container(
                 height: 160,
                 width: 160,
@@ -84,7 +92,6 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
               const Text(
                 'Konsultasi Telah Berakhir',
                 style: TextStyle(
@@ -104,8 +111,6 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Card Dokter
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -159,10 +164,9 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                   ],
                 ),
               ),
-
               const Spacer(),
 
-              // Tombol Lihat Ringkasan Konsultasi
+              // 1. LANGSUNG KE RINGKASAN (TANPA POP-UP RATING)
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -180,6 +184,8 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                         builder: (context) => RingkasanKonsultasiPage(
                           doctor: doctor,
                           namaUser: namaUser,
+                          roomId: roomId,
+                          currentUserId: currentUserId,
                         ),
                       ),
                     );
@@ -195,7 +201,7 @@ class KonsultasiSelesaiPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Tombol Kembali ke Beranda
+              // 2. KEMBALI KE BERANDA (MEMUNCULKAN POP-UP RATING TERLEBIH DAHULU)
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -208,15 +214,17 @@ class KonsultasiSelesaiPage extends StatelessWidget {
                     elevation: 0,
                   ),
                   onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BerandaPage(
-                          namaUser: namaUser,
+                    _openRatingDialog(context, () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BerandaPage(
+                            namaUser: namaUser,
+                          ),
                         ),
-                      ),
-                          (route) => false,
-                    );
+                            (route) => false,
+                      );
+                    });
                   },
                   child: const Text(
                     'Kembali ke Beranda',
