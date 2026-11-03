@@ -47,7 +47,9 @@ class _HalamanUtamaState extends State<HalamanUtama> {
       KonsultasiPage(
         namaUser: widget.namaUser,
       ),
-      const ArtikelPage(),
+      ArtikelPage(
+        onBackToHome: () => _onItemTapped(0),
+      ),
       ProfileScreen(
         namaUser: widget.namaUser,
         onBackToHome: () => _onItemTapped(0),
