@@ -22,125 +22,18 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
     super.dispose();
   }
 
-  /// Cek apakah shift dokter sedang aktif jam sekarang
+  /// Cek apakah shift dokter sedang aktif berdasarkan jam saat ini
   bool _isShiftAktif(int jamMulai, int jamSelesai) {
     if (jamMulai == 0 && jamSelesai == 0) return false;
 
     final currentHour = DateTime.now().hour;
 
-    // Shift Malam Lintas Hari (23.00 - 07.00)
+    // Shift Malam Lintas Hari (contoh: 23.00 - 07.00)
     if (jamMulai > jamSelesai) {
       return (currentHour >= jamMulai || currentHour < jamSelesai);
     }
-    // Shift Normal Hari yang Sama (07.00 - 15.00 atau 15.00 - 23.00)
+    // Shift Normal Hari yang Sama (contoh: 07.00 - 15.00)
     return (currentHour >= jamMulai && currentHour < jamSelesai);
-  }
-
-  /// Cek apakah dokter bertugas dan bisa dibooking
-  bool _canBeBooked(int jamMulai, int jamSelesai) {
-    if (jamMulai == 0 && jamSelesai == 0) return false;
-
-    final currentHour = DateTime.now().hour;
-
-    // Shift Aktif
-    if (_isShiftAktif(jamMulai, jamSelesai)) return true;
-
-    // Shift Malam (23 - 07) -> Bisa dibooking dari jam 15.00 sore
-    if (jamMulai == 23 && jamSelesai == 7) {
-      return (currentHour >= 15 || currentHour < 7);
-    }
-
-    // Shift Pagi (07 - 15) -> Bisa dibooking untuk besok pagi
-    if (jamMulai == 7 && jamSelesai == 15) {
-      return true;
-    }
-
-    return true;
-  }
-
-  /// Memproses rotasi 7 dokter per hari (Rolling Shift)
-  List<Doctor> _process7DoctorRotations(List<Doctor> allDoctors) {
-    if (allDoctors.isEmpty) return [];
-
-    final now = DateTime.now();
-    final currentHour = now.hour;
-
-    // Shift aktif sekarang: 0 = Pagi (07-15), 1 = Siang (15-23), 2 = Malam (23-07)
-    int activeShiftNow;
-    if (currentHour >= 7 && currentHour < 15) {
-      activeShiftNow = 0;
-    } else if (currentHour >= 15 && currentHour < 23) {
-      activeShiftNow = 1;
-    } else {
-      activeShiftNow = 2;
-    }
-
-    // Hitung offset rotasi harian
-    final referenceDate = DateTime(2026, 1, 1);
-    final dayOffset = now.difference(referenceDate).inDays;
-    int totalDocs = allDoctors.length;
-
-    List<Doctor> processedDoctors = [];
-
-    for (int i = 0; i < totalDocs; i++) {
-      Doctor doc = allDoctors[i];
-
-      // Tentukan giliran shift dokter (0 = Pagi, 1 = Siang, 2 = Malam, >=3 = Libur)
-      int shiftIndexHariIni = (i + dayOffset) % totalDocs;
-
-      int jamMulai = 0;
-      int jamSelesai = 0;
-
-      if (shiftIndexHariIni == 0) {
-        jamMulai = 7;
-        jamSelesai = 15;
-      } else if (shiftIndexHariIni == 1) {
-        jamMulai = 15;
-        jamSelesai = 23;
-      } else if (shiftIndexHariIni == 2) {
-        jamMulai = 23;
-        jamSelesai = 7;
-      } else {
-        // Dokter ke-4 sampai ke-7 Libur
-        jamMulai = 0;
-        jamSelesai = 0;
-      }
-
-      bool isOnlineNow = (shiftIndexHariIni == activeShiftNow);
-
-      processedDoctors.add(
-        Doctor(
-          id: doc.id,
-          nama: doc.nama,
-          spesialis: doc.spesialis,
-          jamMulai: jamMulai,
-          jamSelesai: jamSelesai,
-          isOnline: isOnlineNow,
-          isBusyInChat: doc.isBusyInChat,
-          rating: doc.rating,
-          ulasan: doc.ulasan,
-          deskripsi: doc.deskripsi,
-        ),
-      );
-    }
-
-    // SORTING KRONOLOGIS URUTAN JAM:
-    // 1. Shift Aktif saat ini (misal 15-23)
-    // 2. Shift Malam Nanti (23-07)
-    // 3. Shift Besok Pagi (07-15)
-    // 4. Dokter Libur / Offline
-    processedDoctors.sort((a, b) {
-      int getPriority(Doctor doc) {
-        if (_isShiftAktif(doc.jamMulai, doc.jamSelesai)) return 1; // Paling Atas
-        if (doc.jamMulai == 23) return 2; // Shift Malam Nanti
-        if (doc.jamMulai == 7) return 3;  // Shift Besok Pagi
-        return 4;                         // Offline / Libur
-      }
-
-      return getPriority(a).compareTo(getPriority(b));
-    });
-
-    return processedDoctors;
   }
 
   String _formatShiftText(int jamMulai, int jamSelesai) {
@@ -151,15 +44,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
     final start = jamMulai.toString().padLeft(2, '0');
     final end = jamSelesai.toString().padLeft(2, '0');
 
-    if (_isShiftAktif(jamMulai, jamSelesai)) {
-      return 'Shift Aktif ($start.00 - $end.00)';
-    } else if (jamMulai == 23) {
-      return 'Shift Malam Nanti ($start.00 - $end.00)';
-    } else if (jamMulai == 7) {
-      return 'Shift Besok Pagi ($start.00 - $end.00)';
-    } else {
-      return 'Shift Hari Ini ($start.00 - $end.00)';
-    }
+    return 'Jam Praktik ($start.00 - $end.00)';
   }
 
   @override
@@ -247,7 +132,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
             ),
           ),
 
-          // STREAM BUILDER DATA DOKTER REAL-TIME
+          // STREAM BUILDER DATA DOKTER REAL-TIME DARI FIREBASE
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -275,9 +160,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                       doc.data() as Map<String, dynamic>, doc.id);
                 }).toList();
 
-                // TERAPKAN ROTASI 7 DOKTER HARIAN & SORTING KRONOLOGIS
-                doctorsList = _process7DoctorRotations(doctorsList);
-
+                // Filter pencarian berdasarkan nama atau spesialis
                 if (_searchQuery.isNotEmpty) {
                   doctorsList = doctorsList.where((doc) {
                     return doc.nama.toLowerCase().contains(_searchQuery) ||
@@ -304,10 +187,10 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                         const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final doctor = doctorsList[index];
-                          final bool isAktif = _isShiftAktif(
-                              doctor.jamMulai, doctor.jamSelesai);
-                          final bool canBook = _canBeBooked(
-                              doctor.jamMulai, doctor.jamSelesai);
+
+                          // STATUS MURNI MEMBACA DARI DATABASE FIREBASE
+                          final bool isOnline = doctor.isOnline;
+                          final bool isBusy = doctor.isBusyInChat;
                           final String shiftText = _formatShiftText(
                               doctor.jamMulai, doctor.jamSelesai);
 
@@ -384,42 +267,36 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                                                 ),
                                                 const SizedBox(width: 8),
 
-                                                // BADGE STATUS DOKTER
+                                                // BADGE STATUS DOKTER (BERDASARKAN FIREBASE)
                                                 Container(
                                                   padding: const EdgeInsets
                                                       .symmetric(
                                                       horizontal: 8,
                                                       vertical: 4),
                                                   decoration: BoxDecoration(
-                                                    color: isAktif
-                                                        ? (doctor.isBusyInChat
+                                                    color: isOnline
+                                                        ? (isBusy
                                                         ? const Color(0xFFFFF7ED)
                                                         : const Color(0xFFF0FDF4))
-                                                        : (canBook
-                                                        ? const Color(0xFFEFF6FF)
-                                                        : const Color(0xFFF1F5F9)),
+                                                        : const Color(0xFFF1F5F9),
                                                     borderRadius:
                                                     BorderRadius.circular(6),
                                                   ),
                                                   child: Text(
-                                                    isAktif
-                                                        ? (doctor.isBusyInChat
+                                                    isOnline
+                                                        ? (isBusy
                                                         ? 'Dalam Sesi'
-                                                        : 'Praktek')
-                                                        : (canBook
-                                                        ? 'Bisa Dibooking'
-                                                        : 'Offline'),
+                                                        : 'Online')
+                                                        : 'Offline',
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       fontWeight:
                                                       FontWeight.bold,
-                                                      color: isAktif
-                                                          ? (doctor.isBusyInChat
+                                                      color: isOnline
+                                                          ? (isBusy
                                                           ? const Color(0xFFC2410C)
                                                           : const Color(0xFF15803D))
-                                                          : (canBook
-                                                          ? const Color(0xFF2563EB)
-                                                          : const Color(0xFF64748B)),
+                                                          : const Color(0xFF64748B),
                                                     ),
                                                   ),
                                                 ),
@@ -464,11 +341,9 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
-                                                color: isAktif
+                                                color: isOnline
                                                     ? const Color(0xFF16A34A)
-                                                    : (canBook
-                                                    ? const Color(0xFF2563EB)
-                                                    : const Color(0xFF94A3B8)),
+                                                    : const Color(0xFF94A3B8),
                                               ),
                                             ),
                                           ],
