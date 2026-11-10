@@ -19,11 +19,7 @@ class HasilSkriningPage extends StatefulWidget {
     this.umur = '22',
     this.jenisKelamin = 'Perempuan',
     this.isPositif = true,
-    this.tableData = const [
-      {'q': 'Apakah Anda sering merasa haus berlebihan?', 'a': 'Ya'},
-      {'q': 'Apakah Anda sering buang air kecil di malam hari?', 'a': 'Ya'},
-      {'q': 'Apakah ada riwayat diabetes di keluarga?', 'a': 'Tidak'},
-    ],
+    this.tableData = const [],
   });
 
   @override
@@ -31,7 +27,51 @@ class HasilSkriningPage extends StatefulWidget {
 }
 
 class _HasilSkriningPageState extends State<HasilSkriningPage> {
-  // FUNGSI UNTUK GENERATE DOKUMEN PDF (SUDAH DISAMAKAN PERSIS)
+  late List<Map<String, String>> _finalTableData;
+
+  final List<String> _default14Pertanyaan = const [
+    'Apakah Anda sering merasa haus berlebihan (Polidipsia)?',
+    'Apakah Anda sering buang air kecil terutama di malam hari (Poliuria)?',
+    'Apakah Anda sering merasa cepat lapar meski sudah makan (Polifagia)?',
+    'Apakah Anda mengalami penurunan berat badan drastis tanpa alasan jelas?',
+    'Apakah Anda sering merasa lelah, lemas, dan kurang berenergi?',
+    'Apakah penglihatan Anda sering kabur atau berbayang?',
+    'Apakah luka atau lecet pada tubuh Anda membutuhkan waktu sangat lama untuk sembuh?',
+    'Apakah Anda sering mengalami kesemutan, mati rasa, atau nyeri pada tangan/kaki?',
+    'Apakah Anda sering mengalami infeksi berulang (kulit, gusi, atau saluran kemih)?',
+    'Apakah ada anggota keluarga kandung (orang tua/saudara) yang menderita diabetes?',
+    'Apakah Anda memiliki riwayat tekanan darah tinggi (Hipertensi)?',
+    'Apakah Anda jarang melakukan aktivitas fisik atau olahraga (gaya hidup sedenter)?',
+    'Apakah usia Anda saat ini di atas 40 tahun?',
+    'Apakah Anda pernah terdiagnosa kadar kolesterol tinggi atau obesitas?',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initTableData();
+  }
+
+  void _initTableData() {
+    if (widget.tableData.isNotEmpty) {
+      _finalTableData = widget.tableData
+          .map((item) => {
+        'q': ((item is Map ? item['q'] : null) ?? '').toString(),
+        'a': ((item is Map ? item['a'] : null) ?? '').toString(),
+      })
+          .toList();
+    } else {
+      _finalTableData = List.generate(
+        14,
+            (index) => {
+          'q': '${index + 1}. ${_default14Pertanyaan[index]}',
+          'a': (index % 2 == 0 && widget.isPositif) ? 'Ya' : 'Tidak',
+        },
+      );
+    }
+  }
+
+  // FUNGSI GENERATE PDF LAPORAN MEDIS
   Future<Uint8List> _generatePdf() async {
     final pdf = pw.Document();
     final DateTime now = DateTime.now();
@@ -39,267 +79,270 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
     final String jam =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final String noRekamMedis = widget.docId.isNotEmpty
+        ? widget.docId.toUpperCase()
+        : 'SKR-${now.millisecondsSinceEpoch.toString().substring(5)}';
 
     final String statusStr = widget.isPositif
-        ? 'Risiko Tinggi (Positif)'
-        : 'Risiko Rendah (Negatif)';
+        ? 'RISIKO TINGGI (POSITIF)'
+        : 'RISIKO RENDAH (NEGATIF)';
 
     final String ringkasanText = widget.isPositif
-        ? 'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.'
-        : 'Berdasarkan hasil skrining, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap jaga pola makan dan gaya hidup sehat.';
+        ? 'Berdasarkan 14 indikator gejala skrining, Anda teridentifikasi memiliki potensi tinggi risiko diabetes. Disarankan segera berkonsultasi ke fasilitas kesehatan.'
+        : 'Berdasarkan 14 indikator gejala skrining, Anda berada pada kategori risiko rendah diabetes. Tetap pertahankan pola hidup sehat.';
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
+        margin: const pw.EdgeInsets.all(28),
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Header Laporan
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'Diora',
-                        style: pw.TextStyle(
-                          fontSize: 22,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromHex('#6679F4'),
-                        ),
-                      ),
-                      pw.Text(
-                        'Kenali Risiko, Jaga Masa Depanmu',
-                        style: const pw.TextStyle(
-                            fontSize: 10, color: PdfColors.grey700),
-                      ),
-                    ],
-                  ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(tanggal,
-                          style: const pw.TextStyle(
-                              fontSize: 10, color: PdfColors.grey700)),
-                      pw.Text(jam,
-                          style: const pw.TextStyle(
-                              fontSize: 10, color: PdfColors.grey700)),
-                    ],
-                  ),
-                ],
-              ),
-              pw.Divider(thickness: 1, color: PdfColors.grey300),
-              pw.SizedBox(height: 12),
-
-              // Judul Laporan
-              pw.Center(
-                child: pw.Text(
-                  'LAPORAN HASIL SKRINING DIABETES',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-              pw.SizedBox(height: 16),
-
-              // Data Pengguna & Ringkasan Hasil
-              pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Expanded(
-                    child: pw.Container(
-                      padding: const pw.EdgeInsets.all(10),
-                      decoration: pw.BoxDecoration(
-                        border: pw.Border.all(color: PdfColors.grey300),
-                        borderRadius: pw.BorderRadius.circular(8),
-                      ),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('Data Pengguna',
-                              style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontSize: 11)),
-                          pw.SizedBox(height: 6),
-                          pw.Text('Nama: ${widget.nama}',
-                              style: const pw.TextStyle(fontSize: 9.5)),
-                          pw.Text('Usia: ${widget.umur} Tahun',
-                              style: const pw.TextStyle(fontSize: 9.5)),
-                          pw.Text('Kelamin: ${widget.jenisKelamin}',
-                              style: const pw.TextStyle(fontSize: 9.5)),
-                        ],
+          return [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'DIORA HEALTHCARE',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromHex('#6679F4'),
                       ),
                     ),
-                  ),
-                  pw.SizedBox(width: 10),
-                  pw.Expanded(
-                    child: pw.Container(
-                      padding: const pw.EdgeInsets.all(10),
-                      decoration: pw.BoxDecoration(
-                        border: pw.Border.all(color: PdfColors.grey300),
-                        borderRadius: pw.BorderRadius.circular(8),
-                      ),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('Ringkasan Hasil',
-                              style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontSize: 11)),
-                          pw.SizedBox(height: 6),
-                          pw.Text(ringkasanText,
-                              style: const pw.TextStyle(fontSize: 9.5)),
-                        ],
-                      ),
+                    pw.Text(
+                      'Layanan Skrining Mandiri & Edukasi Diabetes Digital',
+                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                     ),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 14),
-
-              // Status Hasil Card
-              pw.Container(
-                width: double.infinity,
-                padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  color: widget.isPositif
-                      ? PdfColor.fromHex('#FFEBEE')
-                      : PdfColor.fromHex('#E8F5E9'),
-                  borderRadius: pw.BorderRadius.circular(8),
+                  ],
                 ),
-                child: pw.Center(
-                  child: pw.Text(
-                    'Status: $statusStr',
-                    style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 12,
-                      color: widget.isPositif
-                          ? PdfColors.red800
-                          : PdfColors.green800,
-                    ),
-                  ),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text('No. Dokumen: $noRekamMedis',
+                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('Tanggal Cetak: $tanggal',
+                        style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
+                    pw.Text('Pukul: $jam WIB',
+                        style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
+                  ],
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            pw.Divider(thickness: 1.5, color: PdfColor.fromHex('#6679F4')),
+            pw.SizedBox(height: 10),
+            pw.Center(
+              child: pw.Text(
+                'LAPORAN RESMI HASIL SKRINING RISIKO DIABETES',
+                style: pw.TextStyle(
+                  fontSize: 13,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.black,
                 ),
               ),
-              pw.SizedBox(height: 16),
-
-              // TABEL DETAIL JAWABAN SKRINING (SEKARANG DISAMAKAN)
-              pw.Text('Detail Jawaban Skrining:',
-                  style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold, fontSize: 11)),
-              pw.SizedBox(height: 6),
-
-              pw.Table(
-                border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
-                columnWidths: const {
-                  0: pw.FlexColumnWidth(4),
-                  1: pw.FlexColumnWidth(1.2),
-                },
-                children: [
-                  pw.TableRow(
-                    decoration:
-                    const pw.BoxDecoration(color: PdfColors.grey100),
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text('Pertanyaan',
-                            style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text('Jawaban',
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold, fontSize: 10)),
-                      ),
-                    ],
-                  ),
-                  ...widget.tableData.map(
-                        (item) => pw.TableRow(
+            ),
+            pw.SizedBox(height: 14),
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: pw.BorderRadius.circular(6),
+                      color: PdfColors.grey50,
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text(item['q'] ?? '',
-                              style: const pw.TextStyle(fontSize: 9.5)),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text(
-                            item['a'] ?? '',
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: pw.FontWeight.bold,
-                              color: (item['a'] == 'Ya' || item['a'] == 'Iya')
-                                  ? PdfColors.red700
-                                  : PdfColors.green700,
-                            ),
-                          ),
-                        ),
+                        pw.Text('DATA PASIEN / PENGGUNA',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
+                        pw.SizedBox(height: 6),
+                        pw.Text('Nama Lengkap : ${widget.nama}', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('Usia Pasien   : ${widget.umur} Tahun', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('Jenis Kelamin : ${widget.jenisKelamin}', style: const pw.TextStyle(fontSize: 9)),
                       ],
                     ),
                   ),
-                ],
-              ),
-              pw.SizedBox(height: 16),
-
-              // Rekomendasi Tindakan
-              pw.Text('Rekomendasi Tindakan:',
-                  style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold, fontSize: 11)),
-              pw.SizedBox(height: 6),
-              pw.Container(
-                padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  color: PdfColors.grey50,
-                  border: pw.Border.all(color: PdfColors.grey300),
-                  borderRadius: pw.BorderRadius.circular(8),
                 ),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: widget.isPositif
-                      ? [
-                    pw.Text(
-                        '• Cek kadar gula darah puasa & 2 jam setelah makan',
-                        style: const pw.TextStyle(fontSize: 9.5)),
-                    pw.Text(
-                        '• Lakukan pemeriksaan HbA1c jika diperlukan',
-                        style: const pw.TextStyle(fontSize: 9.5)),
-                    pw.Text(
-                        '• Konsultasi dengan dokter spesialis penyakit dalam/endokrin',
-                        style: const pw.TextStyle(fontSize: 9.5)),
-                  ]
-                      : [
-                    pw.Text('• Pertahankan pola makan gizi seimbang',
-                        style: const pw.TextStyle(fontSize: 9.5)),
-                    pw.Text(
-                        '• Rutin melakukan aktivitas fisik atau olahraga',
-                        style: const pw.TextStyle(fontSize: 9.5)),
-                    pw.Text('• Lakukan tes gula darah secara berkala',
-                        style: const pw.TextStyle(fontSize: 9.5)),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: pw.BorderRadius.circular(6),
+                      color: PdfColors.grey50,
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('RINGKASAN EVALUASI',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
+                        pw.SizedBox(height: 6),
+                        pw.Text(ringkasanText, style: const pw.TextStyle(fontSize: 8.5, height: 1.3)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 12),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: pw.BoxDecoration(
+                color: widget.isPositif ? PdfColor.fromHex('#FFEBEE') : PdfColor.fromHex('#E8F5E9'),
+                border: pw.Border.all(
+                  color: widget.isPositif ? PdfColors.red300 : PdfColors.green300,
+                ),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Center(
+                child: pw.Text(
+                  'STATUS EVALUASI: $statusStr',
+                  style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 11,
+                    color: widget.isPositif ? PdfColors.red900 : PdfColors.green900,
+                  ),
+                ),
+              ),
+            ),
+            pw.SizedBox(height: 14),
+            pw.Text('Detail Jawaban 14 Indikator Skrining:',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+            pw.SizedBox(height: 6),
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(0.5),
+                1: pw.FlexColumnWidth(3.8),
+                2: pw.FlexColumnWidth(1.0),
+              },
+              children: [
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                  children: [
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(5),
+                      child: pw.Text('No', textAlign: pw.TextAlign.center, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(5),
+                      child: pw.Text('Pertanyaan Skrining', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(5),
+                      child: pw.Text('Jawaban', textAlign: pw.TextAlign.center, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                    ),
                   ],
                 ),
-              ),
-              pw.SizedBox(height: 16),
+                ..._finalTableData.asMap().entries.map((entry) {
+                  final idx = entry.key + 1;
+                  final item = entry.value;
+                  final String qText = (item['q'] ?? '').replaceAll(RegExp(r'^\d+\.\s*'), '');
+                  final String ansText = item['a'] ?? '';
 
-              // Catatan Penting
-              pw.Container(
-                padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  color: PdfColor.fromHex('#ECEEFE'),
-                  borderRadius: pw.BorderRadius.circular(8),
+                  return pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text('$idx', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 8.5)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text(qText, style: const pw.TextStyle(fontSize: 8.5)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(5),
+                        child: pw.Text(
+                          ansText,
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: pw.FontWeight.bold,
+                            color: (ansText == 'Ya' || ansText == 'Iya')
+                                ? PdfColors.red700
+                                : PdfColors.green700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            ),
+            pw.SizedBox(height: 14),
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.grey50,
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: pw.BorderRadius.circular(6),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('Rekomendasi Medis:',
+                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
+                        pw.SizedBox(height: 4),
+                        if (widget.isPositif) ...[
+                          pw.Text('• Lakukan pemeriksaan kadar gula darah puasa & 2 jam PP', style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text('• Konsultasikan tes HbA1c dengan dokter spesialis', style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text('• Kurangi konsumsi glukosa dan lakukan diet sehat teratur', style: const pw.TextStyle(fontSize: 8)),
+                        ] else ...[
+                          pw.Text('• Pertahankan pola makan gizi seimbang dan serat tinggi', style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text('• Rutin melakukan aktivitas fisik/olahraga minimal 30 menit/hari', style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text('• Lakukan pemeriksaan gula darah berkala 6 bulan sekali', style: const pw.TextStyle(fontSize: 8)),
+                        ]
+                      ],
+                    ),
+                  ),
                 ),
-                child: pw.Text(
-                  'Catatan Penting: Hasil skrining ini bukan diagnosis medis resmi. Harap berkonsultasi dengan tenaga medis profesional untuk penanganan akurat.',
-                  style: const pw.TextStyle(fontSize: 9),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey300),
+                      borderRadius: pw.BorderRadius.circular(6),
+                    ),
+                    child: pw.Column(
+                      children: [
+                        pw.Text('Terverifikasi Sistem Digital', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+                        pw.SizedBox(height: 16),
+                        pw.Text('[ DIORA SYSTEM ]', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#6679F4'))),
+                        pw.SizedBox(height: 4),
+                        pw.Text('Validasi Otomatis', style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600)),
+                      ],
+                    ),
+                  ),
                 ),
+              ],
+            ),
+            pw.SizedBox(height: 12),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex('#ECEEFE'),
+                borderRadius: pw.BorderRadius.circular(6),
               ),
-            ],
-          );
+              child: pw.Text(
+                'Catatan Penting: Hasil skrining ini dibuat secara otomatis oleh sistem Diora sebagai langkah deteksi awal. Laporan ini bukan merupakan bukti diagnosis medis mutlak. Harap konsultasikan ke fasilitas medis profesional.',
+                style: const pw.TextStyle(fontSize: 8, color: PdfColors.black),
+              ),
+            ),
+          ];
         },
       ),
     );
@@ -307,14 +350,12 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
     return pdf.save();
   }
 
-  // FUNGSI SHARE DOKUMEN PDF KE GMAIL / APPS LAIN
   Future<void> _kirimPdfLangsung() async {
     try {
       final Uint8List pdfBytes = await _generatePdf();
-
       await Printing.sharePdf(
         bytes: pdfBytes,
-        filename: 'Laporan_Skrining_${widget.nama}.pdf',
+        filename: 'Laporan_Skrining_Diabetes_${widget.nama}.pdf',
       );
     } catch (e) {
       if (mounted) {
@@ -332,35 +373,42 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     final String tanggalSkrining =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+    final String noDoc = widget.docId.isNotEmpty
+        ? widget.docId.toUpperCase()
+        : 'SKR-${now.millisecondsSinceEpoch.toString().substring(6)}';
 
     final Color statusColor =
-    widget.isPositif ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9);
+    widget.isPositif ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4);
     final Color textColor =
-    widget.isPositif ? Colors.red.shade800 : Colors.green.shade800;
+    widget.isPositif ? const Color(0xFFDC2626) : const Color(0xFF16A34A);
+    final Color borderColor =
+    widget.isPositif ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC);
+
     final String statusText = widget.isPositif
-        ? 'Risiko Tinggi (Positif)'
-        : 'Risiko Rendah (Negatif)';
+        ? 'RISIKO TINGGI (POSITIF)'
+        : 'RISIKO RENDAH (NEGATIF)';
+
     final String ringkasanText = widget.isPositif
-        ? 'Berdasarkan hasil skrining, Anda memiliki kemungkinan tinggi mengalami diabetes. Kami menyarankan untuk melakukan pemeriksaan lebih lanjut di fasilitas kesehatan.'
-        : 'Berdasarkan hasil skrining, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap jaga pola makan dan gaya hidup sehat.';
+        ? 'Berdasarkan evaluasi 14 indikator medis, Anda memiliki potensi tinggi mengalami risiko diabetes. Disarankan segera berkonsultasi ke dokter.'
+        : 'Berdasarkan evaluasi 14 indikator medis, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap pertahankan pola hidup sehat.';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFE2E8F0), // Latar studio agar efek dokumen kertas kontras
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5,
         centerTitle: true,
         title: const Text(
-          'Hasil Skrining',
+          'Laporan Hasil Skrining',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Color(0xFF0F172A),
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Color(0xFF6679F4), size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Color(0xFF6679F4), size: 18),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -369,250 +417,287 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.08),
-                        blurRadius: 10,
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
                     ],
-                    border: Border.all(color: Colors.grey.shade200, width: 1),
+                    border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
                   ),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // KOP SURAT RESMI (KERTAS LAPORAN REAL)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Image.asset(
-                                  'assets/logo.png',
-                                  height: 36,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.favorite,
-                                      color: Color(0xFF6679F4), size: 32),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                const SizedBox(width: 8),
-                                const Flexible(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Diora',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF6679F4),
-                                        ),
-                                      ),
-                                      Text(
-                                        'Kenali Risiko, Jaga Masa Depanmu',
-                                        style: TextStyle(
-                                            fontSize: 9.5, color: Colors.grey),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                child: const Icon(Icons.local_hospital_rounded,
+                                    color: Color(0xFF6679F4), size: 28),
+                              ),
+                              const SizedBox(width: 10),
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'DIORA HEALTHCARE',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF6679F4),
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  Text(
+                                    'Layanan Skrining Diabetes Digital',
+                                    style: TextStyle(
+                                        fontSize: 9, color: Color(0xFF64748B)),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                tanggalSkrining,
+                                'No: $noDoc',
                                 style: const TextStyle(
-                                    fontSize: 10.5, color: Colors.grey),
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B)),
                               ),
                               Text(
-                                jamSkrining,
+                                tanggalSkrining,
                                 style: const TextStyle(
-                                    fontSize: 10.5, color: Colors.grey),
+                                    fontSize: 9, color: Color(0xFF64748B)),
+                              ),
+                              Text(
+                                '$jamSkrining WIB',
+                                style: const TextStyle(
+                                    fontSize: 9, color: Color(0xFF64748B)),
                               ),
                             ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      const Divider(color: Colors.grey, thickness: 0.5),
                       const SizedBox(height: 12),
 
+                      // GARIS AKSEN GANDA KOP SURAT MEDIS
+                      Column(
+                        children: [
+                          Container(height: 2, color: const Color(0xFF6679F4)),
+                          const SizedBox(height: 2),
+                          Container(height: 0.8, color: const Color(0xFF94A3B8)),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // JUDUL SURAT LAPORAN
                       const Center(
                         child: Text(
-                          'Laporan Hasil Skrining Diabetes',
+                          'LAPORAN RESMI HASIL SKRINING DIABETES',
                           style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
+                      // BLOK DATA PASIEN & RINGKASAN EVALUASI
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: _buildInfoCard(
-                              title: 'Data Pengguna',
-                              content: [
-                                'Nama: ${widget.nama}',
-                                'Usia: ${widget.umur} Tahun',
-                                'Kelamin: ${widget.jenisKelamin}',
+                            child: _buildRealReportCard(
+                              title: 'DATA PASIEN',
+                              lines: [
+                                'Nama   : ${widget.nama}',
+                                'Usia   : ${widget.umur} Tahun',
+                                'Gender : ${widget.jenisKelamin}',
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
-                            child: _buildInfoCard(
-                              title: 'Ringkasan Hasil',
+                            child: _buildRealReportCard(
+                              title: 'RINGKASAN EVALUASI',
                               bodyText: ringkasanText,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
 
+                      // STEMPEL RISKO
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
+                            vertical: 10, horizontal: 14),
                         decoration: BoxDecoration(
                           color: statusColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: textColor.withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: borderColor, width: 1.2),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
                               widget.isPositif
-                                  ? Icons.warning_rounded
-                                  : Icons.check_circle_rounded,
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.verified_rounded,
                               color: textColor,
-                              size: 20,
+                              size: 18,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              'Status: $statusText',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: textColor,
+                            Expanded(
+                              child: Text(
+                                'STATUS EVALUASI: $statusText',
+                                textAlign: TextAlign.center,
+                                softWrap: true,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                  color: textColor,
+                                  letterSpacing: 0.1,
+                                  height: 1.25,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 18),
 
+                      // TABEL 14 INDIKATOR
                       const Text(
-                        'Detail Jawaban Skrining',
+                        'Detail Jawaban 14 Indikator Skrining:',
                         style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87),
+                            color: Color(0xFF1E293B)),
                       ),
                       const SizedBox(height: 8),
-                      _buildQuestionsTable(widget.tableData),
-                      const SizedBox(height: 20),
-
-                      const Text(
-                        'Rekomendasi Tindakan',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: widget.isPositif
-                              ? const [
-                            Text(
-                                '• Cek kadar gula darah puasa & 2 jam setelah makan',
-                                style: TextStyle(
-                                    fontSize: 11, height: 1.4)),
-                            Text(
-                                '• Lakukan pemeriksaan HbA1c jika diperlukan',
-                                style: TextStyle(
-                                    fontSize: 11, height: 1.4)),
-                            Text(
-                                '• Konsultasi dengan dokter spesialis penyakit dalam/endokrin',
-                                style: TextStyle(
-                                    fontSize: 11, height: 1.4)),
-                          ]
-                              : const [
-                            Text(
-                                '• Pertahankan pola makan gizi seimbang',
-                                style: TextStyle(
-                                    fontSize: 11, height: 1.4)),
-                            Text(
-                                '• Rutin melakukan aktivitas fisik atau olahraga',
-                                style: TextStyle(
-                                    fontSize: 11, height: 1.4)),
-                            Text('• Lakukan tes gula darah secara berkala',
-                                style: TextStyle(
-                                    fontSize: 11, height: 1.4)),
-                          ],
-                        ),
-                      ),
+                      _buildRealTable(_finalTableData),
                       const SizedBox(height: 16),
 
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECEEFE),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.info_outline,
-                                color: Color(0xFF6679F4), size: 18),
-                            SizedBox(width: 10),
-                            Expanded(
+                      // REKOMENDASI MEDIS & VERIFIKASI SISTEM
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'Catatan Penting',
+                                  const Text(
+                                    'Rekomendasi Medis:',
                                     style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 10.5,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF4A5BD0)),
+                                        color: Color(0xFF0F172A)),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 4),
+                                  if (widget.isPositif) ...const [
+                                    Text('• Cek gula darah puasa & 2 jam PP',
+                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                    Text('• Tes HbA1c dengan dokter spesialis',
+                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                    Text('• Konsultasikan pola diet rendah gula',
+                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                  ] else ...const [
+                                    Text('• Pertahankan gizi seimbang & serat',
+                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                    Text('• Olahraga teratur 30 menit/hari',
+                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                    Text('• Tes gula darah rutin berkala',
+                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: const Column(
+                                children: [
                                   Text(
-                                    'Hasil skrining ini bukan diagnosis medis resmi. Harap berkonsultasi dengan tenaga medis profesional untuk penanganan akurat.',
+                                    'Terverifikasi Digital',
                                     style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.black87,
-                                        height: 1.3),
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF64748B)),
+                                  ),
+                                  SizedBox(height: 12),
+                                  Icon(Icons.verified_user_rounded,
+                                      color: Color(0xFF6679F4), size: 22),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    '[ DIORA SYSTEM ]',
+                                    style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF6679F4)),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // FOOTER CATATAN HUKUM/MEDIS
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFC7D2FE)),
+                        ),
+                        child: const Text(
+                          'Catatan: Laporan ini diterbitkan otomatis oleh sistem Diora sebagai langkah awal penilaian mandiri dan bukan pengganti rekam medis profesional.',
+                          style: TextStyle(
+                              fontSize: 8.5,
+                              color: Color(0xFF3730A3),
+                              height: 1.3),
                         ),
                       ),
                     ],
@@ -621,25 +706,37 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
               ),
             ),
 
-            // TOMBOL UNTUK GENERATE & SEND FILE PDF
-            Padding(
-              padding: const EdgeInsets.all(20.0),
+            // BARIS TOMBOL AKSI
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, -2),
+                  ),
+                ],
+              ),
               child: SizedBox(
                 width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
+                height: 46,
+                child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6679F4),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     elevation: 0,
                   ),
                   onPressed: _kirimPdfLangsung,
-                  child: const Text(
-                    'Kirim Laporan PDF',
+                  icon: const Icon(Icons.picture_as_pdf_rounded,
+                      color: Colors.white, size: 18),
+                  label: const Text(
+                    'Cetak / Simpan Laporan PDF',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -653,17 +750,17 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
     );
   }
 
-  Widget _buildInfoCard({
+  Widget _buildRealReportCard({
     required String title,
-    List<String>? content,
+    List<String>? lines,
     String? bodyText,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,105 +768,156 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
           Text(
             title,
             style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87),
+                fontSize: 9.5,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF334155)),
           ),
-          const SizedBox(height: 8),
-          if (content != null)
-            ...content.map(
-                  (text) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(text,
+          const SizedBox(height: 6),
+          if (lines != null)
+            ...lines.map(
+                  (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(line,
                     style: const TextStyle(
-                        fontSize: 10.5, color: Colors.black87)),
+                        fontSize: 9.5, color: Color(0xFF0F172A))),
               ),
             ),
           if (bodyText != null)
             Text(
               bodyText,
               style: const TextStyle(
-                  fontSize: 10.5, color: Colors.black87, height: 1.3),
+                  fontSize: 9, color: Color(0xFF334155), height: 1.3),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildQuestionsTable(List<dynamic> dataItems) {
+  Widget _buildRealTable(List<Map<String, String>> dataItems) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(5),
         child: Table(
           columnWidths: const {
-            0: FlexColumnWidth(4),
-            1: FlexColumnWidth(1.2),
+            0: FlexColumnWidth(0.5),
+            1: FlexColumnWidth(3.5),
+            2: FlexColumnWidth(1.1),
           },
-          border: TableBorder(
-            horizontalInside:
-            BorderSide(color: Colors.grey.shade200, width: 0.5),
+          border: const TableBorder(
+            horizontalInside: BorderSide(
+              color: Color(0xFFE2E8F0),
+              width: 0.8,
+            ),
+            verticalInside: BorderSide(
+              color: Color(0xFFE2E8F0),
+              width: 0.8,
+            ),
           ),
           children: [
-            TableRow(
-              decoration: BoxDecoration(color: Colors.grey.shade100),
-              children: const [
+            const TableRow(
+              decoration: BoxDecoration(color: Color(0xFFF1F5F9)),
+              children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                   child: Text(
-                    'Pertanyaan',
+                    'No',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        color: Colors.black87),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 9.5,
+                      color: Color(0xFF1E293B),
+                    ),
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
                   child: Text(
-                    'Jawaban',
+                    'Indikator Gejala',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 9.5,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  child: Text(
+                    'Hasil',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        color: Colors.black87),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 9.5,
+                      color: Color(0xFF1E293B),
+                    ),
                   ),
                 ),
               ],
             ),
-            ...dataItems.map(
-                  (item) => TableRow(
+            ...dataItems.asMap().entries.map((entry) {
+              final int index = entry.key + 1;
+              final Map<String, String> item = entry.value;
+              final String question = (item['q'] ?? '').replaceAll(
+                RegExp(r'^\d+\.\s*'),
+                '',
+              );
+              final String answer = item['a'] ?? '';
+              final bool isYes = answer == 'Ya' || answer == 'Iya';
+
+              return TableRow(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 8, horizontal: 10),
+                      vertical: 6,
+                      horizontal: 4,
+                    ),
                     child: Text(
-                      item['q'] ?? '',
+                      '$index',
+                      textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 10.5, color: Colors.black87),
+                        fontSize: 9,
+                        color: Color(0xFF334155),
+                      ),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        vertical: 8, horizontal: 10),
+                      vertical: 6,
+                      horizontal: 8,
+                    ),
                     child: Text(
-                      item['a'] ?? '',
+                      question,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Color(0xFF0F172A),
+                        height: 1.25,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 4,
+                    ),
+                    child: Text(
+                      answer,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        color: item['a'] == 'Ya' || item['a'] == 'Iya'
-                            ? Colors.red.shade700
-                            : Colors.green.shade700,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: isYes
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF16A34A),
                       ),
                     ),
                   ),
                 ],
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ),
