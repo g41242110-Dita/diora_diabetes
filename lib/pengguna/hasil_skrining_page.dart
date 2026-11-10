@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -15,9 +16,9 @@ class HasilSkriningPage extends StatefulWidget {
   const HasilSkriningPage({
     super.key,
     this.docId = '',
-    this.nama = 'Pengguna',
-    this.umur = '22',
-    this.jenisKelamin = 'Perempuan',
+    this.nama = '',
+    this.umur = '',
+    this.jenisKelamin = '',
     this.isPositif = true,
     this.tableData = const [],
   });
@@ -27,51 +28,93 @@ class HasilSkriningPage extends StatefulWidget {
 }
 
 class _HasilSkriningPageState extends State<HasilSkriningPage> {
-  late List<Map<String, String>> _finalTableData;
-
-  final List<String> _default14Pertanyaan = const [
-    'Apakah Anda sering merasa haus berlebihan (Polidipsia)?',
-    'Apakah Anda sering buang air kecil terutama di malam hari (Poliuria)?',
-    'Apakah Anda sering merasa cepat lapar meski sudah makan (Polifagia)?',
-    'Apakah Anda mengalami penurunan berat badan drastis tanpa alasan jelas?',
-    'Apakah Anda sering merasa lelah, lemas, dan kurang berenergi?',
-    'Apakah penglihatan Anda sering kabur atau berbayang?',
-    'Apakah luka atau lecet pada tubuh Anda membutuhkan waktu sangat lama untuk sembuh?',
-    'Apakah Anda sering mengalami kesemutan, mati rasa, atau nyeri pada tangan/kaki?',
-    'Apakah Anda sering mengalami infeksi berulang (kulit, gusi, atau saluran kemih)?',
-    'Apakah ada anggota keluarga kandung (orang tua/saudara) yang menderita diabetes?',
-    'Apakah Anda memiliki riwayat tekanan darah tinggi (Hipertensi)?',
-    'Apakah Anda jarang melakukan aktivitas fisik atau olahraga (gaya hidup sedenter)?',
-    'Apakah usia Anda saat ini di atas 40 tahun?',
-    'Apakah Anda pernah terdiagnosa kadar kolesterol tinggi atau obesitas?',
-  ];
+  late List<dynamic> _finalTableData;
+  late String _nama;
+  late String _umur;
+  late String _jenisKelamin;
+  late bool _isPositif;
+  late String _docId;
+  bool _isLoadingFirestore = false;
 
   @override
   void initState() {
     super.initState();
-    _initTableData();
-  }
+    _nama = widget.nama;
+    _umur = widget.umur;
+    _jenisKelamin = widget.jenisKelamin;
+    _isPositif = widget.isPositif;
+    _docId = widget.docId;
+    _finalTableData = widget.tableData;
 
-  void _initTableData() {
-    if (widget.tableData.isNotEmpty) {
-      _finalTableData = widget.tableData
-          .map((item) => {
-        'q': ((item is Map ? item['q'] : null) ?? '').toString(),
-        'a': ((item is Map ? item['a'] : null) ?? '').toString(),
-      })
-          .toList();
-    } else {
-      _finalTableData = List.generate(
-        14,
-            (index) => {
-          'q': '${index + 1}. ${_default14Pertanyaan[index]}',
-          'a': (index % 2 == 0 && widget.isPositif) ? 'Ya' : 'Tidak',
-        },
-      );
+    // Jika dibuka dari menu Hasil Tes di Beranda (tanpa membawa data),
+    // Ambil data tes terbaru secara otomatis dari Firebase Firestore
+    if (_nama.isEmpty || _finalTableData.isEmpty) {
+      _fetchLatestFromFirestore();
     }
   }
 
-  // FUNGSI GENERATE PDF LAPORAN MEDIS
+  Future<void> _fetchLatestFromFirestore() async {
+    setState(() {
+      _isLoadingFirestore = true;
+    });
+
+    try {
+      if (_docId.isNotEmpty) {
+        var docSnap = await FirebaseFirestore.instance
+            .collection('screening_results')
+            .doc(_docId)
+            .get();
+        if (docSnap.exists) {
+          _populateDataFromDoc(docSnap.data() as Map<String, dynamic>);
+          setState(() {
+            _isLoadingFirestore = false;
+          });
+          return;
+        }
+      }
+
+      // Ambil riwayat tes paling baru yang diisi pengguna
+      var query = await FirebaseFirestore.instance
+          .collection('screening_results')
+          .orderBy('waktuSkrining', descending: true)
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        var data = query.docs.first.data();
+        _docId = query.docs.first.id;
+        _populateDataFromDoc(data);
+      }
+    } catch (e) {
+      debugPrint("Gagal load Firestore: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingFirestore = false;
+        });
+      }
+    }
+  }
+
+  void _populateDataFromDoc(Map<String, dynamic> data) {
+    _nama = (data['nama'] ?? 'Pengguna').toString();
+    _umur = (data['umur'] ?? '22').toString();
+    _jenisKelamin = (data['jenisKelamin'] ?? 'Perempuan').toString();
+    String hasilStr = (data['hasilPrediksi'] ?? '').toString();
+    _isPositif = hasilStr == 'Positif Diabetes';
+
+    _finalTableData = [
+      {'q': 'Apakah Anda sering buang air kecil (BAK)?', 'a': data['seringBAK'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering merasa haus / dahaga?', 'a': data['seringHaus'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering merasa lemas atau mudah lelah?', 'a': data['seringLemas'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda mengalami rambut rontok?', 'a': data['rambutRontok'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda memiliki luka yang sulit sembuh?', 'a': data['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda merasa mudah marah atau emosional?', 'a': data['mudahMarah'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering mengalami kaku otot?', 'a': data['kakuOtot'] == true ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda mengalami obesitas / kelebihan BB?', 'a': data['obesitas'] == true ? 'Ya' : 'Tidak'},
+    ];
+  }
+
   Future<Uint8List> _generatePdf() async {
     final pdf = pw.Document();
     final DateTime now = DateTime.now();
@@ -79,17 +122,21 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
     final String jam =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    final String noRekamMedis = widget.docId.isNotEmpty
-        ? widget.docId.toUpperCase()
+
+    final String cleanId = _docId.length > 8
+        ? _docId.substring(0, 8).toUpperCase()
+        : _docId.toUpperCase();
+    final String noRekamMedis = _docId.isNotEmpty
+        ? cleanId
         : 'SKR-${now.millisecondsSinceEpoch.toString().substring(5)}';
 
-    final String statusStr = widget.isPositif
+    final String statusStr = _isPositif
         ? 'RISIKO TINGGI (POSITIF)'
         : 'RISIKO RENDAH (NEGATIF)';
 
-    final String ringkasanText = widget.isPositif
-        ? 'Berdasarkan 14 indikator gejala skrining, Anda teridentifikasi memiliki potensi tinggi risiko diabetes. Disarankan segera berkonsultasi ke fasilitas kesehatan.'
-        : 'Berdasarkan 14 indikator gejala skrining, Anda berada pada kategori risiko rendah diabetes. Tetap pertahankan pola hidup sehat.';
+    final String ringkasanText = _isPositif
+        ? 'Berdasarkan evaluasi indikator medis, Anda teridentifikasi memiliki potensi tinggi risiko diabetes. Disarankan segera berkonsultasi ke fasilitas kesehatan.'
+        : 'Berdasarkan evaluasi indikator medis, Anda berada pada kategori risiko rendah diabetes. Tetap pertahankan pola hidup sehat.';
 
     pdf.addPage(
       pw.MultiPage(
@@ -113,7 +160,8 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     ),
                     pw.Text(
                       'Layanan Skrining Mandiri & Edukasi Diabetes Digital',
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                      style: const pw.TextStyle(
+                          fontSize: 9, color: PdfColors.grey700),
                     ),
                   ],
                 ),
@@ -121,11 +169,14 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
                     pw.Text('No. Dokumen: $noRekamMedis',
-                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                        style: pw.TextStyle(
+                            fontSize: 9, fontWeight: pw.FontWeight.bold)),
                     pw.Text('Tanggal Cetak: $tanggal',
-                        style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
+                        style: const pw.TextStyle(
+                            fontSize: 8.5, color: PdfColors.grey700)),
                     pw.Text('Pukul: $jam WIB',
-                        style: const pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700)),
+                        style: const pw.TextStyle(
+                            fontSize: 8.5, color: PdfColors.grey700)),
                   ],
                 ),
               ],
@@ -159,11 +210,15 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('DATA PASIEN / PENGGUNA',
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
                         pw.SizedBox(height: 6),
-                        pw.Text('Nama Lengkap : ${widget.nama}', style: const pw.TextStyle(fontSize: 9)),
-                        pw.Text('Usia Pasien   : ${widget.umur} Tahun', style: const pw.TextStyle(fontSize: 9)),
-                        pw.Text('Jenis Kelamin : ${widget.jenisKelamin}', style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('Nama Lengkap : $_nama',
+                            style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('Usia Pasien   : $_umur Tahun',
+                            style: const pw.TextStyle(fontSize: 9)),
+                        pw.Text('Jenis Kelamin : $_jenisKelamin',
+                            style: const pw.TextStyle(fontSize: 9)),
                       ],
                     ),
                   ),
@@ -181,9 +236,12 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('RINGKASAN EVALUASI',
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
                         pw.SizedBox(height: 6),
-                        pw.Text(ringkasanText, style: const pw.TextStyle(fontSize: 8.5, height: 1.3)),
+                        pw.Text(ringkasanText,
+                            style: const pw.TextStyle(
+                                fontSize: 8.5, height: 1.3)),
                       ],
                     ),
                   ),
@@ -193,11 +251,15 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
             pw.SizedBox(height: 12),
             pw.Container(
               width: double.infinity,
-              padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              padding:
+              const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               decoration: pw.BoxDecoration(
-                color: widget.isPositif ? PdfColor.fromHex('#FFEBEE') : PdfColor.fromHex('#E8F5E9'),
+                color: _isPositif
+                    ? PdfColor.fromHex('#FFEBEE')
+                    : PdfColor.fromHex('#E8F5E9'),
                 border: pw.Border.all(
-                  color: widget.isPositif ? PdfColors.red300 : PdfColors.green300,
+                  color:
+                  _isPositif ? PdfColors.red300 : PdfColors.green300,
                 ),
                 borderRadius: pw.BorderRadius.circular(6),
               ),
@@ -207,14 +269,17 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                   style: pw.TextStyle(
                     fontWeight: pw.FontWeight.bold,
                     fontSize: 11,
-                    color: widget.isPositif ? PdfColors.red900 : PdfColors.green900,
+                    color: _isPositif
+                        ? PdfColors.red900
+                        : PdfColors.green900,
                   ),
                 ),
               ),
             ),
             pw.SizedBox(height: 14),
-            pw.Text('Detail Jawaban 14 Indikator Skrining:',
-                style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+            pw.Text('Detail Jawaban Indikator Skrining:',
+                style: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold, fontSize: 10)),
             pw.SizedBox(height: 6),
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
@@ -229,33 +294,47 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                   children: [
                     pw.Padding(
                       padding: const pw.EdgeInsets.all(5),
-                      child: pw.Text('No', textAlign: pw.TextAlign.center, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                      child: pw.Text('No',
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold, fontSize: 9)),
                     ),
                     pw.Padding(
                       padding: const pw.EdgeInsets.all(5),
-                      child: pw.Text('Pertanyaan Skrining', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                      child: pw.Text('Pertanyaan Skrining',
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold, fontSize: 9)),
                     ),
                     pw.Padding(
                       padding: const pw.EdgeInsets.all(5),
-                      child: pw.Text('Jawaban', textAlign: pw.TextAlign.center, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
+                      child: pw.Text('Jawaban',
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold, fontSize: 9)),
                     ),
                   ],
                 ),
                 ..._finalTableData.asMap().entries.map((entry) {
                   final idx = entry.key + 1;
                   final item = entry.value;
-                  final String qText = (item['q'] ?? '').replaceAll(RegExp(r'^\d+\.\s*'), '');
-                  final String ansText = item['a'] ?? '';
+                  final String qText = ((item is Map) ? (item['q'] ?? '') : '')
+                      .toString()
+                      .replaceAll(RegExp(r'^\d+\.\s*'), '');
+                  final String ansText =
+                  ((item is Map) ? (item['a'] ?? '') : '').toString();
 
                   return pw.TableRow(
                     children: [
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(5),
-                        child: pw.Text('$idx', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 8.5)),
+                        child: pw.Text('$idx',
+                            textAlign: pw.TextAlign.center,
+                            style: const pw.TextStyle(fontSize: 8.5)),
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(5),
-                        child: pw.Text(qText, style: const pw.TextStyle(fontSize: 8.5)),
+                        child: pw.Text(qText,
+                            style: const pw.TextStyle(fontSize: 8.5)),
                       ),
                       pw.Padding(
                         padding: const pw.EdgeInsets.all(5),
@@ -293,16 +372,29 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text('Rekomendasi Medis:',
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold, fontSize: 9.5)),
                         pw.SizedBox(height: 4),
-                        if (widget.isPositif) ...[
-                          pw.Text('• Lakukan pemeriksaan kadar gula darah puasa & 2 jam PP', style: const pw.TextStyle(fontSize: 8)),
-                          pw.Text('• Konsultasikan tes HbA1c dengan dokter spesialis', style: const pw.TextStyle(fontSize: 8)),
-                          pw.Text('• Kurangi konsumsi glukosa dan lakukan diet sehat teratur', style: const pw.TextStyle(fontSize: 8)),
+                        if (_isPositif) ...[
+                          pw.Text(
+                              '• Lakukan pemeriksaan kadar gula darah puasa & 2 jam PP',
+                              style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text(
+                              '• Konsultasikan tes HbA1c dengan dokter spesialis',
+                              style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text(
+                              '• Kurangi konsumsi glukosa dan lakukan diet sehat teratur',
+                              style: const pw.TextStyle(fontSize: 8)),
                         ] else ...[
-                          pw.Text('• Pertahankan pola makan gizi seimbang dan serat tinggi', style: const pw.TextStyle(fontSize: 8)),
-                          pw.Text('• Rutin melakukan aktivitas fisik/olahraga minimal 30 menit/hari', style: const pw.TextStyle(fontSize: 8)),
-                          pw.Text('• Lakukan pemeriksaan gula darah berkala 6 bulan sekali', style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text(
+                              '• Pertahankan pola makan gizi seimbang dan serat tinggi',
+                              style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text(
+                              '• Rutin melakukan aktivitas fisik/olahraga minimal 30 menit/hari',
+                              style: const pw.TextStyle(fontSize: 8)),
+                          pw.Text(
+                              '• Lakukan pemeriksaan gula darah berkala 6 bulan sekali',
+                              style: const pw.TextStyle(fontSize: 8)),
                         ]
                       ],
                     ),
@@ -319,11 +411,19 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     ),
                     child: pw.Column(
                       children: [
-                        pw.Text('Terverifikasi Sistem Digital', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+                        pw.Text('Terverifikasi Digital',
+                            style: const pw.TextStyle(
+                                fontSize: 8, color: PdfColors.grey700)),
                         pw.SizedBox(height: 16),
-                        pw.Text('[ DIORA SYSTEM ]', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColor.fromHex('#6679F4'))),
+                        pw.Text('[ DIORA SYSTEM ]',
+                            style: pw.TextStyle(
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColor.fromHex('#6679F4'))),
                         pw.SizedBox(height: 4),
-                        pw.Text('Validasi Otomatis', style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600)),
+                        pw.Text('Validasi Otomatis',
+                            style: const pw.TextStyle(
+                                fontSize: 7.5, color: PdfColors.grey600)),
                       ],
                     ),
                   ),
@@ -355,7 +455,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
       final Uint8List pdfBytes = await _generatePdf();
       await Printing.sharePdf(
         bytes: pdfBytes,
-        filename: 'Laporan_Skrining_Diabetes_${widget.nama}.pdf',
+        filename: 'Laporan_Skrining_Diabetes_${_nama}.pdf',
       );
     } catch (e) {
       if (mounted) {
@@ -368,32 +468,55 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingFirestore) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFE2E8F0),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: const Text('Laporan Hasil Skrining',
+              style: TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
+          centerTitle: true,
+          elevation: 0.5,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: Color(0xFF6679F4)),
+        ),
+      );
+    }
+
     final DateTime now = DateTime.now();
     final String jamSkrining =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     final String tanggalSkrining =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
-    final String noDoc = widget.docId.isNotEmpty
-        ? widget.docId.toUpperCase()
+
+    final String displayDocId = _docId.length > 8
+        ? _docId.substring(0, 8).toUpperCase()
+        : _docId.toUpperCase();
+    final String noDoc = _docId.isNotEmpty
+        ? displayDocId
         : 'SKR-${now.millisecondsSinceEpoch.toString().substring(6)}';
 
     final Color statusColor =
-    widget.isPositif ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4);
+    _isPositif ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4);
     final Color textColor =
-    widget.isPositif ? const Color(0xFFDC2626) : const Color(0xFF16A34A);
+    _isPositif ? const Color(0xFFDC2626) : const Color(0xFF16A34A);
     final Color borderColor =
-    widget.isPositif ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC);
+    _isPositif ? const Color(0xFFFCA5A5) : const Color(0xFF86EFAC);
 
-    final String statusText = widget.isPositif
+    final String statusText = _isPositif
         ? 'RISIKO TINGGI (POSITIF)'
         : 'RISIKO RENDAH (NEGATIF)';
 
-    final String ringkasanText = widget.isPositif
-        ? 'Berdasarkan evaluasi 14 indikator medis, Anda memiliki potensi tinggi mengalami risiko diabetes. Disarankan segera berkonsultasi ke dokter.'
-        : 'Berdasarkan evaluasi 14 indikator medis, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap pertahankan pola hidup sehat.';
+    final String ringkasanText = _isPositif
+        ? 'Berdasarkan evaluasi indikator medis, Anda memiliki potensi tinggi mengalami risiko diabetes. Disarankan segera berkonsultasi ke dokter.'
+        : 'Berdasarkan evaluasi indikator medis, Anda memiliki kemungkinan rendah mengalami diabetes. Tetap pertahankan pola hidup sehat.';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE2E8F0), // Latar studio agar efek dokumen kertas kontras
+      backgroundColor: const Color(0xFFE2E8F0),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -418,7 +541,8 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -426,18 +550,18 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
+                        color: Colors.black.withOpacity(0.12),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
                     ],
-                    border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                    border:
+                    Border.all(color: const Color(0xFFCBD5E1), width: 1),
                   ),
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                  padding: const EdgeInsets.fromLTRB(14, 20, 14, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // KOP SURAT RESMI (KERTAS LAPORAN REAL)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,81 +575,82 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(Icons.local_hospital_rounded,
-                                    color: Color(0xFF6679F4), size: 28),
+                                    color: Color(0xFF6679F4), size: 24),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 8),
                               const Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'DIORA HEALTHCARE',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 13.5,
                                       fontWeight: FontWeight.w900,
                                       color: Color(0xFF6679F4),
-                                      letterSpacing: 0.5,
+                                      letterSpacing: 0.3,
                                     ),
                                   ),
                                   Text(
-                                    'Layanan Skrining Diabetes Digital',
+                                    'Layanan Skrining Digital',
                                     style: TextStyle(
-                                        fontSize: 9, color: Color(0xFF64748B)),
+                                        fontSize: 8.5,
+                                        color: Color(0xFF64748B)),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'No: $noDoc',
-                                style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B)),
-                              ),
-                              Text(
-                                tanggalSkrining,
-                                style: const TextStyle(
-                                    fontSize: 9, color: Color(0xFF64748B)),
-                              ),
-                              Text(
-                                '$jamSkrining WIB',
-                                style: const TextStyle(
-                                    fontSize: 9, color: Color(0xFF64748B)),
-                              ),
-                            ],
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'No: $noDoc',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1E293B)),
+                                ),
+                                Text(
+                                  tanggalSkrining,
+                                  style: const TextStyle(
+                                      fontSize: 8.5, color: Color(0xFF64748B)),
+                                ),
+                                Text(
+                                  '$jamSkrining WIB',
+                                  style: const TextStyle(
+                                      fontSize: 8.5, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-
-                      // GARIS AKSEN GANDA KOP SURAT MEDIS
                       Column(
                         children: [
                           Container(height: 2, color: const Color(0xFF6679F4)),
                           const SizedBox(height: 2),
-                          Container(height: 0.8, color: const Color(0xFF94A3B8)),
+                          Container(
+                              height: 0.8, color: const Color(0xFF94A3B8)),
                         ],
                       ),
                       const SizedBox(height: 14),
-
-                      // JUDUL SURAT LAPORAN
                       const Center(
                         child: Text(
                           'LAPORAN RESMI HASIL SKRINING DIABETES',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF0F172A),
-                            letterSpacing: 0.3,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // BLOK DATA PASIEN & RINGKASAN EVALUASI
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -533,9 +658,9 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                             child: _buildRealReportCard(
                               title: 'DATA PASIEN',
                               lines: [
-                                'Nama   : ${widget.nama}',
-                                'Usia   : ${widget.umur} Tahun',
-                                'Gender : ${widget.jenisKelamin}',
+                                'Nama   : $_nama',
+                                'Usia   : $_umur Tahun',
+                                'Gender : $_jenisKelamin',
                               ],
                             ),
                           ),
@@ -549,8 +674,6 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                         ],
                       ),
                       const SizedBox(height: 14),
-
-                      // STEMPEL RISKO
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
@@ -565,7 +688,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
-                              widget.isPositif
+                              _isPositif
                                   ? Icons.warning_amber_rounded
                                   : Icons.verified_rounded,
                               color: textColor,
@@ -579,7 +702,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                 softWrap: true,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                   color: textColor,
                                   letterSpacing: 0.1,
                                   height: 1.25,
@@ -590,20 +713,16 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                         ),
                       ),
                       const SizedBox(height: 18),
-
-                      // TABEL 14 INDIKATOR
                       const Text(
-                        'Detail Jawaban 14 Indikator Skrining:',
+                        'Detail Jawaban Indikator Skrining:',
                         style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E293B)),
                       ),
                       const SizedBox(height: 8),
                       _buildRealTable(_finalTableData),
                       const SizedBox(height: 16),
-
-                      // REKOMENDASI MEDIS & VERIFIKASI SISTEM
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -614,7 +733,8 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border:
+                                Border.all(color: const Color(0xFFE2E8F0)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -622,25 +742,38 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                   const Text(
                                     'Rekomendasi Medis:',
                                     style: TextStyle(
-                                        fontSize: 10.5,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF0F172A)),
                                   ),
                                   const SizedBox(height: 4),
-                                  if (widget.isPositif) ...const [
+                                  if (_isPositif) ...const [
                                     Text('• Cek gula darah puasa & 2 jam PP',
-                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF334155))),
                                     Text('• Tes HbA1c dengan dokter spesialis',
-                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
-                                    Text('• Konsultasikan pola diet rendah gula',
-                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF334155))),
+                                    Text(
+                                        '• Konsultasikan pola diet rendah gula',
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF334155))),
                                   ] else ...const [
                                     Text('• Pertahankan gizi seimbang & serat',
-                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF334155))),
                                     Text('• Olahraga teratur 30 menit/hari',
-                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF334155))),
                                     Text('• Tes gula darah rutin berkala',
-                                        style: TextStyle(fontSize: 9.5, color: Color(0xFF334155))),
+                                        style: TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFF334155))),
                                   ],
                                 ],
                               ),
@@ -653,25 +786,26 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border:
+                                Border.all(color: const Color(0xFFE2E8F0)),
                               ),
                               child: const Column(
                                 children: [
                                   Text(
                                     'Terverifikasi Digital',
                                     style: TextStyle(
-                                        fontSize: 8.5,
+                                        fontSize: 8,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF64748B)),
                                   ),
                                   SizedBox(height: 12),
                                   Icon(Icons.verified_user_rounded,
-                                      color: Color(0xFF6679F4), size: 22),
+                                      color: Color(0xFF6679F4), size: 20),
                                   SizedBox(height: 4),
                                   Text(
                                     '[ DIORA SYSTEM ]',
                                     style: TextStyle(
-                                        fontSize: 8,
+                                        fontSize: 7.5,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF6679F4)),
                                   ),
@@ -682,8 +816,6 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                         ],
                       ),
                       const SizedBox(height: 14),
-
-                      // FOOTER CATATAN HUKUM/MEDIS
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(10),
@@ -705,40 +837,29 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                 ),
               ),
             ),
-
-            // BARIS TOMBOL AKSI
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, -2),
-                  ),
-                ],
-              ),
+              padding: const EdgeInsets.all(14),
+              color: Colors.white,
               child: SizedBox(
                 width: double.infinity,
-                height: 46,
+                height: 48,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6679F4),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
                   onPressed: _kirimPdfLangsung,
                   icon: const Icon(Icons.picture_as_pdf_rounded,
-                      color: Colors.white, size: 18),
+                      color: Colors.white, size: 20),
                   label: const Text(
                     'Cetak / Simpan Laporan PDF',
                     style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -760,7 +881,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -768,157 +889,102 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
           Text(
             title,
             style: const TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF334155)),
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
+            ),
           ),
           const SizedBox(height: 6),
           if (lines != null)
             ...lines.map(
                   (line) => Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: Text(line,
-                    style: const TextStyle(
-                        fontSize: 9.5, color: Color(0xFF0F172A))),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
               ),
             ),
           if (bodyText != null)
             Text(
               bodyText,
               style: const TextStyle(
-                  fontSize: 9, color: Color(0xFF334155), height: 1.3),
+                fontSize: 8.5,
+                color: Color(0xFF334155),
+                height: 1.3,
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildRealTable(List<Map<String, String>> dataItems) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(5),
-        child: Table(
-          columnWidths: const {
-            0: FlexColumnWidth(0.5),
-            1: FlexColumnWidth(3.5),
-            2: FlexColumnWidth(1.1),
-          },
-          border: const TableBorder(
-            horizontalInside: BorderSide(
-              color: Color(0xFFE2E8F0),
-              width: 0.8,
-            ),
-            verticalInside: BorderSide(
-              color: Color(0xFFE2E8F0),
-              width: 0.8,
-            ),
-          ),
+  Widget _buildRealTable(List<dynamic> data) {
+    return Table(
+      border: TableBorder.all(color: const Color(0xFFE2E8F0), width: 1),
+      columnWidths: const {
+        0: FlexColumnWidth(0.6),
+        1: FlexColumnWidth(4.0),
+        2: FlexColumnWidth(1.2),
+      },
+      children: [
+        TableRow(
+          decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
           children: [
-            const TableRow(
-              decoration: BoxDecoration(color: Color(0xFFF1F5F9)),
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                  child: Text(
-                    'No',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9.5,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                  child: Text(
-                    'Indikator Gejala',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9.5,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                  child: Text(
-                    'Hasil',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9.5,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            ...dataItems.asMap().entries.map((entry) {
-              final int index = entry.key + 1;
-              final Map<String, String> item = entry.value;
-              final String question = (item['q'] ?? '').replaceAll(
-                RegExp(r'^\d+\.\s*'),
-                '',
-              );
-              final String answer = item['a'] ?? '';
-              final bool isYes = answer == 'Ya' || answer == 'Iya';
-
-              return TableRow(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 4,
-                    ),
-                    child: Text(
-                      '$index',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 8,
-                    ),
-                    child: Text(
-                      question,
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Color(0xFF0F172A),
-                        height: 1.25,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 4,
-                    ),
-                    child: Text(
-                      answer,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        color: isYes
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFF16A34A),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }),
+            _buildTableCell('No', isHeader: true, align: TextAlign.center),
+            _buildTableCell('Pertanyaan Skrining', isHeader: true),
+            _buildTableCell('Jawaban', isHeader: true, align: TextAlign.center),
           ],
+        ),
+        ...data.asMap().entries.map((entry) {
+          final idx = entry.key + 1;
+          final item = entry.value;
+          final String qText = ((item is Map) ? (item['q'] ?? '') : '')
+              .toString()
+              .replaceAll(RegExp(r'^\d+\.\s*'), '');
+          final String ansText =
+          ((item is Map) ? (item['a'] ?? '') : '').toString();
+          final bool isYa = (ansText == 'Ya' || ansText == 'Iya');
+
+          return TableRow(
+            children: [
+              _buildTableCell('$idx', align: TextAlign.center),
+              _buildTableCell(qText),
+              _buildTableCell(
+                ansText,
+                align: TextAlign.center,
+                textColor:
+                isYa ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+                isBold: true,
+              ),
+            ],
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTableCell(
+      String text, {
+        bool isHeader = false,
+        TextAlign align = TextAlign.left,
+        Color? textColor,
+        bool isBold = false,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+      child: Text(
+        text,
+        textAlign: align,
+        style: TextStyle(
+          fontSize: isHeader ? 9 : 8.5,
+          fontWeight: isHeader || isBold ? FontWeight.bold : FontWeight.normal,
+          color: textColor ??
+              (isHeader ? const Color(0xFF1E293B) : const Color(0xFF334155)),
         ),
       ),
     );
