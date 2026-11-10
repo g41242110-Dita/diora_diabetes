@@ -59,7 +59,11 @@ class _ArtikelPageState extends State<ArtikelPage> {
           width: 78,
           height: 78,
           color: const Color(0xFFEEF2FF),
-          child: const Icon(Icons.broken_image_rounded, color: Color(0xFF6679F4), size: 28),
+          child: const Icon(
+            Icons.broken_image_rounded,
+            color: Color(0xFF6679F4),
+            size: 28,
+          ),
         );
       }
     }
@@ -94,9 +98,9 @@ class _ArtikelPageState extends State<ArtikelPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. HEADER DENGAN KOTAK PENCARIAN YANG SUDAH DIPERKECL THIN & RAMPING
+          // 1. HEADER DENGAN KOTAK PENCARIAN
           Container(
-            padding: EdgeInsets.fromLTRB(16, topPadding, 20, 18), // Padding bawah dikurangi dari 24 ke 18
+            padding: EdgeInsets.fromLTRB(16, topPadding, 20, 18),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
@@ -146,11 +150,11 @@ class _ArtikelPageState extends State<ArtikelPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14), // Jarak dikurangi dari 20 ke 14
+                const SizedBox(height: 14),
 
-                // KOTAK PENCARIAN ARTIKEL (LEBIH TIPIS & MINIMALIS)
+                // KOTAK PENCARIAN ARTIKEL
                 Container(
-                  height: 44, // Ditentukan tinggi pasti agar tidak terlalu besar
+                  height: 44,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
@@ -181,7 +185,7 @@ class _ArtikelPageState extends State<ArtikelPage> {
                       prefixIcon: const Icon(
                         Icons.search_rounded,
                         color: Color(0xFF6679F4),
-                        size: 20, // Icon disesuaikan ukurannya ke 20
+                        size: 20,
                       ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
