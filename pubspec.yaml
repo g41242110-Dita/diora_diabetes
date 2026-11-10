@@ -35,11 +35,18 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.1
 
+  # Rich Text / Article Editor Package
+  flutter_quill: ^10.8.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+
+# Penyelesaian bentrok versi package intl
+dependency_overrides:
+  intl: ^0.20.3
 
 flutter:
   uses-material-design: true
