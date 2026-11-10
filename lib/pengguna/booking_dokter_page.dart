@@ -105,6 +105,21 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
       if (!mounted) return;
 
       if (result) {
+        // --- CATAT KE KOLEKSI GLOBAL CONSULTATION_BOOKINGS UNTUK RIWAYAT & DASHBOARD DOKTER ---
+        try {
+          await FirebaseFirestore.instance.collection('consultation_bookings').add({
+            'doctor_id': widget.doctor.id, // Menggunakan ID asli dokter (misal: '1')
+            'user_id': widget.namaUser,
+            'booking_date': tanggalStr, // Tanggal otomatis hari ini
+            'booking_time': _selectedSlot,
+            'status': 'confirmed',
+            'screening_result_id': 'ID_SCREENING_HASIL',
+            'created_at': FieldValue.serverTimestamp(),
+          });
+        } catch (e) {
+          debugPrint('Gagal mencatat ke consultation_bookings: $e');
+        }
+
         List<String> slotParts = _selectedSlot!.split('-');
         String jamMulaiStr = slotParts[0].trim().replaceAll('.', ':');
         String jamSelesaiStr = slotParts.length > 1
@@ -418,7 +433,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                 return InkWell(
                                   onTap: () {
                                     if (isDipesanOlehSaya) {
-                                      // Buka room chat kembali walau sudah diakhiri (untuk lihat riwayat)
                                       _bukaKembaliChat(slot);
                                     } else if (isTersedia) {
                                       setState(() {
@@ -428,11 +442,10 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      // WARNA BACKGROUND SLOT FIKS
                                       color: isDipesanOlehSaya
                                           ? (isChatEnded
-                                          ? const Color(0xFFF1F5F9) // Abu-abu jika sudah diakhiri
-                                          : const Color(0xFFEEF2FF)) // Biru jika masih aktif
+                                          ? const Color(0xFFF1F5F9)
+                                          : const Color(0xFFEEF2FF))
                                           : (isSelected
                                           ? const Color(0xFF4F46E5)
                                           : (isBookedOrExpired
@@ -473,8 +486,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                           ),
                                         ),
                                         const SizedBox(height: 2),
-
-                                        // TEKS STATUS FIKS
                                         Text(
                                           isDipesanOlehSaya
                                               ? (isChatEnded ? 'Sesi Berakhir' : 'Buka Chat Saya')
