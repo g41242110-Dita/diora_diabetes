@@ -275,6 +275,46 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     );
   }
 
+  // Helper render widget gambar dari sumber string (Base64 / URL)
+  Widget _renderImageWidget(String imageSrc) {
+    String cleanSrc = imageSrc.trim();
+
+    // Jika format [IMAGE: data:...]
+    if (cleanSrc.startsWith('[IMAGE:') && cleanSrc.endsWith(']')) {
+      cleanSrc = cleanSrc.substring(7, cleanSrc.length - 1).trim();
+    }
+
+    Widget img;
+    if (cleanSrc.startsWith('data:image')) {
+      try {
+        final bytes = base64Decode(cleanSrc.split(',').last);
+        img = Image.memory(
+          bytes,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        );
+      } catch (e) {
+        return const SizedBox();
+      }
+    } else {
+      img = Image.network(
+        cleanSrc,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => const SizedBox(),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: img,
+      ),
+    );
+  }
+
+  // Parser pintar yang mendukung [FOTO_X], [IMAGE: ...], dan URL biasa
   Widget _buildContentWithImages(String rawContent) {
     List<Widget> widgets = [];
     Map<String, String> imagesMap = {};
@@ -285,35 +325,50 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
       );
     }
 
-    RegExp exp = RegExp(r'(\[FOTO_\d+\])');
-    List<String> parts = rawContent.split(exp);
+    // Regex serbaguna untuk mendeteksi [FOTO_1] ATAU [IMAGE: ...]
+    RegExp exp = RegExp(r'(\[FOTO_\d+\]|\[IMAGE:\s*[^\]]+\])');
+    Iterable<RegExpMatch> matches = exp.allMatches(rawContent);
 
-    for (String part in parts) {
-      String trimmed = part.trim();
-      if (imagesMap.containsKey(trimmed)) {
-        String base64Data = imagesMap[trimmed]!;
-        try {
-          final bytes = base64Decode(base64Data.split(',').last);
+    int lastIndex = 0;
+    for (RegExpMatch match in matches) {
+      // Teks sebelum gambar
+      if (match.start > lastIndex) {
+        String textSegment = rawContent.substring(lastIndex, match.start).trim();
+        if (textSegment.isNotEmpty) {
           widgets.add(
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.memory(
-                  bytes,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+            Text(
+              textSegment,
+              style: TextStyle(
+                fontSize: _fontSize,
+                color: const Color(0xFF334155),
+                height: 1.8,
+                fontWeight: FontWeight.w400,
               ),
             ),
           );
-        } catch (e) {
-          widgets.add(const SizedBox());
+          widgets.add(const SizedBox(height: 10));
         }
-      } else if (trimmed.isNotEmpty) {
+      }
+
+      String token = match.group(0)!;
+      if (imagesMap.containsKey(token)) {
+        // Jika token cocok dengan [FOTO_1] dari Map
+        widgets.add(_renderImageWidget(imagesMap[token]!));
+      } else if (token.startsWith('[IMAGE:')) {
+        // Jika token berformat [IMAGE: data:image/...]
+        widgets.add(_renderImageWidget(token));
+      }
+
+      lastIndex = match.end;
+    }
+
+    // Sisa teks di bagian paling akhir
+    if (lastIndex < rawContent.length) {
+      String remainingText = rawContent.substring(lastIndex).trim();
+      if (remainingText.isNotEmpty) {
         widgets.add(
           Text(
-            part,
+            remainingText,
             style: TextStyle(
               fontSize: _fontSize,
               color: const Color(0xFF334155),
@@ -322,7 +377,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
             ),
           ),
         );
-        widgets.add(const SizedBox(height: 10));
       }
     }
 
@@ -472,7 +526,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // JUDUL SEKARANG MEMAKAI _fontSize + 3.0 (IKUT MEMBESAR/MENGECIL DINAMIS)
                         Text(
                           widget.title,
                           style: TextStyle(
