@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -33,9 +33,12 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
   bool _isUnderlineActive = false;
   TextAlign _textAlign = TextAlign.left;
 
-  // Gambar Thumbnail
-  Uint8List? _webImageThumbnail;
+  // Gambar Thumbnail & Map Gambar Isi Artikel
+  String? _base64Thumbnail;
   String? _existingImageUrl;
+  Map<String, String> _inlineImages = {};
+  int _imageCounter = 1;
+
   final ImagePicker _picker = ImagePicker();
 
   late AnimationController _animController;
@@ -45,11 +48,17 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
   @override
   void initState() {
     super.initState();
-    // Isi data jika dalam mode edit
     _judulController = TextEditingController(text: widget.dataArtikel?['title'] ?? '');
     _isiController = TextEditingController(text: widget.dataArtikel?['content'] ?? '');
     _status = widget.dataArtikel?['status'] ?? 'Publis';
     _existingImageUrl = widget.dataArtikel?['thumbnail'] ?? widget.dataArtikel?['imageUrl'];
+
+    // Load inline images jika ada data lama
+    if (widget.dataArtikel?['inline_images'] != null) {
+      Map<String, dynamic> rawMap = Map<String, dynamic>.from(widget.dataArtikel!['inline_images']);
+      _inlineImages = rawMap.map((key, value) => MapEntry(key, value.toString()));
+      _imageCounter = _inlineImages.length + 1;
+    }
 
     _animController = AnimationController(
       vsync: this,
@@ -74,25 +83,55 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     super.dispose();
   }
 
+  // 1. PILIH THUMBNAIL UTAMA DARI GALERI (KOMPRES BASE64 RINGAN)
   Future<void> _pickThumbnailFromGallery() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 500,
+        imageQuality: 50,
+      );
       if (pickedFile != null) {
         var bytes = await pickedFile.readAsBytes();
+        String base64Image = base64Encode(bytes);
         setState(() {
-          _webImageThumbnail = bytes;
+          _base64Thumbnail = "data:image/jpeg;base64,$base64Image";
         });
       }
     } catch (e) {
-      debugPrint("Gagal mengambil gambar: $e");
+      debugPrint("Gagal mengambil gambar thumbnail: $e");
     }
   }
 
+  // 2. SISIPKAN GAMBAR GALERI DENGAN TAG BERSIH [FOTO_1], [FOTO_2]
   Future<void> _insertImageToContent() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 600,
+        imageQuality: 55,
+      );
       if (pickedFile != null) {
-        _insertTextAtCursor("[Gambar: ${pickedFile.name}]");
+        var bytes = await pickedFile.readAsBytes();
+        String base64Image = "data:image/jpeg;base64,${base64Encode(bytes)}";
+
+        String tag = "[FOTO_$_imageCounter]";
+        setState(() {
+          _inlineImages[tag] = base64Image;
+          _imageCounter++;
+        });
+
+        // Sisipkan penanda tag bersih ke dalam teks kursor
+        _insertTextAtCursor("\n\n$tag\n\n");
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Foto disisipkan sebagai penanda $tag!'),
+              backgroundColor: const Color(0xFF166534),
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint("Gagal menyisipkan gambar: $e");
@@ -127,15 +166,16 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       if (action == 'align_justify') _textAlign = TextAlign.justify;
 
       if (action == 'bullet') {
-        _insertTextAtCursor('• ');
+        _insertTextAtCursor('\n• ');
       } else if (action == 'number') {
-        _insertTextAtCursor('1. ');
+        _insertTextAtCursor('\n1. ');
       } else if (action == 'link') {
         _insertTextAtCursor('[Tautan URL]');
       }
     });
   }
 
+  // 3. SIMPAN ARTIKEL KE FIRESTORE DATABASE
   Future<void> _simpanArtikelKeFirestore() async {
     final judul = _judulController.text.trim();
     final isi = _isiController.text.trim();
@@ -155,33 +195,28 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     });
 
     try {
-      String imageUrl = _existingImageUrl ?? 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?q=80&w=400';
+      String finalThumbnail = _base64Thumbnail ?? _existingImageUrl ?? '';
 
       final data = {
         'title': judul,
         'content': isi,
-        'thumbnail': imageUrl,
+        'thumbnail': finalThumbnail,
+        'inline_images': _inlineImages,
         'status': _status,
         'created_at': widget.dataArtikel?['created_at'] ?? FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),
       };
 
       if (widget.docId != null) {
-        // Mode Update
         await FirebaseFirestore.instance.collection('articles').doc(widget.docId).update(data);
       } else {
-        // Mode Tambah
         await FirebaseFirestore.instance.collection('articles').add(data);
 
-        // OTOMATIS KIRIM NOTIFIKASI KE SEMUA USER JIKA DIPUBLIKASIKAN
         if (_status == 'Publis') {
           QuerySnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').get();
-
           for (var doc in userSnapshot.docs) {
-            String userId = doc.id;
-
             await FirebaseFirestore.instance.collection('notifications').add({
-              'user_id': userId,
+              'user_id': doc.id,
               'title': 'Artikel Terbaru 📚',
               'body': 'Artikel baru telah diterbitkan: $judul',
               'is_read': false,
@@ -286,9 +321,35 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     );
   }
 
+  // WIDGET MENAMPILKAN THUMBNAIL (BISA LOGO NETWORKING ATAU BASE64)
+  Widget _buildThumbnailWidget() {
+    String? imgSource = _base64Thumbnail ?? _existingImageUrl;
+    if (imgSource == null || imgSource.isEmpty) {
+      return const SizedBox();
+    }
+
+    if (imgSource.startsWith('data:image')) {
+      try {
+        final bytes = base64Decode(imgSource.split(',').last);
+        return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
+      } catch (e) {
+        return const Icon(Icons.broken_image, size: 40, color: Colors.grey);
+      }
+    }
+
+    return Image.network(
+      imgSource,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditMode = widget.docId != null;
+    final hasThumbnail = _base64Thumbnail != null || (_existingImageUrl != null && _existingImageUrl!.isNotEmpty);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -302,6 +363,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // HEADER
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -388,6 +450,8 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                       ],
                     ),
                   ),
+
+                  // FORM INPUT ARTIKEL
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
                     child: Container(
@@ -402,11 +466,12 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             offset: const Offset(0, 10),
                           ),
                         ],
-                        border: Border.all(color: const Color(0xFFE0E7FF), width: 1.2),
+                        border: Border.all(color: const Color(0xFFE0E0FF), width: 1.2),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 1. JUDUL ARTIKEL
                           _buildSectionCard(
                             icon: Icons.title_rounded,
                             title: 'Judul Artikel',
@@ -435,62 +500,75 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             ),
                           ),
                           const SizedBox(height: 20),
+
+                          // 2. THUMBNAIL UTAMA ARTIKEL
                           _buildSectionCard(
                             icon: Icons.image_rounded,
-                            title: 'Thumbnail Artikel',
+                            title: 'Thumbnail Utama Artikel',
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
                               onTap: _pickThumbnailFromGallery,
                               child: Container(
                                 width: double.infinity,
-                                height: (_webImageThumbnail != null || _existingImageUrl != null) ? 170 : 120,
+                                height: hasThumbnail ? 170 : 120,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: const Color(0xFF93C5FD), width: 1.5),
-                                  image: _webImageThumbnail != null
-                                      ? DecorationImage(image: MemoryImage(_webImageThumbnail!), fit: BoxFit.cover)
-                                      : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
-                                      ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
-                                      : null,
                                 ),
-                                child: (_webImageThumbnail == null && _existingImageUrl == null)
-                                    ? Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: const BoxDecoration(
-                                        gradient: LinearGradient(colors: [Color(0xFFE0E7FF), Color(0xFFBFDBFE)]),
-                                        shape: BoxShape.circle,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: hasThumbnail
+                                      ? Stack(
+                                    children: [
+                                      Positioned.fill(child: _buildThumbnailWidget()),
+                                      Align(
+                                        alignment: Alignment.topRight,
+                                        child: Container(
+                                          margin: const EdgeInsets.all(10),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.65),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text(
+                                            'Ganti Gambar',
+                                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
                                       ),
-                                      child: const Icon(Icons.add_photo_alternate_rounded, color: Color(0xFF2563EB), size: 26),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      'Pilih Gambar Thumbnail dari Galeri',
-                                      style: TextStyle(fontSize: 12, color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    const Text('Format: JPG, PNG (Maks. 2 MB)', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                                  ],
-                                )
-                                    : Align(
-                                  alignment: Alignment.topRight,
-                                  child: Container(
-                                    margin: const EdgeInsets.all(10),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.65), borderRadius: BorderRadius.circular(8)),
-                                    child: const Text('Ganti Gambar', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                    ],
+                                  )
+                                      : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: const BoxDecoration(
+                                          gradient: LinearGradient(colors: [Color(0xFFE0E7FF), Color(0xFFBFDBFE)]),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.add_photo_alternate_rounded, color: Color(0xFF2563EB), size: 26),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Pilih Gambar Thumbnail dari Galeri',
+                                        style: TextStyle(fontSize: 12, color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      const Text('Format: JPG, PNG (Tersimpan Otomatis)', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 20),
+
+                          // 3. ISI ARTIKEL & TOOLBAR
                           _buildSectionCard(
                             icon: Icons.edit_note_rounded,
-                            title: 'Isi Artikel',
+                            title: 'Isi Artikel & Format Tata Letak',
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -500,6 +578,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // TOOLBAR EDITOR
                                   Container(
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -511,7 +590,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                     child: SingleChildScrollView(
                                       scrollDirection: Axis.horizontal,
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
                                           _buildToolbarButton(Icons.format_bold, 'bold', _isBoldActive),
                                           _buildToolbarButton(Icons.format_italic, 'italic', _isItalicActive),
@@ -526,9 +604,9 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                           _buildToolbarButton(Icons.format_list_numbered, 'number', false),
                                           _buildToolbarButton(Icons.link, 'link', false),
                                           IconButton(
-                                            icon: const Icon(Icons.image_rounded, size: 18, color: Color(0xFF2563EB)),
+                                            icon: const Icon(Icons.add_photo_alternate_rounded, size: 20, color: Color(0xFF2563EB)),
                                             onPressed: _insertImageToContent,
-                                            tooltip: 'Sisipkan Gambar ke Teks',
+                                            tooltip: 'Sisipkan Foto dari Galeri ke Teks',
                                             constraints: const BoxConstraints(),
                                             padding: const EdgeInsets.all(6),
                                           ),
@@ -536,9 +614,10 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                       ),
                                     ),
                                   ),
+                                  // INPUT TEKS ARTIKEL
                                   TextField(
                                     controller: _isiController,
-                                    maxLines: 6,
+                                    maxLines: 12,
                                     textAlign: _textAlign,
                                     style: TextStyle(
                                       fontSize: 13.5,
@@ -548,7 +627,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                       decoration: _isUnderlineActive ? TextDecoration.underline : TextDecoration.none,
                                     ),
                                     decoration: const InputDecoration(
-                                      hintText: 'Tulis isi artikel lengkap mengenai edukasi kesehatan dan diabetes...',
+                                      hintText: 'Tulis isi artikel lengkap mengenai edukasi kesehatan...\n\nTekan tombol icon gambar di toolbar untuk menyisipkan foto.',
                                       hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
                                       contentPadding: EdgeInsets.all(14),
                                       border: InputBorder.none,
@@ -559,18 +638,22 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                             ),
                           ),
                           const SizedBox(height: 20),
+
+                          // 4. STATUS PUBLIKASI
                           _buildSectionCard(
                             icon: Icons.publish_rounded,
                             title: 'Status Publikasi',
                             child: Row(
                               children: [
                                 Expanded(child: _buildStatusCard('Draf', 'Simpan Draf')),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Expanded(child: _buildStatusCard('Publis', 'Publikasikan')),
                               ],
                             ),
                           ),
                           const SizedBox(height: 28),
+
+                          // TOMBOL AKSI
                           Row(
                             children: [
                               Expanded(
@@ -693,7 +776,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       onTap: () => setState(() => _status = value),
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -704,19 +787,23 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
               color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
-              size: 18,
+              size: 16,
             ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 13,
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 12,
+                ),
               ),
             ),
           ],
