@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'skrining2_page.dart';
 
 class SkriningPage extends StatefulWidget {
-  final VoidCallback? onBackToHome; // Callback untuk berpindah ke tab Beranda
+  final VoidCallback? onBackToHome;
 
   const SkriningPage({super.key, this.onBackToHome});
 
@@ -14,7 +14,7 @@ class _SkriningPageState extends State<SkriningPage> {
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _umurController = TextEditingController();
   String? _jenisKelamin;
-  bool _showErrorBanner = false; // State untuk menampilkan banner peringatan
+  bool _showErrorBanner = false;
 
   @override
   void dispose() {
@@ -23,7 +23,6 @@ class _SkriningPageState extends State<SkriningPage> {
     super.dispose();
   }
 
-  // Validasi data dan navigasi
   void _validateAndNavigate() {
     String nama = _namaController.text.trim();
     String umur = _umurController.text.trim();
@@ -60,7 +59,6 @@ class _SkriningPageState extends State<SkriningPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. HEADER ESTETIK DENGAN GRADIENT & TOMBOL KEMBALI CLEAN
           Container(
             padding: EdgeInsets.fromLTRB(16, topPadding, 20, 24),
             decoration: const BoxDecoration(
@@ -111,8 +109,6 @@ class _SkriningPageState extends State<SkriningPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                // PROGRESS BAR (1/2)
                 Row(
                   children: [
                     Expanded(
@@ -141,8 +137,6 @@ class _SkriningPageState extends State<SkriningPage> {
               ],
             ),
           ),
-
-          // 2. KONTEN FORM
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -185,8 +179,6 @@ class _SkriningPageState extends State<SkriningPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // BANNER PERINGATAN KOTAK
                     if (_showErrorBanner)
                       Container(
                         width: double.infinity,
@@ -217,8 +209,6 @@ class _SkriningPageState extends State<SkriningPage> {
                           ],
                         ),
                       ),
-
-                    // Input Nama Lengkap
                     _buildLabel('Nama Lengkap'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -226,8 +216,6 @@ class _SkriningPageState extends State<SkriningPage> {
                       hintText: 'Masukkan nama Anda',
                     ),
                     const SizedBox(height: 18),
-
-                    // Input Umur
                     _buildLabel('Umur'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -236,8 +224,6 @@ class _SkriningPageState extends State<SkriningPage> {
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 18),
-
-                    // Dropdown Jenis Kelamin (Presisi & Bebas Mismatch)
                     _buildLabel('Jenis Kelamin'),
                     const SizedBox(height: 8),
                     Container(
@@ -253,7 +239,6 @@ class _SkriningPageState extends State<SkriningPage> {
                         style: const TextStyle(
                           fontSize: 13.5,
                           color: Color(0xFF1E293B),
-                          fontFamily: 'Roboto',
                         ),
                         hint: const Text(
                           'Pilih jenis kelamin',
@@ -284,8 +269,6 @@ class _SkriningPageState extends State<SkriningPage> {
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // TOMBOL LANJUTKAN DIBUAT BULAT (PILL SHAPE - RADIUS 25)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
