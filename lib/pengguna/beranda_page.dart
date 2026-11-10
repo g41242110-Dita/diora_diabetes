@@ -79,6 +79,62 @@ class _BerandaPageState extends State<BerandaPage> {
     super.dispose();
   }
 
+  // Helper untuk menampilkan thumbnail artikel (Base64 atau URL biasa)
+  Widget _buildThumbnailWidget(String imageUrl, {double height = 95}) {
+    if (imageUrl.isEmpty) {
+      return Container(
+        height: height,
+        width: double.infinity,
+        color: const Color(0xFFEEF2FF),
+        child: const Icon(
+          Icons.image_not_supported_rounded,
+          color: Color(0xFF6679F4),
+          size: 28,
+        ),
+      );
+    }
+
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final bytes = base64Decode(imageUrl.split(',').last);
+        return Image.memory(
+          bytes,
+          height: height,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        );
+      } catch (e) {
+        return Container(
+          height: height,
+          width: double.infinity,
+          color: const Color(0xFFEEF2FF),
+          child: const Icon(
+            Icons.broken_image_rounded,
+            color: Color(0xFF6679F4),
+            size: 28,
+          ),
+        );
+      }
+    }
+
+    return Image.network(
+      imageUrl,
+      height: height,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: height,
+        width: double.infinity,
+        color: const Color(0xFFEEF2FF),
+        child: const Icon(
+          Icons.image_not_supported_rounded,
+          color: Color(0xFF6679F4),
+          size: 28,
+        ),
+      ),
+    );
+  }
+
   void _bukaHalamanProfil() async {
     await Navigator.push(
       context,
@@ -636,6 +692,7 @@ class _BerandaPageState extends State<BerandaPage> {
                     final title = data['title'] ?? '';
                     final content = data['content'] ?? '';
                     final imageUrl = data['thumbnail'] ?? data['imageUrl'] ?? '';
+                    final inlineImages = data['inline_images'];
 
                     return GestureDetector(
                       onTap: () {
@@ -646,6 +703,7 @@ class _BerandaPageState extends State<BerandaPage> {
                               title: title,
                               content: content,
                               imageUrl: imageUrl,
+                              inlineImages: inlineImages,
                             ),
                           ),
                         );
@@ -666,19 +724,10 @@ class _BerandaPageState extends State<BerandaPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // PENAMBAHAN CLIPRRECT DAN HELPER _buildThumbnailWidget
                             ClipRRect(
                               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                              child: Image.network(
-                                imageUrl,
-                                height: 95,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  height: 95,
-                                  color: const Color(0xFFE2E7FF),
-                                  child: const Icon(Icons.article_outlined, color: Color(0xFF6679F4), size: 30),
-                                ),
-                              ),
+                              child: _buildThumbnailWidget(imageUrl, height: 95),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(10),
