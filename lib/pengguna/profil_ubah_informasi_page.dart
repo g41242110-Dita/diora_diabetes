@@ -20,7 +20,6 @@ class _UbahInformasiPageState extends State<UbahInformasiPage> {
   late TextEditingController _namaController;
   late TextEditingController _emailController;
   late TextEditingController _noTelpController;
-
   bool _showSuccessAlert = false;
 
   @override
@@ -47,176 +46,201 @@ class _UbahInformasiPageState extends State<UbahInformasiPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Banner Sukses "Perubahan Disimpan !"
-            if (_showSuccessAlert)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF81C784), width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF2E7D32),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.check,
+      body: Column(
+        children: [
+          ClipPath(
+            clipper: _UbahLiquidClipper(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 42),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
                           color: Colors.white,
-                          size: 16,
+                          size: 22,
                         ),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
+                    ),
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 36),
                         child: Text(
-                          'Perubahan Disimpan !',
+                          'Ubah Informasi',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 19,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _showSuccessAlert = false;
-                          });
-                        },
-                        child: const Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    // Judul Halaman
-                    const Text(
-                      'Ubah Informasi',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
                     ),
-                    const SizedBox(height: 8),
-                    const Divider(color: Colors.black87, thickness: 1),
-                    const SizedBox(height: 20),
-
-                    // Avatar Inisial
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: const Color(0xFFBAC8FF),
-                      child: const Text(
-                        'AP',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Tombol Ubah Foto Profil
-                    GestureDetector(
-                      onTap: () {
-                        // Fitur ganti foto profil
-                      },
-                      child: const Text(
-                        'Ubah Foto Profil',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Input 1: Nama Lengkap
-                    _buildInputField(
-                      label: 'Nama Lengkap',
-                      controller: _namaController,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Input 2: Email
-                    _buildInputField(
-                      label: 'Email',
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Input 3: Nomor Telepon
-                    _buildInputField(
-                      label: 'Nomor Telepon',
-                      controller: _noTelpController,
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
-
-            // Tombol Simpan Perubahan di Bagian Bawah
+          ),
+          if (_showSuccessAlert)
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6679F4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBBF7D0), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded,
+                        color: Color(0xFF16A34A), size: 18),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Perubahan Disimpan!',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
                     ),
-                    elevation: 0,
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showSuccessAlert = false;
+                        });
+                      },
+                      child: const Icon(Icons.close_rounded,
+                          size: 16, color: Color(0xFF166534)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  const CircleAvatar(
+                    radius: 34,
+                    backgroundColor: Color(0xFFEEF2FF),
+                    child: Text(
+                      'AP',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF5B4AF4),
+                      ),
+                    ),
                   ),
-                  onPressed: _simpanPerubahan,
-                  child: const Text(
-                    'Simpan Perubahan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Text(
+                      'Ubah Foto Profil',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF5B4AF4),
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  _buildInputField(
+                    label: 'Nama Lengkap',
+                    controller: _namaController,
+                  ),
+                  const SizedBox(height: 14),
+
+                  _buildInputField(
+                    label: 'Email',
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 14),
+
+                  _buildInputField(
+                    label: 'Nomor Telepon',
+                    controller: _noTelpController,
+                    keyboardType: TextInputType.phone,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(
+                16, 10, 16, MediaQuery.of(context).padding.bottom + 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5B4AF4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  elevation: 0,
+                ),
+                onPressed: _simpanPerubahan,
+                child: const Text(
+                  'Simpan Perubahan',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -232,29 +256,29 @@ class _UbahInformasiPageState extends State<UbahInformasiPage> {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 13.5,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Color(0xFF0F172A),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
             style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
+              fontSize: 13.5,
+              color: Color(0xFF0F172A),
             ),
             decoration: const InputDecoration(
               isDense: true,
               contentPadding:
-              EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               border: InputBorder.none,
             ),
           ),
@@ -262,4 +286,37 @@ class _UbahInformasiPageState extends State<UbahInformasiPage> {
       ],
     );
   }
+}
+
+class _UbahLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 35);
+
+    var firstControlPoint = Offset(size.width * 0.28, size.height);
+    var firstEndPoint = Offset(size.width * 0.55, size.height - 25);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.8, size.height - 50);
+    var secondEndPoint = Offset(size.width, size.height - 18);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
