@@ -103,15 +103,64 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
     String hasilStr = (data['hasilPrediksi'] ?? '').toString();
     _isPositif = hasilStr == 'Positif Diabetes';
 
+    // Memuat 14 indikator skrining lengkap
     _finalTableData = [
-      {'q': 'Apakah Anda sering buang air kecil (BAK)?', 'a': data['seringBAK'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda sering merasa haus / dahaga?', 'a': data['seringHaus'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda sering merasa lemas atau mudah lelah?', 'a': data['seringLemas'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda mengalami rambut rontok?', 'a': data['rambutRontok'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda memiliki luka yang sulit sembuh?', 'a': data['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda merasa mudah marah atau emosional?', 'a': data['mudahMarah'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda sering mengalami kaku otot?', 'a': data['kakuOtot'] == true ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda mengalami obesitas / kelebihan BB?', 'a': data['obesitas'] == true ? 'Ya' : 'Tidak'},
+      {
+        'q': 'Apakah Anda sering merasa haus berlebihan (Polidipsia)?',
+        'a': data['seringHausBerlebihan'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda sering buang air kecil terutama di malam hari (Poliuria)?',
+        'a': data['seringBAKMalamHari'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda sering merasa cepat lapar meski sudah makan (Polifagia)?',
+        'a': data['cepatLapar'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda mengalami penurunan berat badan drastis tanpa alasan jelas?',
+        'a': data['penurunanBeratBadan'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda sering merasa lelah, lemas, dan kurang berenergi?',
+        'a': data['lemasKurangBerenergi'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah penglihatan Anda sering kabur atau berbayang?',
+        'a': data['penglihatanKabur'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah luka atau lecet pada tubuh Anda membutuhkan waktu sangat lama untuk sembuh?',
+        'a': data['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda sering mengalami kesemutan, mati rasa, atau nyeri pada tangan/kaki?',
+        'a': data['kesemutanNyeri'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda sering mengalami infeksi berulang (kulit, gusi, atau saluran kemih)?',
+        'a': data['infeksiBerulang'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah ada anggota keluarga kandung (orang tua/saudara) yang menderita diabetes?',
+        'a': data['riwayatKeluarga'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda memiliki riwayat tekanan darah tinggi (Hipertensi)?',
+        'a': data['riwayatHipertensi'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda jarang melakukan aktivitas fisik atau olahraga (gaya hidup sedenter)?',
+        'a': data['jarangAktivitasFisik'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah usia Anda saat ini di atas 40 tahun?',
+        'a': data['usiaDiatas40'] == true ? 'Ya' : 'Tidak'
+      },
+      {
+        'q': 'Apakah Anda pernah terdiagnosa kadar kolesterol tinggi atau obesitas?',
+        'a': data['kolesterolTinggiObesitas'] == true ? 'Ya' : 'Tidak'
+      },
     ];
   }
 
@@ -258,8 +307,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                     ? PdfColor.fromHex('#FFEBEE')
                     : PdfColor.fromHex('#E8F5E9'),
                 border: pw.Border.all(
-                  color:
-                  _isPositif ? PdfColors.red300 : PdfColors.green300,
+                  color: _isPositif ? PdfColors.red300 : PdfColors.green300,
                 ),
                 borderRadius: pw.BorderRadius.circular(6),
               ),
@@ -269,17 +317,15 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                   style: pw.TextStyle(
                     fontWeight: pw.FontWeight.bold,
                     fontSize: 11,
-                    color: _isPositif
-                        ? PdfColors.red900
-                        : PdfColors.green900,
+                    color: _isPositif ? PdfColors.red900 : PdfColors.green900,
                   ),
                 ),
               ),
             ),
             pw.SizedBox(height: 14),
             pw.Text('Detail Jawaban Indikator Skrining:',
-                style: pw.TextStyle(
-                    fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                style:
+                pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
             pw.SizedBox(height: 6),
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
@@ -464,6 +510,147 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
         );
       }
     }
+  }
+
+  // Widget helper untuk menampilkan card data pasien & ringkasan di UI
+  Widget _buildRealReportCard({
+    required String title,
+    List<String>? lines,
+    String? bodyText,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        borderRadius: BorderRadius.circular(6),
+        color: const Color(0xFFF8FAFC),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 9.5,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (lines != null)
+            ...lines.map((l) => Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(l,
+                  style: const TextStyle(
+                      fontSize: 9, color: Color(0xFF334155))),
+            )),
+          if (bodyText != null)
+            Text(
+              bodyText,
+              style: const TextStyle(
+                fontSize: 8.5,
+                height: 1.3,
+                color: Color(0xFF334155),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Widget helper untuk menampilkan tabel 14 pertanyaan di UI aplikasi
+  Widget _buildRealTable(List<dynamic> tableData) {
+    return Table(
+      border: TableBorder.all(color: const Color(0xFFCBD5E1), width: 0.5),
+      columnWidths: const {
+        0: FlexColumnWidth(0.5),
+        1: FlexColumnWidth(3.8),
+        2: FlexColumnWidth(1.0),
+      },
+      children: [
+        TableRow(
+          decoration: const BoxDecoration(color: Color(0xFFE2E8F0)),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text(
+                'No',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 9,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text(
+                'Pertanyaan Skrining',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 9,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text(
+                'Jawaban',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 9,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        ...tableData.asMap().entries.map((entry) {
+          final idx = entry.key + 1;
+          final item = entry.value;
+          final String qText = ((item is Map) ? (item['q'] ?? '') : '')
+              .toString()
+              .replaceAll(RegExp(r'^\d+\.\s*'), '');
+          final String ansText =
+          ((item is Map) ? (item['a'] ?? '') : '').toString();
+
+          return TableRow(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(6),
+                child: Text('$idx',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 8.5, color: Color(0xFF334155))),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(6),
+                child: Text(qText,
+                    style: const TextStyle(
+                        fontSize: 8.5, color: Color(0xFF334155))),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(6),
+                child: Text(
+                  ansText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.bold,
+                    color: (ansText == 'Ya' || ansText == 'Iya')
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF16A34A),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ],
+    );
   }
 
   @override
@@ -757,7 +944,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                             fontSize: 9,
                                             color: Color(0xFF334155))),
                                     Text(
-                                        '• Konsultasikan pola diet rendah gula',
+                                        '• Kurangi glukosa & jaga pola makan',
                                         style: TextStyle(
                                             fontSize: 9,
                                             color: Color(0xFF334155))),
@@ -774,7 +961,7 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                                         style: TextStyle(
                                             fontSize: 9,
                                             color: Color(0xFF334155))),
-                                  ],
+                                  ]
                                 ],
                               ),
                             ),
@@ -785,27 +972,27 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                             child: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(6),
                                 border:
                                 Border.all(color: const Color(0xFFE2E8F0)),
                               ),
-                              child: const Column(
+                              child: Column(
                                 children: [
-                                  Text(
-                                    'Terverifikasi Digital',
+                                  const Text(
+                                    'Terverifikasi',
                                     style: TextStyle(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 8.5,
                                         color: Color(0xFF64748B)),
                                   ),
-                                  SizedBox(height: 12),
-                                  Icon(Icons.verified_user_rounded,
+                                  const SizedBox(height: 8),
+                                  const Icon(Icons.verified_rounded,
                                       color: Color(0xFF6679F4), size: 20),
-                                  SizedBox(height: 4),
-                                  Text(
+                                  const SizedBox(height: 4),
+                                  const Text(
                                     '[ DIORA SYSTEM ]',
                                     style: TextStyle(
-                                        fontSize: 7.5,
+                                        fontSize: 8,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF6679F4)),
                                   ),
@@ -822,14 +1009,11 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFEEF2FF),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFC7D2FE)),
                         ),
                         child: const Text(
                           'Catatan: Laporan ini diterbitkan otomatis oleh sistem Diora sebagai langkah awal penilaian mandiri dan bukan pengganti rekam medis profesional.',
                           style: TextStyle(
-                              fontSize: 8.5,
-                              color: Color(0xFF3730A3),
-                              height: 1.3),
+                              fontSize: 8.5, color: Color(0xFF334155)),
                         ),
                       ),
                     ],
@@ -838,153 +1022,33 @@ class _HasilSkriningPageState extends State<HasilSkriningPage> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               color: Colors.white,
               child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 45,
                 child: ElevatedButton.icon(
+                  onPressed: _kirimPdfLangsung,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6679F4),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    elevation: 0,
                   ),
-                  onPressed: _kirimPdfLangsung,
                   icon: const Icon(Icons.picture_as_pdf_rounded,
-                      color: Colors.white, size: 20),
+                      color: Colors.white),
                   label: const Text(
                     'Cetak / Simpan Laporan PDF',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
                 ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRealReportCard({
-    required String title,
-    List<String>? lines,
-    String? bodyText,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 6),
-          if (lines != null)
-            ...lines.map(
-                  (line) => Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  line,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-              ),
-            ),
-          if (bodyText != null)
-            Text(
-              bodyText,
-              style: const TextStyle(
-                fontSize: 8.5,
-                color: Color(0xFF334155),
-                height: 1.3,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRealTable(List<dynamic> data) {
-    return Table(
-      border: TableBorder.all(color: const Color(0xFFE2E8F0), width: 1),
-      columnWidths: const {
-        0: FlexColumnWidth(0.6),
-        1: FlexColumnWidth(4.0),
-        2: FlexColumnWidth(1.2),
-      },
-      children: [
-        TableRow(
-          decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
-          children: [
-            _buildTableCell('No', isHeader: true, align: TextAlign.center),
-            _buildTableCell('Pertanyaan Skrining', isHeader: true),
-            _buildTableCell('Jawaban', isHeader: true, align: TextAlign.center),
-          ],
-        ),
-        ...data.asMap().entries.map((entry) {
-          final idx = entry.key + 1;
-          final item = entry.value;
-          final String qText = ((item is Map) ? (item['q'] ?? '') : '')
-              .toString()
-              .replaceAll(RegExp(r'^\d+\.\s*'), '');
-          final String ansText =
-          ((item is Map) ? (item['a'] ?? '') : '').toString();
-          final bool isYa = (ansText == 'Ya' || ansText == 'Iya');
-
-          return TableRow(
-            children: [
-              _buildTableCell('$idx', align: TextAlign.center),
-              _buildTableCell(qText),
-              _buildTableCell(
-                ansText,
-                align: TextAlign.center,
-                textColor:
-                isYa ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
-                isBold: true,
-              ),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildTableCell(
-      String text, {
-        bool isHeader = false,
-        TextAlign align = TextAlign.left,
-        Color? textColor,
-        bool isBold = false,
-      }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-      child: Text(
-        text,
-        textAlign: align,
-        style: TextStyle(
-          fontSize: isHeader ? 9 : 8.5,
-          fontWeight: isHeader || isBold ? FontWeight.bold : FontWeight.normal,
-          color: textColor ??
-              (isHeader ? const Color(0xFF1E293B) : const Color(0xFF334155)),
         ),
       ),
     );
