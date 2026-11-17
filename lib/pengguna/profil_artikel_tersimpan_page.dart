@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,15 +13,107 @@ class ArtikelTersimpanPage extends StatefulWidget {
 
 class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
   final TextEditingController _searchController = TextEditingController();
+
+  // ignore: prefer_final_fields
   String _searchQuery = '';
+  OverlayEntry? _overlayEntry;
 
   @override
   void dispose() {
+    _overlayEntry?.remove();
+    _overlayEntry?.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  // Fungsi untuk membatalkan/menghapus bookmark langsung menggunakan doc.id
+  void _showTopNotification(String title, String message) {
+    _overlayEntry?.remove();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 24,
+        right: 24,
+        child: Material(
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: const Color(0xFFF43F5E).withValues(alpha: 0.2),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFF43F5E), Color(0xFFFB7185)],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.bookmark_remove_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        Text(
+                          message,
+                          style: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 10.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    });
+  }
+
   Future<void> _removeBookmark(String docId) async {
     try {
       await FirebaseFirestore.instance
@@ -29,22 +122,9 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
           .delete();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.bookmark_remove_rounded, color: Colors.white, size: 20),
-                SizedBox(width: 10),
-                Text('Artikel dihapus dari bookmark.'),
-              ],
-            ),
-            backgroundColor: const Color(0xFFD97706),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 2),
-          ),
+        _showTopNotification(
+          'Bookmark Dihapus',
+          'Artikel dikeluarkan dari daftar simpanan',
         );
       }
     } catch (e) {
@@ -52,275 +132,470 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Artikel Tersimpan')),
-        body: const Center(
-          child: Text('Silakan login terlebih dahulu untuk melihat artikel tersimpan.'),
+  Widget _buildCardImage(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return Container(
+        height: 120,
+        color: const Color(0xFFEEF2FF),
+        child: const Center(
+          child: Icon(
+            Icons.medical_information_rounded,
+            size: 38,
+            color: Color(0xFF5B4AF4),
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
+    if (imageUrl.startsWith('data:image')) {
+      try {
+        final bytes = base64Decode(imageUrl.split(',').last);
+        return Image.memory(
+          bytes,
+          width: double.infinity,
+          height: 120,
+          fit: BoxFit.cover,
+        );
+      } catch (e) {
+        return Container(
+          height: 120,
+          color: const Color(0xFFEEF2FF),
+          child: const Center(
+            child: Icon(
+              Icons.broken_image_rounded,
+              size: 38,
+              color: Color(0xFF5B4AF4),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Image.network(
+      imageUrl,
+      width: double.infinity,
+      height: 120,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        height: 120,
+        color: const Color(0xFFEEF2FF),
+        child: const Center(
+          child: Icon(
+            Icons.medical_information_rounded,
+            size: 38,
+            color: Color(0xFF5B4AF4),
+          ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Judul Halaman
-            const Text(
-              'Artikel Tersimpan',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
+    );
+  }
 
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Column(
+        children: [
+          // HEADER LIQUID WAVE SENADA DENGAN KONSULTASI
+          ClipPath(
+            clipper: _SavedLiquidClipper(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 52),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Color(0xFF64748B)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) {
-                          setState(() {
-                            _searchQuery = value;
-                          });
-                        },
-                        decoration: const InputDecoration(
-                          hintText: 'Cari topik atau judul artikel...',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontStyle: FontStyle.italic,
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            onPressed: () => Navigator.pop(context),
                           ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 36),
+                            child: Text(
+                              'Artikel Tersimpan',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // SEARCH BAR CAPSULE RAMPING
+                  Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF5B4AF4).withValues(alpha: 0.06),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                        });
+                      },
+                      textAlignVertical: TextAlignVertical.center,
+                      style: const TextStyle(fontSize: 12.5),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Cari topik atau judul artikel...',
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12.5,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          color: Color(0xFF5B4AF4),
+                          size: 18,
+                        ),
+                        prefixIconConstraints: const BoxConstraints(
+                          minWidth: 38,
+                          minHeight: 40,
+                        ),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(
+                            Icons.cancel_rounded,
+                            size: 16,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
                         ),
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // KONTEN UTAMA (JIKA BELUM LOGIN / SUDAH LOGIN)
+          Expanded(
+            child: user == null
+                ? Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEEF2FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lock_outline_rounded,
+                        size: 34,
+                        color: Color(0xFF5B4AF4),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Akses Terbatas',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Silakan login terlebih dahulu untuk melihat daftar artikel tersimpan Anda.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+            )
+                : StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('saved_articles')
+                  .where('userId', isEqualTo: user.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return const Center(
+                    child:
+                    CircularProgressIndicator(color: Color(0xFF5B4AF4)),
+                  );
+                }
 
-            // StreamBuilder untuk Mengambil Data Real-Time
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('saved_articles')
-                    .where('userId', isEqualTo: user.uid)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF6679F4)),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Tidak ada artikel tersimpan.',
-                        style: TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 14,
+                if (!snapshot.hasData ||
+                    snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.bookmark_border_rounded,
+                            size: 34,
+                            color: Color(0xFF5B4AF4),
+                          ),
                         ),
-                      ),
-                    );
-                  }
-
-                  final docs = snapshot.data!.docs.where((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    final title = (data['title'] ?? '').toString().toLowerCase();
-                    final snippet = (data['snippet'] ?? '').toString().toLowerCase();
-                    return title.contains(_searchQuery.toLowerCase()) ||
-                        snippet.contains(_searchQuery.toLowerCase());
-                  }).toList();
-
-                  if (docs.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Artikel tidak ditemukan.',
-                        style: TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 14,
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Belum ada artikel tersimpan',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                      ],
+                    ),
+                  );
+                }
 
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Daftar Bacaan Anda',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
-                              ),
+                final docs = snapshot.data!.docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final title =
+                  (data['title'] ?? '').toString().toLowerCase();
+                  final snippet =
+                  (data['snippet'] ?? '').toString().toLowerCase();
+                  return title.contains(_searchQuery.toLowerCase()) ||
+                      snippet.contains(_searchQuery.toLowerCase());
+                }).toList();
+
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Daftar Bacaan Anda',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
                             ),
-                            Text(
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
                               '${docs.length} Artikel',
                               style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6679F4),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF5B4AF4),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding:
+                        const EdgeInsets.fromLTRB(16, 2, 16, 20),
+                        itemCount: docs.length,
+                        itemBuilder: (context, index) {
+                          final doc = docs[index];
+                          final data =
+                          doc.data() as Map<String, dynamic>;
+                          final docId = doc.id;
+                          final title = data['title'] ?? '';
+                          final snippet = data['snippet'] ?? '';
+                          final content = data['content'] ?? '';
+                          final imageUrl = data['imageUrl'] ?? '';
+                          final inlineImages = data['inline_images'];
 
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          itemCount: docs.length,
-                          itemBuilder: (context, index) {
-                            final doc = docs[index];
-                            final data = doc.data() as Map<String, dynamic>;
-                            final docId = doc.id; // Menggunakan doc.id asli dari Firestore
-                            final title = data['title'] ?? '';
-                            final snippet = data['snippet'] ?? '';
-                            final content = data['content'] ?? '';
-                            final imageUrl = data['imageUrl'] ?? '';
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                              ),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF0F172A)
+                                      .withValues(alpha: 0.04),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                              border: Border.all(
+                                  color: const Color(0xFFF1F5F9)),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(20),
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => DetailArtikelPage(
-                                        title: title,
-                                        content: content,
-                                        imageUrl: imageUrl,
-                                      ),
+                                      builder: (context) =>
+                                          DetailArtikelPage(
+                                            title: title,
+                                            content: content,
+                                            imageUrl: imageUrl,
+                                            inlineImages: inlineImages,
+                                          ),
                                     ),
                                   );
                                 },
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      height: 120,
-                                      width: double.infinity,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(16),
-                                        ),
+                                    ClipRRect(
+                                      borderRadius:
+                                      const BorderRadius.vertical(
+                                        top: Radius.circular(20),
                                       ),
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(16),
-                                        ),
-                                        child: Image.network(
-                                          imageUrl,
-                                          width: double.infinity,
-                                          height: 120,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) =>
-                                              Container(
-                                                color: const Color(0xFFE2E8F0),
-                                                child: const Center(
-                                                  child: Icon(
-                                                    Icons.medical_information,
-                                                    size: 40,
-                                                    color: Color(0xFF6679F4),
-                                                  ),
-                                                ),
-                                              ),
-                                        ),
-                                      ),
+                                      child: _buildCardImage(imageUrl),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                      padding: const EdgeInsets.all(14),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            title,
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            snippet,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF64748B),
-                                              height: 1.3,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Align(
-                                            alignment: Alignment.bottomRight,
-                                            child: InkWell(
-                                              borderRadius: BorderRadius.circular(20),
-                                              onTap: () => _removeBookmark(docId),
-                                              child: const Padding(
-                                                padding: EdgeInsets.all(4.0),
-                                                child: Icon(
-                                                  Icons.bookmark_rounded,
-                                                  color: Color(0xFF6679F4),
-                                                  size: 20,
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                              CrossAxisAlignment
+                                                  .start,
+                                              children: [
+                                                Text(
+                                                  title,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                    FontWeight.bold,
+                                                    color: Color(
+                                                        0xFF0F172A),
+                                                    height: 1.25,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow
+                                                      .ellipsis,
                                                 ),
+                                                const SizedBox(
+                                                    height: 5),
+                                                Text(
+                                                  snippet,
+                                                  style: const TextStyle(
+                                                    fontSize: 11.5,
+                                                    color: Color(
+                                                        0xFF64748B),
+                                                    height: 1.35,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow
+                                                      .ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          InkWell(
+                                            borderRadius:
+                                            BorderRadius.circular(
+                                                12),
+                                            onTap: () =>
+                                                _removeBookmark(docId),
+                                            child: Container(
+                                              padding:
+                                              const EdgeInsets.all(
+                                                  8),
+                                              decoration: BoxDecoration(
+                                                color: const Color(
+                                                    0xFFEEF2FF),
+                                                borderRadius:
+                                                BorderRadius
+                                                    .circular(10),
+                                              ),
+                                              child: const Icon(
+                                                Icons.bookmark_rounded,
+                                                color: Color(0xFF5B4AF4),
+                                                size: 18,
                                               ),
                                             ),
                                           ),
@@ -330,18 +605,51 @@ class _ArtikelTersimpanPageState extends State<ArtikelTersimpanPage> {
                                   ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _SavedLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 40);
+
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    var secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
