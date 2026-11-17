@@ -13,7 +13,8 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage>
+    with TickerProviderStateMixin {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final captchaController = TextEditingController();
@@ -28,11 +29,51 @@ class _LoginPageState extends State<LoginPage> {
   bool captchaError = false;
 
   String captcha = '';
+  int captchaSeed = 0;
+
+  // Controller Animasi Masuk Halaman
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Controller Animasi Denyut Halus Khusus Ikon Tetesan Darah
+  late AnimationController _bloodPulseController;
+  late Animation<double> _bloodPulseAnimation;
 
   @override
   void initState() {
     super.initState();
     refreshCaptcha();
+
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _animController.forward();
+
+    // Denyut lembut khusus ikon tetesan darah
+    _bloodPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+
+    _bloodPulseAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(
+      CurvedAnimation(parent: _bloodPulseController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -40,6 +81,8 @@ class _LoginPageState extends State<LoginPage> {
     emailController.dispose();
     passwordController.dispose();
     captchaController.dispose();
+    _animController.dispose();
+    _bloodPulseController.dispose();
     super.dispose();
   }
 
@@ -52,6 +95,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       captcha = newCaptcha;
+      captchaSeed = random.nextInt(100000);
       captchaController.clear();
       captchaError = false;
     });
@@ -103,8 +147,6 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // Role dicek di Firestore:
-      // admin -> dashboard admin, pengguna -> beranda pengguna.
       final bool berhasil = await AuthRouter.arahkan(context, user);
 
       if (!mounted) return;
@@ -170,39 +212,41 @@ class _LoginPageState extends State<LoginPage> {
     bool isError = false,
   }) {
     return InputDecoration(
+      filled: true,
+      fillColor: isError ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC),
       prefixIcon: Icon(
         icon,
         size: 20,
-        color: isError ? Colors.red : Colors.grey.shade600,
+        color: isError ? const Color(0xFFEF4444) : const Color(0xFF6679F4),
       ),
       suffixIcon: suffixIcon,
       hintText: hint,
-      hintStyle: const TextStyle(
+      hintStyle: TextStyle(
         fontSize: 13,
-        color: Colors.grey,
+        color: Colors.grey.shade400,
       ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 14,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide(
-          color: isError ? Colors.red : Colors.grey.shade400,
+          color: isError ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
           width: 1.0,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide(
-          color: isError ? Colors.red : Colors.grey.shade400,
-          width: isError ? 1.5 : 1.0,
+          color: isError ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
+          width: 1.0,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide(
-          color: isError ? Colors.red : const Color(0xFF6679F4),
+          color: isError ? const Color(0xFFEF4444) : const Color(0xFF6679F4),
           width: 1.5,
         ),
       ),
@@ -212,277 +256,468 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      backgroundColor: const Color(0xFFF4F6FB),
+      body: Stack(
+        children: [
+          // 1. LATAR BELAKANG HEADER MELENGKUNG
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 310,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFE4E9FF),
+                    Color(0xFFEEF2FF),
+                    Color(0xFFF8FAFC),
+                  ],
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(42),
+                  bottomRight: Radius.circular(42),
+                ),
+              ),
+              child: Stack(
                 children: [
-                  const SizedBox(height: 20),
-
-                  Center(
-                    child: Image.asset(
-                      'assets/logo.png',
-                      height: 140,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  const Text(
-                    'Masuk',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Masuk Ke Akun Anda Untuk Melanjutkan',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  TextField(
-                    controller: emailController,
-                    enabled: !isLoading,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                    onChanged: (_) {
-                      if (emailError) setState(() => emailError = false);
-                    },
-                    decoration: inputDecoration(
-                      icon: Icons.email_outlined,
-                      hint: 'Masukkan Email Anda',
-                      isError: emailError,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: passwordController,
-                    enabled: !isLoading,
-                    obscureText: !passwordVisible,
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                    onChanged: (_) {
-                      if (passwordError) setState(() => passwordError = false);
-                    },
-                    decoration: inputDecoration(
-                      icon: Icons.lock_outline,
-                      hint: 'Masukkan Kata Sandi',
-                      isError: passwordError,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          passwordVisible
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          size: 20,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            passwordVisible = !passwordVisible;
-                          });
-                        },
+                  Positioned(
+                    top: -50,
+                    left: -40,
+                    child: Container(
+                      width: 170,
+                      height: 170,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF6679F4).withValues(alpha: 0.08),
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    'Verifikasi Captcha',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black87,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 45,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F3F5),
-                            border: Border.all(color: Colors.grey.shade400),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Text(
-                            captcha,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 6,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Container(
-                        width: 55,
-                        height: 45,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.refresh, size: 22),
-                          onPressed: isLoading ? null : refreshCaptcha,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: captchaController,
-                    enabled: !isLoading,
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                    textCapitalization: TextCapitalization.characters,
-                    onChanged: (_) {
-                      if (captchaError) setState(() => captchaError = false);
-                    },
-                    decoration: inputDecoration(
-                      icon: Icons.shield_outlined,
-                      hint: 'Masukkan Kode Captcha',
-                      isError: captchaError,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6679F4),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                          : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Masuk',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(Icons.arrow_forward, size: 18),
-                        ],
+                  Positioned(
+                    bottom: 20,
+                    right: -30,
+                    child: Container(
+                      width: 130,
+                      height: 130,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.05),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Center(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ForgotPasswordPage(),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        'Lupa Kata Sandi?',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  const Divider(color: Color(0xFFE0E0E0), thickness: 1),
-
-                  const SizedBox(height: 12),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Belum Punya Akun? ',
-                        style: TextStyle(fontSize: 13, color: Colors.black54),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const DaftarAkunPage(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Daftar',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF558B82),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
+          ),
 
-            if (showErrorBanner)
-              Positioned(
-                top: 10,
-                left: 20,
-                right: 20,
+          // 2. KONTEN UTAMA
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 2),
+
+                      // AREA HEADER: LOGO (Diturunkan & Didekatkan) + TETESAN DARAH DI KANAN ATAS
+                      SizedBox(
+                        height: 145,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Logo Diora diturunkan sedikit menggunakan Padding top
+                            Padding(
+                              padding: const EdgeInsets.only(top: 14),
+                              child: SizedBox(
+                                height: 138,
+                                child: Image.asset(
+                                  'assets/logo.png',
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.high,
+                                ),
+                              ),
+                            ),
+
+                            // Badge Tetesan Darah Berdenyut Lembut di Pojok Kanan Atas
+                            Positioned(
+                              top: 6,
+                              right: 12,
+                              child: ScaleTransition(
+                                scale: _bloodPulseAnimation,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.water_drop_rounded,
+                                    color: Color(0xFFEF4444),
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 2),
+
+                      // JUDUL "Masuk" & SUBJUDUL DI TENGAH (Lebih dekat dengan logo)
+                      const Text(
+                        'Masuk',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Masuk ke akun Diora Anda untuk melanjutkan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      // 3. FLOATING FORM CARD
+                      Container(
+                        padding: const EdgeInsets.all(22),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1E293B).withValues(alpha: 0.06),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Input Email
+                            TextField(
+                              controller: emailController,
+                              enabled: !isLoading,
+                              keyboardType: TextInputType.emailAddress,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF1E293B),
+                              ),
+                              onChanged: (_) {
+                                if (emailError) setState(() => emailError = false);
+                              },
+                              decoration: inputDecoration(
+                                icon: Icons.email_outlined,
+                                hint: 'Masukkan Email Anda',
+                                isError: emailError,
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Input Password
+                            TextField(
+                              controller: passwordController,
+                              enabled: !isLoading,
+                              obscureText: !passwordVisible,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF1E293B),
+                              ),
+                              onChanged: (_) {
+                                if (passwordError) setState(() => passwordError = false);
+                              },
+                              decoration: inputDecoration(
+                                icon: Icons.lock_outline_rounded,
+                                hint: 'Masukkan Kata Sandi',
+                                isError: passwordError,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    passwordVisible
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    size: 20,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      passwordVisible = !passwordVisible;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            // Label Captcha
+                            const Text(
+                              'Verifikasi Captcha',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            // Baris Kotak Captcha Distorsi Noise & Gelombang + Refresh
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 54,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: const Color(0xFFCBD5E1),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(17),
+                                      child: CustomPaint(
+                                        painter: DistortedCaptchaPainter(
+                                          code: captcha,
+                                          seed: captchaSeed,
+                                        ),
+                                        child: const SizedBox.expand(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEEF2FF),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: const Color(0xFF6679F4).withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.refresh_rounded,
+                                      size: 22,
+                                      color: Color(0xFF6679F4),
+                                    ),
+                                    onPressed: isLoading ? null : refreshCaptcha,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Input Kode Captcha
+                            TextField(
+                              controller: captchaController,
+                              enabled: !isLoading,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF1E293B),
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
+                              ),
+                              textCapitalization: TextCapitalization.characters,
+                              onChanged: (_) {
+                                if (captchaError) setState(() => captchaError = false);
+                              },
+                              decoration: inputDecoration(
+                                icon: Icons.shield_outlined,
+                                hint: 'Masukkan Kode Captcha',
+                                isError: captchaError,
+                              ),
+                            ),
+
+                            const SizedBox(height: 22),
+
+                            // TOMBOL MASUK
+                            Container(
+                              height: 52,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF6679F4), Color(0xFF5366E6)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF6679F4).withValues(alpha: 0.32),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: isLoading ? null : login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                ),
+                                child: isLoading
+                                    ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                                    : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Masuk',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 0.4,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Lupa Kata Sandi
+                            Center(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const ForgotPasswordPage(),
+                                    ),
+                                  );
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                                  child: Text(
+                                    'Lupa Kata Sandi?',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF6679F4),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      // Bagian Bawah: Belum Punya Akun? Daftar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Belum Punya Akun? ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const DaftarAkunPage(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Daftar',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF6679F4),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 4. BANNER ERROR MELAYANG
+          if (showErrorBanner)
+            Positioned(
+              top: 10,
+              left: 20,
+              right: 20,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 300),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, -20 * (1 - value)),
+                      child: child,
+                    ),
+                  );
+                },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFDE8E8),
+                    color: const Color(0xFFFEF2F2),
                     border: Border.all(color: const Color(0xFFF87171)),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -498,7 +733,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: const Icon(
                           Icons.close,
                           color: Colors.white,
-                          size: 18,
+                          size: 16,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -511,7 +746,7 @@ class _LoginPageState extends State<LoginPage> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: Color(0xFF1E293B),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -519,7 +754,7 @@ class _LoginPageState extends State<LoginPage> {
                               errorMessage,
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Colors.black54,
+                                color: Color(0xFF64748B),
                               ),
                             ),
                           ],
@@ -532,12 +767,12 @@ class _LoginPageState extends State<LoginPage> {
                           });
                         },
                         child: const Padding(
-                          padding: EdgeInsets.only(bottom: 14),
+                          padding: EdgeInsets.only(bottom: 12, left: 8),
                           child: Text(
-                            'x',
+                            '✕',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -547,9 +782,131 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
+  }
+}
+
+// PAINTER KHUSUS CAPTCHA DENGAN BINTIK NOISE, GARIS GELOMBANG & HURUF WARNA-WARNI
+class DistortedCaptchaPainter extends CustomPainter {
+  final String code;
+  final int seed;
+
+  DistortedCaptchaPainter({required this.code, required this.seed});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = Random(seed);
+
+    // 1. Background putih bersih
+    final bgPaint = Paint()..color = Colors.white;
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    // 2. Bintik-bintik noise halus warna-warni di seluruh latar belakang
+    final noiseColors = [
+      Colors.red.withValues(alpha: 0.25),
+      Colors.blue.withValues(alpha: 0.25),
+      Colors.green.withValues(alpha: 0.25),
+      Colors.orange.withValues(alpha: 0.25),
+      Colors.purple.withValues(alpha: 0.25),
+      Colors.teal.withValues(alpha: 0.25),
+    ];
+
+    final dotPaint = Paint()..strokeWidth = 1.4;
+    for (int i = 0; i < 420; i++) {
+      dotPaint.color = noiseColors[random.nextInt(noiseColors.length)];
+      final dx = random.nextDouble() * size.width;
+      final dy = random.nextDouble() * size.height;
+      canvas.drawCircle(Offset(dx, dy), 0.9, dotPaint);
+    }
+
+    // 3. Karakter Captcha warna-warni dengan rotasi & posisi naik-turun
+    final charColors = [
+      const Color(0xFFB45309), // Cokelat oranye
+      const Color(0xFF0891B2), // Biru cyan
+      const Color(0xFF15803D), // Hijau tua
+      const Color(0xFF9CA309), // Hijau zaitun / kuning tua
+      const Color(0xFF4F46E5), // Indigo
+      const Color(0xFFBE123C), // Merah marun
+    ];
+
+    final charCount = code.length;
+    final stepX = (size.width - 32) / charCount;
+
+    for (int i = 0; i < charCount; i++) {
+      final char = code[i];
+      final color = charColors[(i + random.nextInt(3)) % charColors.length];
+      final angle = (random.nextDouble() - 0.5) * 0.45;
+      final offsetY = (random.nextDouble() - 0.5) * 10;
+      final fontSize = 24.0 + random.nextDouble() * 4;
+
+      final shadowSpan = TextSpan(
+        text: char,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w900,
+          fontStyle: FontStyle.italic,
+          color: color.withValues(alpha: 0.25),
+        ),
+      );
+      final shadowPainter = TextPainter(
+        text: shadowSpan,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final textSpan = TextSpan(
+        text: char,
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w900,
+          fontStyle: FontStyle.italic,
+          color: color,
+        ),
+      );
+      final textPainter = TextPainter(
+        text: textSpan,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      final x = 20 + (i * stepX) + (stepX - textPainter.width) / 2;
+      final y = (size.height - textPainter.height) / 2 + offsetY;
+
+      canvas.save();
+      canvas.translate(x + textPainter.width / 2, y + textPainter.height / 2);
+      canvas.rotate(angle);
+      canvas.translate(-textPainter.width / 2, -textPainter.height / 2);
+
+      shadowPainter.paint(canvas, const Offset(-2, -1.5));
+      textPainter.paint(canvas, Offset.zero);
+      canvas.restore();
+    }
+
+    // 4. Dua garis kurva gelombang melintang di atas teks
+    for (int lineIdx = 0; lineIdx < 2; lineIdx++) {
+      final wavePaint = Paint()
+        ..color = const Color(0xFF9F1239).withValues(alpha: 0.45)
+        ..strokeWidth = 1.3
+        ..style = PaintingStyle.stroke;
+
+      final path = Path();
+      final startY = size.height * (0.35 + random.nextDouble() * 0.4);
+      path.moveTo(8, startY);
+
+      final cp1x = size.width * 0.35;
+      final cp1y = size.height * (lineIdx == 0 ? 0.1 : 0.9);
+      final cp2x = size.width * 0.70;
+      final cp2y = size.height * (lineIdx == 0 ? 0.95 : 0.1);
+      final endY = size.height * (0.25 + random.nextDouble() * 0.5);
+
+      path.cubicTo(cp1x, cp1y, cp2x, cp2y, size.width - 8, endY);
+      canvas.drawPath(path, wavePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant DistortedCaptchaPainter oldDelegate) {
+    return oldDelegate.code != code || oldDelegate.seed != seed;
   }
 }
