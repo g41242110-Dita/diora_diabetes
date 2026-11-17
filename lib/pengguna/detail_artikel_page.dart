@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,7 +23,7 @@ class DetailArtikelPage extends StatefulWidget {
 }
 
 class _DetailArtikelPageState extends State<DetailArtikelPage> {
-  double _fontSize = 15.0;
+  double _fontSize = 14.5;
   bool _isBookmarked = false;
   OverlayEntry? _overlayEntry;
 
@@ -43,7 +44,8 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final articleId = widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+    final articleId =
+    widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
     final docId = '${user.uid}_$articleId';
 
     try {
@@ -64,13 +66,13 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
 
   void _zoomIn() {
     setState(() {
-      if (_fontSize < 22.0) _fontSize += 2.0;
+      if (_fontSize < 22.0) _fontSize += 1.5;
     });
   }
 
   void _zoomOut() {
     setState(() {
-      if (_fontSize > 12.0) _fontSize -= 2.0;
+      if (_fontSize > 12.0) _fontSize -= 1.5;
     });
   }
 
@@ -83,81 +85,110 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.of(context).padding.top + 10,
-        left: 20,
-        right: 20,
+        top: MediaQuery.of(context).padding.top + 12,
+        left: 24,
+        right: 24,
         child: Material(
           color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isSuccess
-                    ? [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)]
-                    : [const Color(0xFFFEF2F2), const Color(0xFFFEE2E2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSuccess
-                    ? const Color(0xFFA7F3D0)
-                    : const Color(0xFFFECDD3),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isSuccess ? const Color(0xFF059669) : const Color(0xFFE11D48))
-                      .withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutBack,
+            tween: Tween(begin: 0.0, end: 1.0),
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, -16 * (1 - value)),
+                child: Opacity(
+                  opacity: value.clamp(0.0, 1.0),
+                  child: child,
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: isSuccess ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    isSuccess ? Icons.bookmark_added_rounded : Icons.bookmark_remove_rounded,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: isSuccess ? const Color(0xFF065F46) : const Color(0xFF881337),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
-                          letterSpacing: -0.2,
-                        ),
+              );
+            },
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: isSuccess
+                            ? const Color(0xFF5B4AF4).withValues(alpha: 0.2)
+                            : const Color(0xFFF43F5E).withValues(alpha: 0.2),
+                        width: 1.2,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        message,
-                        style: TextStyle(
-                          color: isSuccess ? const Color(0xFF047857) : const Color(0xFF9F1239),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w400,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.12),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isSuccess
+                                  ? [
+                                const Color(0xFF5B4AF4),
+                                const Color(0xFF388BFF)
+                              ]
+                                  : [
+                                const Color(0xFFF43F5E),
+                                const Color(0xFFFB7185)
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isSuccess
+                                ? Icons.bookmark_added_rounded
+                                : Icons.bookmark_remove_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  color: Color(0xFF0F172A),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.5,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              Text(
+                                message,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 10.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -179,15 +210,17 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     if (user == null) {
       _showTopNotification(
         title: 'Akses Terbatas',
-        message: 'Silakan login terlebih dahulu untuk menyimpan artikel.',
+        message: 'Silakan login untuk menyimpan artikel.',
         isSuccess: false,
       );
       return;
     }
 
-    final articleId = widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
+    final articleId =
+    widget.title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_');
     final docId = '${user.uid}_$articleId';
-    final docRef = FirebaseFirestore.instance.collection('saved_articles').doc(docId);
+    final docRef =
+    FirebaseFirestore.instance.collection('saved_articles').doc(docId);
 
     setState(() {
       _isBookmarked = !_isBookmarked;
@@ -196,13 +229,13 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     if (_isBookmarked) {
       _showTopNotification(
         title: 'Tersimpan ke Bookmark',
-        message: 'Artikel telah masuk ke daftar bacaan Anda.',
+        message: 'Masuk ke daftar bacaan Anda',
         isSuccess: true,
       );
     } else {
       _showTopNotification(
         title: 'Bookmark Dihapus',
-        message: 'Artikel dikeluarkan dari daftar simpanan.',
+        message: 'Dihapus dari daftar simpanan',
         isSuccess: false,
       );
     }
@@ -229,57 +262,9 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     }
   }
 
-  Widget _buildHeaderImage(String imgUrl) {
-    if (imgUrl.isEmpty) {
-      return Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEF2FF),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
-        ),
-      );
-    }
-
-    if (imgUrl.startsWith('data:image')) {
-      try {
-        final bytes = base64Decode(imgUrl.split(',').last);
-        return Image.memory(
-          bytes,
-          height: 220,
-          width: double.infinity,
-          fit: BoxFit.cover,
-        );
-      } catch (e) {
-        return Container(height: 220, color: Colors.grey[200]);
-      }
-    }
-
-    return Image.network(
-      imgUrl,
-      height: 220,
-      width: double.infinity,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEEF2FF),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: Icon(Icons.image_rounded, size: 48, color: Color(0xFF6679F4)),
-        ),
-      ),
-    );
-  }
-
-  // Helper render widget gambar dari sumber string (Base64 / URL)
   Widget _renderImageWidget(String imageSrc) {
     String cleanSrc = imageSrc.trim();
 
-    // Jika format [IMAGE: data:...]
     if (cleanSrc.startsWith('[IMAGE:') && cleanSrc.endsWith(']')) {
       cleanSrc = cleanSrc.substring(7, cleanSrc.length - 1).trim();
     }
@@ -306,7 +291,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14.0),
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: img,
@@ -314,26 +299,25 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     );
   }
 
-  // Parser pintar yang mendukung [FOTO_X], [IMAGE: ...], dan URL biasa
   Widget _buildContentWithImages(String rawContent) {
     List<Widget> widgets = [];
     Map<String, String> imagesMap = {};
 
     if (widget.inlineImages != null && widget.inlineImages is Map) {
       imagesMap = Map<String, String>.from(
-        (widget.inlineImages as Map).map((k, v) => MapEntry(k.toString(), v.toString())),
+        (widget.inlineImages as Map)
+            .map((k, v) => MapEntry(k.toString(), v.toString())),
       );
     }
 
-    // Regex serbaguna untuk mendeteksi [FOTO_1] ATAU [IMAGE: ...]
     RegExp exp = RegExp(r'(\[FOTO_\d+\]|\[IMAGE:\s*[^\]]+\])');
     Iterable<RegExpMatch> matches = exp.allMatches(rawContent);
 
     int lastIndex = 0;
     for (RegExpMatch match in matches) {
-      // Teks sebelum gambar
       if (match.start > lastIndex) {
-        String textSegment = rawContent.substring(lastIndex, match.start).trim();
+        String textSegment =
+        rawContent.substring(lastIndex, match.start).trim();
         if (textSegment.isNotEmpty) {
           widgets.add(
             Text(
@@ -341,8 +325,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
               style: TextStyle(
                 fontSize: _fontSize,
                 color: const Color(0xFF334155),
-                height: 1.8,
-                fontWeight: FontWeight.w400,
+                height: 1.75,
               ),
             ),
           );
@@ -352,17 +335,14 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
 
       String token = match.group(0)!;
       if (imagesMap.containsKey(token)) {
-        // Jika token cocok dengan [FOTO_1] dari Map
         widgets.add(_renderImageWidget(imagesMap[token]!));
       } else if (token.startsWith('[IMAGE:')) {
-        // Jika token berformat [IMAGE: data:image/...]
         widgets.add(_renderImageWidget(token));
       }
 
       lastIndex = match.end;
     }
 
-    // Sisa teks di bagian paling akhir
     if (lastIndex < rawContent.length) {
       String remainingText = rawContent.substring(lastIndex).trim();
       if (remainingText.isNotEmpty) {
@@ -372,8 +352,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
             style: TextStyle(
               fontSize: _fontSize,
               color: const Color(0xFF334155),
-              height: 1.8,
-              fontWeight: FontWeight.w400,
+              height: 1.75,
             ),
           ),
         );
@@ -388,7 +367,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double topPadding = MediaQuery.of(context).padding.top + 8;
+    final double topPadding = MediaQuery.of(context).padding.top + 10;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -398,21 +377,26 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
           SliverPersistentHeader(
             pinned: true,
             delegate: _StickyHeaderDelegate(
-              minHeight: topPadding + 44.0,
-              maxHeight: topPadding + 48.0,
+              minHeight: topPadding + 52.0,
+              maxHeight: topPadding + 56.0,
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
+                    colors: [
+                      Color(0xFF3B0066),
+                      Color(0xFF5B4AF4),
+                      Color(0xFF388BFF),
+                    ],
+                    stops: [0.0, 0.5, 1.0],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
+                    bottomLeft: Radius.circular(22),
+                    bottomRight: Radius.circular(22),
                   ),
                 ),
-                padding: EdgeInsets.fromLTRB(16, topPadding, 16, 10),
+                padding: EdgeInsets.fromLTRB(16, topPadding, 16, 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -422,19 +406,22 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                       icon: const Icon(
                         Icons.arrow_back_rounded,
                         color: Colors.white,
-                        size: 24,
+                        size: 22,
                       ),
                       onPressed: () => Navigator.pop(context),
                     ),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         InkWell(
                           onTap: _zoomOut,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: Colors.white.withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
@@ -442,7 +429,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 12.5,
                               ),
                             ),
                           ),
@@ -452,9 +439,11 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                           onTap: _zoomIn,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: Colors.white.withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
@@ -462,23 +451,31 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                                fontSize: 12.5,
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: Icon(
-                            _isBookmarked
-                                ? Icons.bookmark_rounded
-                                : Icons.bookmark_border_rounded,
-                            color: Colors.white,
-                            size: 24,
+                        InkWell(
+                          onTap: _toggleBookmark,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            height: 32,
+                            width: 34,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              _isBookmarked
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              color: Colors.white,
+                              size: 19,
+                            ),
                           ),
-                          onPressed: _toggleBookmark,
                         ),
                       ],
                     ),
@@ -487,62 +484,42 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
               ),
             ),
           ),
+
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: _buildHeaderImage(widget.imageUrl),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: TextStyle(
+                        fontSize: _fontSize + 3.5,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                        height: 1.3,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            fontSize: _fontSize + 3.0,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF0F172A),
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Divider(color: Colors.grey.shade200, thickness: 1),
-                        const SizedBox(height: 12),
-                        _buildContentWithImages(widget.content),
-                      ],
-                    ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    const Divider(color: Color(0xFFF1F5F9), thickness: 1),
+                    const SizedBox(height: 12),
+                    _buildContentWithImages(widget.content),
+                  ],
+                ),
               ),
             ),
           ),
@@ -577,7 +554,8 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return SizedBox.expand(child: child);
   }
 }
