@@ -8,10 +8,9 @@ class DokterLokasiPage extends StatefulWidget {
 }
 
 class _DokterLokasiPageState extends State<DokterLokasiPage> {
-  // Index lokasi faskes yang sedang aktif dinas hari ini
-  int _selectedIndex = 1; // Mengikuti screenshot (Klinik Pratama Medika aktif)
+  int _selectedIndex = 1;
 
-  final List<Map<String, dynamic>> _daftarFaskes = [
+  final dynamic _daftarFaskes = [
     {
       'nama': 'Klinik Sehat Sentosa',
       'alamat': 'Jl. Merdeka No. 15 Jember',
@@ -59,6 +58,21 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          onPressed: () {
+            final berandaState = context.findAncestorStateOfType<State>();
+            if (berandaState != null && berandaState.mounted) {
+              try {
+                (berandaState as dynamic).setState(() {
+                  (berandaState as dynamic).currentIndex = 0;
+                });
+              } catch (_) {}
+            }
+          },
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -81,9 +95,6 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
             ),
           ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        automaticallyImplyLeading: false,
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
@@ -94,7 +105,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
               border: Border.all(color: const Color(0xFFC7D2FE)),
             ),
             child: Text(
-              '${_daftarFaskes.length} Lokasi',
+              '${(_daftarFaskes as List).length} Lokasi',
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -107,10 +118,11 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
       body: ListView.builder(
         padding: const EdgeInsets.all(20.0),
         physics: const BouncingScrollPhysics(),
-        itemCount: _daftarFaskes.length,
+        itemCount: (_daftarFaskes as List).length,
         itemBuilder: (context, index) {
           final faskes = _daftarFaskes[index];
           final bool isDinasAktif = _selectedIndex == index;
+          final List<dynamic> fasilitasList = faskes['fasilitas'] ?? [];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
@@ -135,7 +147,6 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Nama Faskes & Status Dinas
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -157,7 +168,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            faskes['nama'],
+                            faskes['nama'].toString(),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
@@ -166,7 +177,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            faskes['alamat'],
+                            faskes['alamat'].toString(),
                             style: const TextStyle(
                               fontSize: 11.5,
                               color: Color(0xFF64748B),
@@ -202,10 +213,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                       ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
-                // Info Meta (Jarak, Rating, Telepon)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -214,7 +222,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                           size: 13, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),
                       Text(
-                        faskes['jarakWaktu'],
+                        faskes['jarakWaktu'].toString(),
                         style: const TextStyle(
                             fontSize: 11, color: Color(0xFF64748B)),
                       ),
@@ -223,7 +231,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                           size: 14, color: Colors.amber),
                       const SizedBox(width: 2),
                       Text(
-                        faskes['rating'],
+                        faskes['rating'].toString(),
                         style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -234,20 +242,17 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                           size: 13, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),
                       Text(
-                        faskes['telepon'],
+                        faskes['telepon'].toString(),
                         style: const TextStyle(
                             fontSize: 11, color: Color(0xFF64748B)),
                       ),
                     ],
                   ),
                 ),
-
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Divider(height: 1, color: Color(0xFFF1F5F9)),
                 ),
-
-                // Jam Jadwal (DIFIX MENGGUNAKAN EXPANDED + ELLIPSIS)
                 Row(
                   children: [
                     const Icon(Icons.access_time_rounded,
@@ -255,7 +260,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        faskes['jadwal'],
+                        faskes['jadwal'].toString(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -267,10 +272,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
-                // Layanan & Fasilitas Terpadu
                 const Text(
                   'Layanan dan Fasilitas Terpadu:',
                   style: TextStyle(
@@ -282,7 +284,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                 const SizedBox(height: 4),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: (faskes['fasilitas'] as List<String>)
+                  children: fasilitasList
                       .map(
                         (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 2),
@@ -293,7 +295,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                                   color: Color(0xFF94A3B8), fontSize: 11)),
                           Expanded(
                             child: Text(
-                              item,
+                              item.toString(),
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF64748B),
@@ -306,10 +308,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                   )
                       .toList(),
                 ),
-
                 const SizedBox(height: 14),
-
-                // Tombol Pilihan Set Sebagai Faskes Dinas Utama
                 if (!isDinasAktif)
                   SizedBox(
                     width: double.infinity,
