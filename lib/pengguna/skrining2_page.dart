@@ -72,7 +72,9 @@ class _Skrining2PageState extends State<Skrining2Page> {
     String newDocId = '';
 
     try {
-      var docRef = await FirebaseFirestore.instance.collection('screening_results').add({
+      var docRef = await FirebaseFirestore.instance
+          .collection('screening_results')
+          .add({
         'nama': widget.nama,
         'umur': umurInt,
         'jenisKelamin': widget.jenisKelamin,
@@ -98,7 +100,6 @@ class _Skrining2PageState extends State<Skrining2Page> {
       _isLoading = false;
     });
 
-    // Penulisan variabel tanpa tipe generik rumit agar tidak memicu error syntax
     var answersTableData = [
       {'q': 'Apakah Anda sering buang air kecil (BAK)?', 'a': seringBAK! ? 'Ya' : 'Tidak'},
       {'q': 'Apakah Anda sering merasa haus / dahaga?', 'a': seringHaus! ? 'Ya' : 'Tidak'},
@@ -133,69 +134,98 @@ class _Skrining2PageState extends State<Skrining2Page> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(16, topPadding, 20, 24),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Skrining Gejala Diabetes',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+          ClipPath(
+            clipper: _Skrining2LiquidClipper(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 52),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF),
                   ],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: const LinearProgressIndicator(
-                          value: 1.0,
-                          minHeight: 7,
-                          backgroundColor: Color(0x33FFFFFF),
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 22,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 36),
+                            child: Text(
+                              'Skrining Gejala Diabetes',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: const LinearProgressIndicator(
+                            value: 1.0,
+                            minHeight: 7,
+                            backgroundColor: Color(0x33FFFFFF),
+                            valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      '2/2',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(width: 12),
+                      const Text(
+                        '2/2',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
               children: [
                 const Text(
                   'Pertanyaan Gejala Diabetes',
@@ -211,7 +241,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
                   style: TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF64748B),
-                    height: 1.3,
+                    height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -219,19 +249,30 @@ class _Skrining2PageState extends State<Skrining2Page> {
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFCA5A5), width: 1),
+                      border:
+                      Border.all(color: const Color(0xFFFCA5A5), width: 1),
                     ),
-                    child: const Text(
-                      'Mohon jawab semua pertanyaan gejala terlebih dahulu.',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF991B1B),
-                      ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded,
+                            color: Color(0xFFDC2626), size: 20),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Mohon jawab semua pertanyaan gejala terlebih dahulu.',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF991B1B),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 _buildQuestionCard(
@@ -248,7 +289,8 @@ class _Skrining2PageState extends State<Skrining2Page> {
                 ),
                 _buildQuestionCard(
                   number: 3,
-                  question: "Apakah kamu sering merasa lemas atau mudah lelah?",
+                  question:
+                  "Apakah kamu sering merasa lemas atau mudah lelah?",
                   value: seringLemas,
                   onChanged: (val) => setState(() => seringLemas = val),
                 ),
@@ -282,22 +324,30 @@ class _Skrining2PageState extends State<Skrining2Page> {
                   value: obesitas,
                   onChanged: (val) => setState(() => obesitas = val),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6679F4),
+                      backgroundColor: const Color(0xFF5B4AF4),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
                     ),
                     onPressed: _isLoading ? null : _prosesSkriningAI,
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
                         : const Text(
-                      'Cek Hasil Skrining AI',
+                      'Cek Hasil Skrining',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -322,50 +372,131 @@ class _Skrining2PageState extends State<Skrining2Page> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
         border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "$number. $question",
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: RadioListTile<bool>(
-                  title: const Text('Iya', style: TextStyle(fontSize: 13)),
-                  value: true,
-                  groupValue: value,
-                  activeColor: const Color(0xFF6679F4),
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: onChanged,
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$number',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF5B4AF4),
+                  ),
                 ),
               ),
+              const SizedBox(width: 10),
               Expanded(
-                child: RadioListTile<bool>(
-                  title: const Text('Tidak', style: TextStyle(fontSize: 13)),
-                  value: false,
-                  groupValue: value,
-                  activeColor: const Color(0xFF6679F4),
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: onChanged,
+                child: Text(
+                  question,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                    height: 1.35,
+                  ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          RadioGroup<bool>(
+            groupValue: value,
+            onChanged: onChanged,
+            child: const Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<bool>(
+                    title: Text(
+                      'Iya',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    value: true,
+                    activeColor: Color(0xFF5B4AF4),
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  ),
+                ),
+                Expanded(
+                  child: RadioListTile<bool>(
+                    title: Text(
+                      'Tidak',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    value: false,
+                    activeColor: Color(0xFF5B4AF4),
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _Skrining2LiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 40);
+
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    var secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
