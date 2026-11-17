@@ -75,7 +75,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       debugPrint('Gagal mengecek status skrining: $e');
       setState(() {
         _isLoadingSkrining = false;
-        _sudahSkrining = true; // Bypass jika terjadi kendala query agar tetap bisa diuji
+        _sudahSkrining = true;
       });
     }
   }
@@ -88,7 +88,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
           .doc(widget.roomId)
           .collection('messages');
 
-      // PENCEGAHAN: Cek apakah ringkasan skrining sudah pernah dikirim sebelumnya di room ini
       final existingSummary = await chatRef
           .where('isScreeningSummary', isEqualTo: true)
           .get();
@@ -96,7 +95,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       if (existingSummary.docs.isNotEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Hasil skrining sudah dilampirkan sebelumnya.')),
+            const SnackBar(
+                content: Text('Hasil skrining sudah dilampirkan sebelumnya.')),
           );
         }
         return;
@@ -116,7 +116,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       if (query.docs.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Belum ada data hasil skrining ditemukan.')),
+            const SnackBar(
+                content: Text('Belum ada data hasil skrining ditemukan.')),
           );
         }
         return;
@@ -126,14 +127,18 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       final String nama = dataSkrining['nama'] ?? 'Pengguna';
       final String umur = (dataSkrining['umur'] ?? '-').toString();
       final String jenisKelamin = dataSkrining['jenisKelamin'] ?? '-';
-      final String hasilPrediksi = dataSkrining['hasilPrediksi'] ?? 'Risiko Rendah';
+      final String hasilPrediksi =
+          dataSkrining['hasilPrediksi'] ?? 'Risiko Rendah';
 
       final String bak = dataSkrining['seringBAK'] == true ? 'Ya' : 'Tidak';
       final String haus = dataSkrining['seringHaus'] == true ? 'Ya' : 'Tidak';
       final String lemas = dataSkrining['seringLemas'] == true ? 'Ya' : 'Tidak';
-      final String rambutRontok = dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
-      final String luka = dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
-      final String marah = dataSkrining['mudahMarah'] == true ? 'Ya' : 'Tidak';
+      final String rambutRontok =
+      dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
+      final String luka =
+      dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
+      final String marah =
+      dataSkrining['mudahMarah'] == true ? 'Ya' : 'Tidak';
       final String kaku = dataSkrining['kakuOtot'] == true ? 'Ya' : 'Tidak';
       final String obesitas = dataSkrining['obesitas'] == true ? 'Ya' : 'Tidak';
 
@@ -162,7 +167,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hasil skrining asli berhasil dikirim ke dokter!')),
+          const SnackBar(
+              content: Text('Hasil skrining asli berhasil dikirim ke dokter!')),
         );
       }
     } catch (e) {
@@ -221,7 +227,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         .collection('messages');
 
     if (_editingMessageId != null) {
-      // Jika sedang dalam mode edit pesan
       await chatRef.doc(_editingMessageId).update({
         'text': text,
         'isEdited': true,
@@ -230,7 +235,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         _editingMessageId = null;
       });
     } else {
-      // Kirim pesan baru
       await chatRef.add({
         'senderId': widget.currentUserId,
         'text': text,
@@ -248,16 +252,17 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             'Akhiri Konsultasi?',
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
           ),
           content: const Text(
             'Sesi percakapan dengan dokter akan diakhiri.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 13.5),
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
           ),
           actionsAlignment: MainAxisAlignment.spaceEvenly,
           actions: [
@@ -265,13 +270,14 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Batal',
                   style: TextStyle(
-                      color: Color(0xFF6679F4), fontWeight: FontWeight.bold)),
+                      color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5B71F3),
+                backgroundColor: const Color(0xFF5B4AF4),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
               onPressed: () async {
                 Navigator.pop(dialogContext);
@@ -325,11 +331,13 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 10;
+
     if (_isLoadingSkrining) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        body: const Center(
-          child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF5B4AF4)),
         ),
       );
     }
@@ -340,12 +348,16 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         backgroundColor: const Color(0xFFF8FAFC),
         appBar: AppBar(
           title: const Text('Konsultasi Dokter',
-              style: TextStyle(color: Color(0xFF0F172A), fontSize: 16)),
+              style: TextStyle(
+                  color: Color(0xFF0F172A),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
+          centerTitle: true,
           backgroundColor: Colors.white,
           elevation: 0.5,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: Color(0xFF4F46E5), size: 18),
+            icon: const Icon(Icons.arrow_back_rounded,
+                color: Color(0xFF5B4AF4), size: 22),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -362,13 +374,13 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.warning_amber_rounded,
-                      size: 48, color: Colors.orange),
+                      size: 46, color: Colors.orange),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 const Text(
                   'Anda Harus Melakukan Skrining Terlebih Dahulu',
                   style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0F172A)),
                   textAlign: TextAlign.center,
@@ -376,18 +388,20 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 const SizedBox(height: 8),
                 const Text(
                   'Sesi konsultasi dikunci. Silakan selesaikan tes skrining risiko terlebih dahulu agar hasil Anda dapat dikirimkan ke dokter.',
-                  style: TextStyle(fontSize: 13.5, color: Color(0xFF64748B)),
+                  style: TextStyle(
+                      fontSize: 13, color: Color(0xFF64748B), height: 1.45),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 46,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
+                      backgroundColor: const Color(0xFF5B4AF4),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(23)),
+                      elevation: 0,
                     ),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -424,66 +438,118 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFC),
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0.5,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: Color(0xFF4F46E5), size: 18),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Color(0xFFEEF2FF),
-                  child: Icon(Icons.person_rounded,
-                      size: 20, color: Color(0xFF4F46E5)),
+          body: Column(
+            children: [
+              // HEADER GRADIENT MODERN SELARAS DENGAN HALAMAN KONSULTASI
+              Container(
+                padding: EdgeInsets.fromLTRB(16, topPadding, 16, 14),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF3B0066),
+                      Color(0xFF5B4AF4),
+                      Color(0xFF388BFF),
+                    ],
+                    stops: [0.0, 0.5, 1.0],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(22),
+                    bottomRight: Radius.circular(22),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      widget.dokterNama,
-                      style: const TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.arrow_back_rounded,
+                          color: Colors.white, size: 22),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    Row(
-                      children: [
-                        Icon(Icons.circle,
-                            size: 6,
-                            color: isEnded
-                                ? Colors.grey
-                                : const Color(0xFF22C55E)),
-                        const SizedBox(width: 4),
-                        Text(
-                          isEnded ? 'Selesai' : 'Online',
-                          style: TextStyle(
-                              color: isEnded
-                                  ? Colors.grey
-                                  : const Color(0xFF22C55E),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ],
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.all(1.5),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Color(0xFFEEF2FF),
+                        child: Icon(Icons.person_rounded,
+                            size: 22, color: Color(0xFF5B4AF4)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.dokterNama,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isEnded
+                                      ? Colors.white54
+                                      : const Color(0xFF4ADE80),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                isEnded ? 'Sesi Selesai' : 'Online',
+                                style: TextStyle(
+                                  color: isEnded
+                                      ? Colors.white70
+                                      : const Color(0xFFDCFCE7),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          body: Column(
-            children: [
-              // Banner Jadwal Aktif
+              ),
+
+              // BANNER JADWAL AKTIF RAPI & PROPORSIONAL
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                color: isEnded
-                    ? const Color(0xFFF1F5F9)
-                    : (belumMulai ? Colors.amber.shade100 : const Color(0xFFE0E7FF)),
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                padding:
+                const EdgeInsets.symmetric(vertical: 9, horizontal: 14),
+                decoration: BoxDecoration(
+                  color: isEnded
+                      ? const Color(0xFFF1F5F9)
+                      : (belumMulai
+                      ? const Color(0xFFFFFBEB)
+                      : const Color(0xFFEEF2FF)),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isEnded
+                        ? const Color(0xFFE2E8F0)
+                        : (belumMulai
+                        ? const Color(0xFFFDE68A)
+                        : const Color(0xFFC7D2FE)),
+                  ),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -493,29 +559,37 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           : (belumMulai
                           ? Icons.lock_clock_rounded
                           : Icons.access_time_filled_rounded),
-                      size: 15,
+                      size: 16,
                       color: isEnded
                           ? const Color(0xFF64748B)
-                          : (belumMulai ? Colors.amber.shade800 : const Color(0xFF3730A3)),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isEnded
-                          ? 'Sesi Konsultasi Telah Berakhir'
                           : (belumMulai
-                          ? 'Belum Waktunya (Jadwal: ${widget.slotWaktu})'
-                          : 'Jadwal Konsultasi Aktif: ${widget.slotWaktu}'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isEnded
-                            ? const Color(0xFF64748B)
-                            : (belumMulai ? Colors.amber.shade900 : const Color(0xFF3730A3)),
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF4F46E5)),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        isEnded
+                            ? 'Sesi Konsultasi Telah Berakhir'
+                            : (belumMulai
+                            ? 'Belum Waktunya (Jadwal: ${widget.slotWaktu})'
+                            : 'Jadwal Konsultasi Aktif: ${widget.slotWaktu}'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isEnded
+                              ? const Color(0xFF64748B)
+                              : (belumMulai
+                              ? const Color(0xFFB45309)
+                              : const Color(0xFF3730A3)),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // AREA PERCAKAPAN
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -528,37 +602,52 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFF4F46E5)));
+                              color: Color(0xFF5B4AF4)));
                     }
 
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: const BoxDecoration(
-                                  color: Color(0xFFEEF2FF),
-                                  shape: BoxShape.circle),
-                              child: const Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  color: Color(0xFF4F46E5),
-                                  size: 36),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text('Belum ada percakapan',
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: const Color(0xFFE0E7FF), width: 2),
+                                ),
+                                child: const Icon(
+                                    Icons.chat_bubble_outline_rounded,
+                                    color: Color(0xFF5B4AF4),
+                                    size: 32),
+                              ),
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Belum ada percakapan',
                                 style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A))),
-                            const SizedBox(height: 4),
-                            const Text(
-                                'Tekan ikon penjepit (📎) di bawah untuk mengirim hasil skrining Anda ke dokter.',
-                                style: TextStyle(
-                                    fontSize: 12, color: Color(0xFF64748B)),
-                                textAlign: TextAlign.center),
-                          ],
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                belumMulai
+                                    ? 'Ruang chat akan otomatis terbuka saat memasuki jadwal konsultasi (${widget.slotWaktu}).'
+                                    : 'Tekan ikon penjepit (📎) di bawah untuk melampirkan hasil skrining mandiri Anda ke dokter.',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                  height: 1.45,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -567,7 +656,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
 
                     return ListView.builder(
                       reverse: true,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                       itemCount: docs.length,
                       itemBuilder: (context, index) {
                         final doc = docs[index];
@@ -581,20 +670,25 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                         _formatTimestamp(data['timestamp'] as Timestamp?);
 
                         if (isSummary) {
-                          final bool isPositif = (data['tingkatRisiko'] ?? '').toString().contains('Positif') || (data['tingkatRisiko'] ?? '').toString().contains('Tinggi');
+                          final bool isPositif = (data['tingkatRisiko'] ?? '')
+                              .toString()
+                              .contains('Positif') ||
+                              (data['tingkatRisiko'] ?? '')
+                                  .toString()
+                                  .contains('Tinggi');
                           return Container(
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: const Color(0xFFE2E8F0)),
+                              borderRadius: BorderRadius.circular(18),
+                              border:
+                              Border.all(color: const Color(0xFFE2E8F0)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.025),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
                                 ),
                               ],
                             ),
@@ -605,16 +699,16 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                   mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      children: const [
-                                        Icon(Icons.assignment_turned_in,
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.assignment_turned_in_rounded,
                                             size: 16,
-                                            color: Color(0xFF4F46E5)),
+                                            color: Color(0xFF5B4AF4)),
                                         SizedBox(width: 6),
                                         Text(
                                           'Hasil Skrining Pasien',
                                           style: TextStyle(
-                                            fontSize: 12,
+                                            fontSize: 12.5,
                                             fontWeight: FontWeight.bold,
                                             color: Color(0xFF0F172A),
                                           ),
@@ -623,20 +717,25 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                     ),
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 2),
+                                          horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: isPositif ? Colors.red.shade50 : Colors.green.shade50,
-                                        borderRadius:
-                                        BorderRadius.circular(10),
+                                        color: isPositif
+                                            ? Colors.red.shade50
+                                            : Colors.green.shade50,
+                                        borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                            color: isPositif ? Colors.red.shade200 : Colors.green.shade200),
+                                            color: isPositif
+                                                ? Colors.red.shade200
+                                                : Colors.green.shade200),
                                       ),
                                       child: Text(
                                         data['tingkatRisiko'] ?? 'Risiko',
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: isPositif ? Colors.redAccent : Colors.green,
+                                          color: isPositif
+                                              ? Colors.redAccent
+                                              : Colors.green,
                                         ),
                                       ),
                                     ),
@@ -648,7 +747,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                   style: const TextStyle(
                                     fontSize: 11.5,
                                     color: Color(0xFF475569),
-                                    height: 1.4,
+                                    height: 1.45,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -666,18 +765,18 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           );
                         }
 
-                        // PESAN CHAT BIASA (Bisa Di-edit jika diklik lama / long press)
+                        // PESAN CHAT BIASA
                         return GestureDetector(
                           onLongPress: () {
-                            if (isMe) {
-                              // Masuk ke mode edit
+                            if (isMe && !isEnded) {
                               setState(() {
                                 _editingMessageId = doc.id;
                                 _messageController.text = data['text'] ?? '';
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('Mode edit pesan aktif. Ubah di kolom bawah.')),
+                                    content: Text(
+                                        'Mode edit pesan aktif. Ubah di kolom bawah.')),
                               );
                             }
                           },
@@ -694,18 +793,30 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                 MediaQuery.of(context).size.width * 0.78,
                               ),
                               decoration: BoxDecoration(
-                                color: isMe
-                                    ? const Color(0xFF4F46E5)
-                                    : Colors.white,
+                                gradient: isMe
+                                    ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF5B4AF4),
+                                    Color(0xFF4F46E5)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                                    : null,
+                                color: isMe ? null : Colors.white,
+                                border: isMe
+                                    ? null
+                                    : Border.all(
+                                    color: const Color(0xFFE2E8F0)),
                                 borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(14),
-                                  topRight: const Radius.circular(14),
+                                  topLeft: const Radius.circular(16),
+                                  topRight: const Radius.circular(16),
                                   bottomLeft: isMe
-                                      ? const Radius.circular(14)
-                                      : Radius.zero,
+                                      ? const Radius.circular(16)
+                                      : const Radius.circular(4),
                                   bottomRight: isMe
-                                      ? Radius.zero
-                                      : const Radius.circular(14),
+                                      ? const Radius.circular(4)
+                                      : const Radius.circular(16),
                                 ),
                               ),
                               child: Column(
@@ -720,7 +831,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                           ? Colors.white
                                           : const Color(0xFF0F172A),
                                       fontSize: 13,
-                                      height: 1.3,
+                                      height: 1.35,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -729,7 +840,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                     children: [
                                       if (isEdited)
                                         Text(
-                                          '(dielit) • ',
+                                          '(diedit) • ',
                                           style: TextStyle(
                                             fontSize: 8.5,
                                             color: isMe
@@ -760,32 +871,34 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 ),
               ),
 
-              // Bagian Input Pesan + Tombol Penjepit (📎) + Indikator Edit
+              // BAGIAN BAWAH (INPUT PESAN / STATUS TERKUNCI / SELESAI)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.fromLTRB(
+                    16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0F172A).withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, -3),
                     ),
                   ],
                 ),
                 child: isEnded
                     ? Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Text(
                     'Sesi konsultasi ini telah berakhir.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF64748B),
                     ),
@@ -794,41 +907,58 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                     : belumMulai
                     ? Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.shade200),
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(14),
+                    border:
+                    Border.all(color: const Color(0xFFFDE68A)),
                   ),
-                  child: Text(
-                    'Chat dikunci. Sesi baru akan dibuka pada jam ${widget.slotWaktu}.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.amber.shade900,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.lock_outline_rounded,
+                          size: 16, color: Color(0xFFD97706)),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Chat dikunci. Sesi dibuka pada jam ${widget.slotWaktu}.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 )
                     : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Jika sedang mode edit, tampilkan banner kecil penanda
                     if (_editingMessageId != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.indigo.shade200),
+                          color: const Color(0xFFEEF2FF),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: const Color(0xFFC7D2FE)),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
                               'Edit Pesan Aktif',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF5B4AF4)),
                             ),
                             InkWell(
                               onTap: () {
@@ -837,39 +967,45 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                   _messageController.clear();
                                 });
                               },
-                              child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                              child: const Icon(Icons.close_rounded,
+                                  size: 16, color: Color(0xFF64748B)),
                             ),
                           ],
                         ),
                       ),
                     Row(
                       children: [
-                        // TOMBOL PENJEPIT (ATTACHMENT)
                         IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                           icon: const Icon(Icons.attach_file_rounded,
-                              color: Color(0xFF4F46E5)),
+                              color: Color(0xFF5B4AF4), size: 22),
                           tooltip: 'Kirim Hasil Skrining Asli',
-                          onPressed: () {
-                            _tarikDanKirimHasilSkriningViaPenjepit();
-                          },
+                          onPressed:
+                          _tarikDanKirimHasilSkriningViaPenjepit,
                         ),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(22),
                             ),
                             child: TextField(
                               controller: _messageController,
                               style: const TextStyle(fontSize: 13),
                               decoration: InputDecoration(
-                                hintText: _editingMessageId != null ? 'Edit pesan Anda...' : 'Tulis pesan...',
+                                isDense: true,
+                                hintText: _editingMessageId != null
+                                    ? 'Edit pesan Anda...'
+                                    : 'Tulis pesan...',
                                 hintStyle: const TextStyle(
                                     fontSize: 13,
                                     color: Color(0xFF94A3B8)),
                                 border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
+                                contentPadding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 11),
                               ),
                             ),
                           ),
@@ -877,12 +1013,16 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                         const SizedBox(width: 8),
                         InkWell(
                           onTap: _sendMessage,
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(20),
                           child: CircleAvatar(
                             radius: 20,
-                            backgroundColor: _editingMessageId != null ? Colors.orange : const Color(0xFF3B52A4),
+                            backgroundColor: _editingMessageId != null
+                                ? Colors.orange
+                                : const Color(0xFF5B4AF4),
                             child: Icon(
-                              _editingMessageId != null ? Icons.check_rounded : Icons.send_rounded,
+                              _editingMessageId != null
+                                  ? Icons.check_rounded
+                                  : Icons.send_rounded,
                               color: Colors.white,
                               size: 18,
                             ),
@@ -896,9 +1036,9 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                       height: 44,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B52A4),
+                          backgroundColor: const Color(0xFF5B4AF4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(22),
                           ),
                           elevation: 0,
                         ),
