@@ -20,27 +20,41 @@ class Skrining2Page extends StatefulWidget {
 }
 
 class _Skrining2PageState extends State<Skrining2Page> {
-  bool? seringBAK;
-  bool? seringHaus;
-  bool? seringLemas;
-  bool? rambutRontok;
-  bool? lukaSulitSembuh;
-  bool? mudahMarah;
-  bool? kakuOtot;
-  bool? obesitas;
+  // 14 Variabel Pertanyaan Skrining
+  bool? seringHausBerlebihan;       // 1. Polidipsia
+  bool? seringBAKMalamHari;         // 2. Poliuria
+  bool? cepatLapar;                 // 3. Polifagia
+  bool? penurunanBeratBadan;        // 4. Penurunan berat badan drastis
+  bool? lemasKurangBerenergi;       // 5. Lemas / kurang berenergi
+  bool? penglihatanKabur;           // 6. Penglihatan kabur
+  bool? lukaSulitSembuh;            // 7. Luka lama sembuhnya
+  bool? kesemutanNyeri;             // 8. Kesemutan / nyeri tangan/kaki
+  bool? infeksiBerulang;            // 9. Infeksi berulang
+  bool? riwayatKeluarga;            // 10. Keluarga kandung diabetes
+  bool? riwayatHipertensi;          // 11. Riwayat tekanan darah tinggi
+  bool? jarangAktivitasFisik;       // 12. Gaya hidup sedenter / jarang olahraga
+  bool? usiaDiatas40;               // 13. Usia di atas 40 tahun
+  bool? kolesterolTinggiObesitas;   // 14. Kolesterol tinggi atau obesitas
 
   bool _isLoading = false;
   bool _showError = false;
 
   void _prosesSkriningAI() async {
-    if (seringBAK == null ||
-        seringHaus == null ||
-        seringLemas == null ||
-        rambutRontok == null ||
+    // Validasi apakah 14 pertanyaan sudah dijawab semua
+    if (seringHausBerlebihan == null ||
+        seringBAKMalamHari == null ||
+        cepatLapar == null ||
+        penurunanBeratBadan == null ||
+        lemasKurangBerenergi == null ||
+        penglihatanKabur == null ||
         lukaSulitSembuh == null ||
-        mudahMarah == null ||
-        kakuOtot == null ||
-        obesitas == null) {
+        kesemutanNyeri == null ||
+        infeksiBerulang == null ||
+        riwayatKeluarga == null ||
+        riwayatHipertensi == null ||
+        jarangAktivitasFisik == null ||
+        usiaDiatas40 == null ||
+        kolesterolTinggiObesitas == null) {
       setState(() {
         _showError = true;
       });
@@ -55,17 +69,18 @@ class _Skrining2PageState extends State<Skrining2Page> {
     int umurInt = int.tryParse(widget.umur) ?? 30;
     bool isMale = widget.jenisKelamin == 'Laki-laki';
 
+    // Panggil fungsi prediksi decision tree (pastikan parameter di service disesuaikan jika perlu)
     String hasilPrediksi = DiabetesDecisionTree.predictDiabetes(
       umur: umurInt,
       isMale: isMale,
-      seringBAK: seringBAK!,
-      seringHaus: seringHaus!,
-      seringLemas: seringLemas!,
-      rambutRontok: rambutRontok!,
+      seringBAK: seringBAKMalamHari!,
+      seringHaus: seringHausBerlebihan!,
+      seringLemas: lemasKurangBerenergi!,
+      rambutRontok: false, // Diganti/disesuaikan dengan model logika decision tree Anda
       lukaSulitSembuh: lukaSulitSembuh!,
-      mudahMarah: mudahMarah!,
-      kakuOtot: kakuOtot!,
-      obesitas: obesitas!,
+      mudahMarah: false,
+      kakuOtot: kesemutanNyeri!,
+      obesitas: kolesterolTinggiObesitas!,
     );
 
     bool isPositif = hasilPrediksi == "Positif Diabetes";
@@ -78,14 +93,20 @@ class _Skrining2PageState extends State<Skrining2Page> {
         'nama': widget.nama,
         'umur': umurInt,
         'jenisKelamin': widget.jenisKelamin,
-        'seringBAK': seringBAK,
-        'seringHaus': seringHaus,
-        'seringLemas': seringLemas,
-        'rambutRontok': rambutRontok,
+        'seringHausBerlebihan': seringHausBerlebihan,
+        'seringBAKMalamHari': seringBAKMalamHari,
+        'cepatLapar': cepatLapar,
+        'penurunanBeratBadan': penurunanBeratBadan,
+        'lemasKurangBerenergi': lemasKurangBerenergi,
+        'penglihatanKabur': penglihatanKabur,
         'lukaSulitSembuh': lukaSulitSembuh,
-        'mudahMarah': mudahMarah,
-        'kakuOtot': kakuOtot,
-        'obesitas': obesitas,
+        'kesemutanNyeri': kesemutanNyeri,
+        'infeksiBerulang': infeksiBerulang,
+        'riwayatKeluarga': riwayatKeluarga,
+        'riwayatHipertensi': riwayatHipertensi,
+        'jarangAktivitasFisik': jarangAktivitasFisik,
+        'usiaDiatas40': usiaDiatas40,
+        'kolesterolTinggiObesitas': kolesterolTinggiObesitas,
         'hasilPrediksi': hasilPrediksi,
         'waktuSkrining': FieldValue.serverTimestamp(),
       });
@@ -100,15 +121,22 @@ class _Skrining2PageState extends State<Skrining2Page> {
       _isLoading = false;
     });
 
+    // Mapping 14 data jawaban untuk tabel laporan
     var answersTableData = [
-      {'q': 'Apakah Anda sering buang air kecil (BAK)?', 'a': seringBAK! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda sering merasa haus / dahaga?', 'a': seringHaus! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda sering merasa lemas atau mudah lelah?', 'a': seringLemas! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda mengalami rambut rontok?', 'a': rambutRontok! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda memiliki luka yang sulit sembuh?', 'a': lukaSulitSembuh! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda merasa mudah marah atau emosional?', 'a': mudahMarah! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda sering mengalami kaku otot?', 'a': kakuOtot! ? 'Ya' : 'Tidak'},
-      {'q': 'Apakah Anda mengalami obesitas / kelebihan BB?', 'a': obesitas! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering merasa haus berlebihan (Polidipsia)?', 'a': seringHausBerlebihan! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering buang air kecil terutama di malam hari (Poliuria)?', 'a': seringBAKMalamHari! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering merasa cepat lapar meski sudah makan (Polifagia)?', 'a': cepatLapar! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda mengalami penurunan berat badan drastis tanpa alasan jelas?', 'a': penurunanBeratBadan! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering merasa lelah, lemas, dan kurang berenergi?', 'a': lemasKurangBerenergi! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah penglihatan Anda sering kabur atau berbayang?', 'a': penglihatanKabur! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah luka atau lecet pada tubuh Anda membutuhkan waktu sangat lama untuk sembuh?', 'a': lukaSulitSembuh! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering mengalami kesemutan, mati rasa, atau nyeri pada tangan/kaki?', 'a': kesemutanNyeri! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda sering mengalami infeksi berulang (kulit, gusi, atau saluran kemih)?', 'a': infeksiBerulang! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah ada anggota keluarga kandung (orang tua/saudara) yang menderita diabetes?', 'a': riwayatKeluarga! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda memiliki riwayat tekanan darah tinggi (Hipertensi)?', 'a': riwayatHipertensi! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda jarang melakukan aktivitas fisik atau olahraga (gaya hidup sedenter)?', 'a': jarangAktivitasFisik! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah usia Anda saat ini di atas 40 tahun?', 'a': usiaDiatas40! ? 'Ya' : 'Tidak'},
+      {'q': 'Apakah Anda pernah terdiagnosa kadar kolesterol tinggi atau obesitas?', 'a': kolesterolTinggiObesitas! ? 'Ya' : 'Tidak'},
     ];
 
     Navigator.pushReplacement(
@@ -228,7 +256,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
               children: [
                 const Text(
-                  'Pertanyaan Gejala Diabetes',
+                  '14 Indikator Gejala & Faktor Risiko',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -237,7 +265,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Jawablah pertanyaan di bawah ini sesuai kondisi yang kamu rasakan.',
+                  'Jawablah seluruh 14 pertanyaan di bawah ini sesuai kondisi yang kamu rasakan.',
                   style: TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF64748B),
@@ -264,7 +292,7 @@ class _Skrining2PageState extends State<Skrining2Page> {
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Mohon jawab semua pertanyaan gejala terlebih dahulu.',
+                            'Mohon jawab semua 14 pertanyaan terlebih dahulu.',
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
@@ -275,54 +303,90 @@ class _Skrining2PageState extends State<Skrining2Page> {
                       ],
                     ),
                   ),
+                // Render 14 Kartu Pertanyaan
                 _buildQuestionCard(
                   number: 1,
-                  question: "Apakah kamu sering buang air kecil (BAK)?",
-                  value: seringBAK,
-                  onChanged: (val) => setState(() => seringBAK = val),
+                  question: "Apakah Anda sering merasa haus berlebihan (Polidipsia)?",
+                  value: seringHausBerlebihan,
+                  onChanged: (val) => setState(() => seringHausBerlebihan = val),
                 ),
                 _buildQuestionCard(
                   number: 2,
-                  question: "Apakah kamu sering merasa haus?",
-                  value: seringHaus,
-                  onChanged: (val) => setState(() => seringHaus = val),
+                  question: "Apakah Anda sering buang air kecil terutama di malam hari (Poliuria)?",
+                  value: seringBAKMalamHari,
+                  onChanged: (val) => setState(() => seringBAKMalamHari = val),
                 ),
                 _buildQuestionCard(
                   number: 3,
-                  question:
-                  "Apakah kamu sering merasa lemas atau mudah lelah?",
-                  value: seringLemas,
-                  onChanged: (val) => setState(() => seringLemas = val),
+                  question: "Apakah Anda sering merasa cepat lapar meski sudah makan (Polifagia)?",
+                  value: cepatLapar,
+                  onChanged: (val) => setState(() => cepatLapar = val),
                 ),
                 _buildQuestionCard(
                   number: 4,
-                  question: "Apakah kamu mengalami rambut rontok?",
-                  value: rambutRontok,
-                  onChanged: (val) => setState(() => rambutRontok = val),
+                  question: "Apakah Anda mengalami penurunan berat badan drastis tanpa alasan jelas?",
+                  value: penurunanBeratBadan,
+                  onChanged: (val) => setState(() => penurunanBeratBadan = val),
                 ),
                 _buildQuestionCard(
                   number: 5,
-                  question: "Apakah kamu mengalami luka yang sulit sembuh?",
+                  question: "Apakah Anda sering merasa lelah, lemas, dan kurang berenergi?",
+                  value: lemasKurangBerenergi,
+                  onChanged: (val) => setState(() => lemasKurangBerenergi = val),
+                ),
+                _buildQuestionCard(
+                  number: 6,
+                  question: "Apakah penglihatan Anda sering kabur atau berbayang?",
+                  value: penglihatanKabur,
+                  onChanged: (val) => setState(() => penglihatanKabur = val),
+                ),
+                _buildQuestionCard(
+                  number: 7,
+                  question: "Apakah luka atau lecet pada tubuh Anda membutuhkan waktu sangat lama untuk sembuh?",
                   value: lukaSulitSembuh,
                   onChanged: (val) => setState(() => lukaSulitSembuh = val),
                 ),
                 _buildQuestionCard(
-                  number: 6,
-                  question: "Apakah kamu merasa mudah marah atau emosional?",
-                  value: mudahMarah,
-                  onChanged: (val) => setState(() => mudahMarah = val),
-                ),
-                _buildQuestionCard(
-                  number: 7,
-                  question: "Apakah kamu sering mengalami kaku otot?",
-                  value: kakuOtot,
-                  onChanged: (val) => setState(() => kakuOtot = val),
-                ),
-                _buildQuestionCard(
                   number: 8,
-                  question: "Apakah kamu mengalami obesitas / kelebihan BB?",
-                  value: obesitas,
-                  onChanged: (val) => setState(() => obesitas = val),
+                  question: "Apakah Anda sering mengalami kesemutan, mati rasa, atau nyeri pada tangan/kaki?",
+                  value: kesemutanNyeri,
+                  onChanged: (val) => setState(() => kesemutanNyeri = val),
+                ),
+                _buildQuestionCard(
+                  number: 9,
+                  question: "Apakah Anda sering mengalami infeksi berulang (kulit, gusi, atau saluran kemih)?",
+                  value: infeksiBerulang,
+                  onChanged: (val) => setState(() => infeksiBerulang = val),
+                ),
+                _buildQuestionCard(
+                  number: 10,
+                  question: "Apakah ada anggota keluarga kandung (orang tua/saudara) yang menderita diabetes?",
+                  value: riwayatKeluarga,
+                  onChanged: (val) => setState(() => riwayatKeluarga = val),
+                ),
+                _buildQuestionCard(
+                  number: 11,
+                  question: "Apakah Anda memiliki riwayat tekanan darah tinggi (Hipertensi)?",
+                  value: riwayatHipertensi,
+                  onChanged: (val) => setState(() => riwayatHipertensi = val),
+                ),
+                _buildQuestionCard(
+                  number: 12,
+                  question: "Apakah Anda jarang melakukan aktivitas fisik atau olahraga (gaya hidup sedenter)?",
+                  value: jarangAktivitasFisik,
+                  onChanged: (val) => setState(() => jarangAktivitasFisik = val),
+                ),
+                _buildQuestionCard(
+                  number: 13,
+                  question: "Apakah usia Anda saat ini di atas 40 tahun?",
+                  value: usiaDiatas40,
+                  onChanged: (val) => setState(() => usiaDiatas40 = val),
+                ),
+                _buildQuestionCard(
+                  number: 14,
+                  question: "Apakah Anda pernah terdiagnosa kadar kolesterol tinggi atau obesitas?",
+                  value: kolesterolTinggiObesitas,
+                  onChanged: (val) => setState(() => kolesterolTinggiObesitas = val),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -422,45 +486,45 @@ class _Skrining2PageState extends State<Skrining2Page> {
             ],
           ),
           const SizedBox(height: 6),
-          RadioGroup<bool>(
-            groupValue: value,
-            onChanged: onChanged,
-            child: const Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: Text(
-                      'Iya',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w500,
-                      ),
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<bool>(
+                  title: const Text(
+                    'Ya',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w500,
                     ),
-                    value: true,
-                    activeColor: Color(0xFF5B4AF4),
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
                   ),
+                  value: true,
+                  groupValue: value,
+                  activeColor: const Color(0xFF5B4AF4),
+                  onChanged: onChanged,
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
                 ),
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: Text(
-                      'Tidak',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w500,
-                      ),
+              ),
+              Expanded(
+                child: RadioListTile<bool>(
+                  title: const Text(
+                    'Tidak',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w500,
                     ),
-                    value: false,
-                    activeColor: Color(0xFF5B4AF4),
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
                   ),
+                  value: false,
+                  groupValue: value,
+                  activeColor: const Color(0xFF5B4AF4),
+                  onChanged: onChanged,
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
