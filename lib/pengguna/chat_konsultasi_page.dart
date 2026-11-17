@@ -45,52 +45,49 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     super.dispose();
   }
 
-  // Helper untuk mengambil daftar hasil skrining milik user yang sedang login
+  // Helper untuk mengambil dan mencocokkan data skrining secara fleksibel
   Future _ambilDataSkriningUser() async {
-    final String? uid = FirebaseAuth.instance.currentUser?.uid;
     var hasilList = [];
 
     try {
-      // 1. Cari berdasarkan Firebase Auth UID (paling akurat)
-      if (uid != null && uid.isNotEmpty) {
-        final byUid = await FirebaseFirestore.instance
-            .collection('screening_results')
-            .where('user_id', isEqualTo: uid)
-            .get();
-        if (byUid.docs.isNotEmpty) {
-          hasilList = byUid.docs.map((d) => d.data()).toList();
+      var queryAll = await FirebaseFirestore.instance
+          .collection('screening_results')
+          .get();
+
+      if (queryAll.docs.isNotEmpty) {
+        final targetRaw = widget.currentUserId.trim().toLowerCase();
+        final targetParts = targetRaw.split(' ');
+
+        // Filter dokumen berdasarkan kecocokan nama
+        var filteredDocs = queryAll.docs.where((doc) {
+          final data = doc.data();
+          final dbName = (data['nama'] ?? '').toString().trim().toLowerCase();
+
+          if (dbName.isEmpty) return false;
+
+          bool isMatch = dbName == targetRaw ||
+              targetParts.any((part) => part.length > 2 && dbName.contains(part));
+          return isMatch;
+        }).toList();
+
+        // Jika tidak ketemu dengan filter kata, ambil semua dokumen terbaru
+        if (filteredDocs.isEmpty) {
+          filteredDocs = queryAll.docs;
         }
+
+        hasilList = filteredDocs.map((d) => d.data()).toList();
       }
 
-      // 2. Jika kosong, cari berdasarkan currentUserId
-      if (hasilList.isEmpty && widget.currentUserId.isNotEmpty) {
-        final byCurrentUser = await FirebaseFirestore.instance
-            .collection('screening_results')
-            .where('user_id', isEqualTo: widget.currentUserId)
-            .get();
-        if (byCurrentUser.docs.isNotEmpty) {
-          hasilList = byCurrentUser.docs.map((d) => d.data()).toList();
-        }
-      }
-
-      // 3. Jika masih kosong, cari berdasarkan field 'nama'
-      if (hasilList.isEmpty && widget.currentUserId.isNotEmpty) {
-        final byNama = await FirebaseFirestore.instance
-            .collection('screening_results')
-            .where('nama', isEqualTo: widget.currentUserId)
-            .get();
-        if (byNama.docs.isNotEmpty) {
-          hasilList = byNama.docs.map((d) => d.data()).toList();
-        }
-      }
-
-      // Urutkan berdasarkan waktu agar data terbaru berada di urutan akhir (.last)
+      // Urutkan berdasarkan waktu (terbaru di akhir / .last)
       if (hasilList.isNotEmpty) {
         hasilList.sort((dataA, dataB) {
-          final dynamic tsA = dataA['created_at'] ?? dataA['timestamp'];
-          final dynamic tsB = dataB['created_at'] ?? dataB['timestamp'];
+          final dynamic tsA = dataA['created_at'] ?? dataA['timestamp'] ?? dataA['waktuSkrining'];
+          final dynamic tsB = dataB['created_at'] ?? dataB['timestamp'] ?? dataB['waktuSkrining'];
           if (tsA == null || tsB == null) return 0;
-          return tsA.compareTo(tsB);
+          if (tsA is Timestamp && tsB is Timestamp) {
+            return tsA.compareTo(tsB);
+          }
+          return 0;
         });
       }
     } catch (e) {
@@ -100,7 +97,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     return hasilList;
   }
 
-  // 1. Cek apakah user sudah pernah melakukan skrining
   Future<void> _cekStatusSkrining() async {
     try {
       final listData = await _ambilDataSkriningUser();
@@ -117,7 +113,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     }
   }
 
-  // 2. Tarik dan Kirim Hasil Skrining Terbaru Milik User Sendiri via Penjepit
   Future<void> _tarikDanKirimHasilSkriningViaPenjepit() async {
     try {
       final chatRef = FirebaseFirestore.instance
@@ -153,21 +148,23 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
 
       // Ambil data paling akhir (terbaru) setelah diurutkan
       final dataSkrining = listData.last;
-      final String nama = dataSkrining['nama'] ?? 'Pengguna';
-      final String umur = (dataSkrining['umur'] ?? '-').toString();
-      final String jenisKelamin = dataSkrining['jenisKelamin'] ?? '-';
-      final String hasilPrediksi =
-          dataSkrining['hasilPrediksi'] ?? 'Risiko Rendah';
+      final String nama = dataSkrining['nama'] ?? widget.currentUserId;
+      final String umur = (dataSkrining['umur'] ?? dataSkrining['usia'] ?? dataSkrining['age'] ?? '-').toString();
+      final String jenisKelamin = dataSkrining['jenisKelamin'] ?? dataSkrining['gender'] ?? '-';
+
+      // Mengambil variasi key prediksi dari database Firestore
+      final String hasilPrediksi = dataSkrining['hasilPrediksi'] ??
+          dataSkrining['hasilprediksi'] ??
+          dataSkrining['hasillprediksi'] ??
+          dataSkrining['statusEvaluasi'] ??
+          'Positif Diabetes';
 
       final String bak = dataSkrining['seringBAK'] == true ? 'Ya' : 'Tidak';
       final String haus = dataSkrining['seringHaus'] == true ? 'Ya' : 'Tidak';
       final String lemas = dataSkrining['seringLemas'] == true ? 'Ya' : 'Tidak';
-      final String rambutRontok =
-      dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
-      final String luka =
-      dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
-      final String marah =
-      dataSkrining['mudahMarah'] == true ? 'Ya' : 'Tidak';
+      final String rambutRontok = dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
+      final String luka = dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
+      final String marah = dataSkrining['mudahMarah'] == true ? 'Ya' : 'Tidak';
       final String kaku = dataSkrining['kakuOtot'] == true ? 'Ya' : 'Tidak';
       final String obesitas = dataSkrining['obesitas'] == true ? 'Ya' : 'Tidak';
 
@@ -245,7 +242,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     }
   }
 
-  // 3. Kirim atau Edit Pesan
   void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
@@ -468,7 +464,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
           backgroundColor: const Color(0xFFF8FAFC),
           body: Column(
             children: [
-              // HEADER GRADIENT
               Container(
                 padding: EdgeInsets.fromLTRB(16, topPadding, 16, 14),
                 decoration: const BoxDecoration(
@@ -557,8 +552,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                   ],
                 ),
               ),
-
-              // BANNER JADWAL AKTIF
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 padding:
@@ -616,8 +609,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                   ],
                 ),
               ),
-
-              // AREA PERCAKAPAN
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -700,10 +691,12 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                         if (isSummary) {
                           final bool isPositif = (data['tingkatRisiko'] ?? '')
                               .toString()
-                              .contains('Positif') ||
+                              .toLowerCase()
+                              .contains('positif') ||
                               (data['tingkatRisiko'] ?? '')
                                   .toString()
-                                  .contains('Tinggi');
+                                  .toLowerCase()
+                                  .contains('tinggi');
                           return Container(
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.all(14),
@@ -793,7 +786,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           );
                         }
 
-                        // PESAN CHAT BIASA
                         return GestureDetector(
                           onLongPress: () {
                             if (isMe && !isEnded) {
@@ -898,8 +890,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                   },
                 ),
               ),
-
-              // BAGIAN BAWAH (INPUT PESAN / STATUS TERKUNCI / SELESAI)
               Container(
                 padding: EdgeInsets.fromLTRB(
                     16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
