@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'riwayat_mingguan_page.dart';
 
 class ProgresKesehatanPage extends StatefulWidget {
@@ -49,6 +51,15 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
 
   String _getKey(String item) => '${widget.username}_$item';
 
+  String _getTanggalId() {
+    DateTime now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  String _getUserId() {
+    return FirebaseAuth.instance.currentUser?.uid ?? widget.username;
+  }
+
   Future<void> _loadDataProgres() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -61,29 +72,103 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
       _gulaDarahHariIni = (savedGula != null && savedGula > 0) ? savedGula : null;
       _waktuCekGula = prefs.getString(_getKey('waktu_cek_gula')) ?? 'Puasa';
     });
+
+    try {
+      final docId = '${_getUserId()}_${_getTanggalId()}';
+      final doc = await FirebaseFirestore.instance
+          .collection('health_progress')
+          .doc(docId)
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        setState(() {
+          _jalanKakiSelesai = data['jalan_kaki'] ?? _jalanKakiSelesai;
+          _kurangiManisSelesai = data['kurangi_manis'] ?? _kurangiManisSelesai;
+          _tidurCukupSelesai = data['tidur_cukup'] ?? _tidurCukupSelesai;
+          _makanSayurSelesai = data['makan_sayur'] ?? _makanSayurSelesai;
+          if (data['gula_darah'] != null) {
+            _gulaDarahHariIni = data['gula_darah'];
+            _waktuCekGula = data['waktu_cek_gula'] ?? 'Puasa';
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal memuat progres dari Firestore: $e');
+    }
+  }
+
+  Future<void> _simpanDanSinkronkanKeCloud({
+    bool? jalanKaki,
+    bool? kurangiManis,
+    bool? tidurCukup,
+    bool? makanSayur,
+    int? gulaDarah,
+    String? waktuCek,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (jalanKaki != null) {
+      _jalanKakiSelesai = jalanKaki;
+      await prefs.setBool(_getKey('jalan_kaki'), jalanKaki);
+    }
+    if (kurangiManis != null) {
+      _kurangiManisSelesai = kurangiManis;
+      await prefs.setBool(_getKey('kurangi_manis'), kurangiManis);
+    }
+    if (tidurCukup != null) {
+      _tidurCukupSelesai = tidurCukup;
+      await prefs.setBool(_getKey('tidur_cukup'), tidurCukup);
+    }
+    if (makanSayur != null) {
+      _makanSayurSelesai = makanSayur;
+      await prefs.setBool(_getKey('makan_sayur'), makanSayur);
+    }
+    if (gulaDarah != null) {
+      _gulaDarahHariIni = gulaDarah;
+      await prefs.setInt(_getKey('gula_darah'), gulaDarah);
+    }
+    if (waktuCek != null) {
+      _waktuCekGula = waktuCek;
+      await prefs.setString(_getKey('waktu_cek_gula'), waktuCek);
+    }
+
+    setState(() {});
+
+    try {
+      final docId = '${_getUserId()}_${_getTanggalId()}';
+      await FirebaseFirestore.instance.collection('health_progress').doc(docId).set({
+        'user_id': _getUserId(),
+        'username': widget.username,
+        'tanggal': _getTanggalId(),
+        'jalan_kaki': _jalanKakiSelesai,
+        'kurangi_manis': _kurangiManisSelesai,
+        'tidur_cukup': _tidurCukupSelesai,
+        'makan_sayur': _makanSayurSelesai,
+        'gula_darah': _gulaDarahHariIni,
+        'waktu_cek_gula': _waktuCekGula,
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Gagal menyimpan progres ke Firestore: $e');
+    }
   }
 
   Future<void> _toggleStatus(String itemKey, bool currentValue) async {
-    final prefs = await SharedPreferences.getInstance();
     bool newValue = !currentValue;
-    await prefs.setBool(_getKey(itemKey), newValue);
-
-    setState(() {
-      if (itemKey == 'jalan_kaki') _jalanKakiSelesai = newValue;
-      if (itemKey == 'kurangi_manis') _kurangiManisSelesai = newValue;
-      if (itemKey == 'tidur_cukup') _tidurCukupSelesai = newValue;
-      if (itemKey == 'makan_sayur') _makanSayurSelesai = newValue;
-    });
+    if (itemKey == 'jalan_kaki') {
+      await _simpanDanSinkronkanKeCloud(jalanKaki: newValue);
+    } else if (itemKey == 'kurangi_manis') {
+      await _simpanDanSinkronkanKeCloud(kurangiManis: newValue);
+    } else if (itemKey == 'tidur_cukup') {
+      await _simpanDanSinkronkanKeCloud(tidurCukup: newValue);
+    } else if (itemKey == 'makan_sayur') {
+      await _simpanDanSinkronkanKeCloud(makanSayur: newValue);
+    }
   }
 
   Future<void> _simpanGulaDarah(int nilai, String waktuCek) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_getKey('gula_darah'), nilai);
-    await prefs.setString(_getKey('waktu_cek_gula'), waktuCek);
-    setState(() {
-      _gulaDarahHariIni = nilai;
-      _waktuCekGula = waktuCek;
-    });
+    await _simpanDanSinkronkanKeCloud(gulaDarah: nilai, waktuCek: waktuCek);
   }
 
   int _hitungTotalTargetSelesai() {
@@ -122,7 +207,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
         return {'label': 'Tinggi', 'color': const Color(0xFFDC2626), 'bg': const Color(0xFFFEE2E2)};
       }
     } else {
-      // Sewaktu / 2 Jam Setelah Makan
       if (nilai < 140) {
         return {'label': 'Normal', 'color': const Color(0xFF16A34A), 'bg': const Color(0xFFDCFCE7)};
       } else if (nilai <= 199) {
@@ -251,7 +335,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
       backgroundColor: const Color(0xFFF4F7FE),
       body: Column(
         children: [
-          // HEADER GRADIENT BIRU-UNGU SENADA DENGAN BERANDA
           Container(
             width: double.infinity,
             padding: const EdgeInsets.only(top: 50, left: 16, right: 20, bottom: 24),
@@ -269,7 +352,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Baris Navigasi Atas
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -293,8 +375,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-
-                // Kartu Ringkasan Progres Harian + Circular Progress
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -369,18 +449,14 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
               ],
             ),
           ),
-
-          // KONTEN SCROLLABLE
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // KARTU CATATAN GULA DARAH HARIAN
                   _buildGulaDarahCard(),
                   const SizedBox(height: 20),
-
                   const Text(
                     'Target Kebiasaan Sehat Harian',
                     style: TextStyle(
@@ -390,7 +466,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
                   _buildTargetCard(
                     iconData: Icons.directions_walk_rounded,
                     title: 'Jalan Kaki 30 Menit',
@@ -400,7 +475,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     onTap: () => _toggleStatus('jalan_kaki', _jalanKakiSelesai),
                   ),
                   const SizedBox(height: 14),
-
                   _buildTargetCard(
                     iconData: Icons.no_drinks_rounded,
                     title: 'Kurangi Minuman Manis',
@@ -410,7 +484,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     onTap: () => _toggleStatus('kurangi_manis', _kurangiManisSelesai),
                   ),
                   const SizedBox(height: 14),
-
                   _buildTargetCard(
                     iconData: Icons.bedtime_rounded,
                     title: 'Tidur Cukup 7 Jam',
@@ -420,7 +493,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     onTap: () => _toggleStatus('tidur_cukup', _tidurCukupSelesai),
                   ),
                   const SizedBox(height: 14),
-
                   _buildTargetCard(
                     iconData: Icons.restaurant_rounded,
                     title: 'Makan Sayur 3x Sehari',
@@ -430,8 +502,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     onTap: () => _toggleStatus('makan_sayur', _makanSayurSelesai),
                   ),
                   const SizedBox(height: 18),
-
-                  // KARTU TIPS EDUKASI SINGKAT
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -472,8 +542,6 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // TOMBOL KE RIWAYAT MINGGUAN
                   InkWell(
                     onTap: () => _navigateToRiwayatMingguan(context),
                     borderRadius: BorderRadius.circular(16),
@@ -580,7 +648,10 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                     style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                   )
                 else
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
                       Text(
                         '$_gulaDarahHariIni mg/dL',
@@ -590,12 +661,10 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(width: 6),
                       Text(
                         '($_waktuCekGula)',
                         style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                       ),
-                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -616,6 +685,7 @@ class _ProgresKesehatanPageState extends State<ProgresKesehatanPage> {
               ],
             ),
           ),
+          const SizedBox(width: 8),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEEF2FF),

@@ -216,7 +216,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
         return;
       }
 
-      // Arahkan lewat AuthRouter (berdasarkan role di Firestore).
       final bool berhasil = await AuthRouter.arahkan(context, user);
 
       if (!mounted) {
@@ -442,104 +441,35 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Image.asset(
-                                'assets/logo.png',
-                                height: 160,
-                                fit: BoxFit.contain,
-                                alignment: Alignment.centerLeft,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 115,
-                            height: 115,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEAEFF8)
-                                  .withValues(alpha: 0.6),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              clipBehavior: Clip.none,
-                              children: [
-                                Positioned(
-                                  bottom: -65,
-                                  child: Image.asset(
-                                    'assets/dokter_illustration.png',
-                                    height: 185,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(
-                                          Icons.medical_services,
-                                          size: 45,
-                                          color: Color(0xFF6679F4));
-                                    },
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 2,
-                                  right: 2,
-                                  child: ScaleTransition(
-                                    scale: _pulseAnimation,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.redAccent
-                                                .withValues(alpha: 0.3),
-                                            blurRadius: 6,
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(Icons.water_drop,
-                                          size: 14, color: Colors.redAccent),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      Center(
+                        child: Image.asset(
+                          'assets/logo.png',
+                          height: 140,
+                          fit: BoxFit.contain,
+                        ),
                       ),
-                      const SizedBox(height: 0),
-                      const Row(
+                      const SizedBox(height: 10),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Daftar Akun',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Buat Akun Baru Untuk Mengakses Layanan',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ],
+                          Text(
+                            'Daftar Akun',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
                             ),
                           ),
-                          SizedBox(width: 115),
+                          SizedBox(height: 2),
+                          Text(
+                            'Buat Akun Baru Untuk Mengakses Layanan',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -554,7 +484,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0xFF6679F4).withValues(
-                                      alpha: 0.08 * _pulseAnimation.value),
+                                    alpha: 0.08 * _pulseAnimation.value,
+                                  ),
                                   blurRadius: 18 * _pulseAnimation.value,
                                   offset: const Offset(0, 6),
                                 ),
@@ -686,14 +617,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                                           color: Colors.grey.shade300),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
-                                    child: Text(
-                                      captcha,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 6,
-                                        fontStyle: FontStyle.italic,
-                                        color: Color(0xFF334155),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: CustomPaint(
+                                        size: const Size(double.infinity, 48),
+                                        painter: CaptchaPainter(captcha: captcha),
                                       ),
                                     ),
                                   ),
@@ -828,85 +756,55 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
                       offset: Offset(0, -20 * (1 - value)),
                       child: Opacity(
                         opacity: value,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFDE8E8),
-                      border: Border.all(color: const Color(0xFFF87171)),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEF4444),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Gagal Melanjutkan!',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade600,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                errorMessage,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.black54,
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: Colors.white, size: 22),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    errorMessage,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              showErrorBanner = false;
-                            });
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.only(bottom: 14),
-                            child: Text(
-                              'x',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.bold,
-                              ),
+                                IconButton(
+                                  icon: const Icon(Icons.close,
+                                      color: Colors.white, size: 18),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () {
+                                    setState(() {
+                                      showErrorBanner = false;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
           ],
@@ -914,4 +812,85 @@ class _DaftarAkunPageState extends State<DaftarAkunPage>
       ),
     );
   }
+}
+
+// Custom Painter untuk menggambar latar belakang noise dan teks captcha acak
+class CaptchaPainter extends CustomPainter {
+  final String captcha;
+
+  CaptchaPainter({required this.captcha});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    final random = Random(captcha.hashCode);
+
+    // 1. Gambar noise titik-titik di background
+    for (int i = 0; i < 80; i++) {
+      paint.color = Colors.primaries[random.nextInt(Colors.primaries.length)]
+          .withValues(alpha: 0.3);
+      paint.strokeWidth = random.nextDouble() * 2 + 1;
+      canvas.drawCircle(
+        Offset(random.nextDouble() * size.width, random.nextDouble() * size.height),
+        random.nextDouble() * 1.5,
+        paint,
+      );
+    }
+
+    // 2. Gambar garis coretan pengaman
+    for (int i = 0; i < 3; i++) {
+      paint.color = Colors.primaries[random.nextInt(Colors.primaries.length)]
+          .withValues(alpha: 0.5);
+      paint.strokeWidth = 1.5;
+      paint.style = PaintingStyle.stroke;
+
+      Path path = Path();
+      path.moveTo(0, random.nextDouble() * size.height);
+      path.quadraticBezierTo(
+        size.width / 2,
+        random.nextDouble() * size.height,
+        size.width,
+        random.nextDouble() * size.height,
+      );
+      canvas.drawPath(path, paint);
+    }
+
+    // 3. Gambar teks karakter captcha satu per satu dengan posisi & rotasi acak
+    if (captcha.isNotEmpty) {
+      double charWidth = size.width / (captcha.length + 1);
+      for (int i = 0; i < captcha.length; i++) {
+        String char = captcha[i];
+
+        TextSpan span = TextSpan(
+          text: char,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+            color: Colors.primaries[random.nextInt(Colors.primaries.length)],
+          ),
+        );
+
+        TextPainter textPainter = TextPainter(
+          text: span,
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+
+        canvas.save();
+
+        double x = charWidth * (i + 1) + (random.nextDouble() * 6 - 3);
+        double y = (size.height - textPainter.height) / 2 + (random.nextDouble() * 10 - 5);
+
+        canvas.translate(x, y);
+        canvas.rotate((random.nextDouble() - 0.5) * 0.4); // Rotasi miring acak
+
+        textPainter.paint(canvas, Offset.zero);
+        canvas.restore();
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
