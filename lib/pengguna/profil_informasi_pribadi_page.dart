@@ -19,18 +19,24 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
 
   File? _imageFile;
   String? _base64Image;
-
   final ImagePicker _picker = ImagePicker();
 
   final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _tglLahirController = TextEditingController(text: '12 Maret 2003');
-  final TextEditingController _genderController = TextEditingController(text: 'Perempuan');
-  final TextEditingController _noHpController = TextEditingController(text: '0812 3456 7850');
+  final TextEditingController _tglLahirController =
+  TextEditingController(text: '12 Maret 2003');
+  final TextEditingController _genderController =
+  TextEditingController(text: 'Perempuan');
+  final TextEditingController _noHpController =
+  TextEditingController(text: '0812 3456 7850');
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _alamatController = TextEditingController(text: 'Jl. Mastrip 84');
-  final TextEditingController _pekerjaanController = TextEditingController(text: 'Mahasiswa');
-  final TextEditingController _instansiController = TextEditingController(text: 'Jl. Mastrip 84');
-  final TextEditingController _alergiController = TextEditingController(text: 'Tidak Ada');
+  final TextEditingController _alamatController =
+  TextEditingController(text: 'Jl. Mastrip 84');
+  final TextEditingController _pekerjaanController =
+  TextEditingController(text: 'Mahasiswa');
+  final TextEditingController _instansiController =
+  TextEditingController(text: 'Jl. Mastrip 84');
+  final TextEditingController _alergiController =
+  TextEditingController(text: 'Tidak Ada');
 
   @override
   void initState() {
@@ -107,7 +113,7 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                   ),
@@ -119,9 +125,11 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                         color: const Color(0xFFEEF2FF),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.photo_library, color: Color(0xFF6679F4)),
+                      child: const Icon(Icons.photo_library_rounded,
+                          color: Color(0xFF5B4AF4)),
                     ),
-                    title: const Text('Ambil dari Galeri', style: TextStyle(fontWeight: FontWeight.w500)),
+                    title: const Text('Ambil dari Galeri',
+                        style: TextStyle(fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
                       _pickImage(ImageSource.gallery);
@@ -135,9 +143,11 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                         color: const Color(0xFFEEF2FF),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.camera_alt, color: Color(0xFF6679F4)),
+                      child: const Icon(Icons.camera_alt_rounded,
+                          color: Color(0xFF5B4AF4)),
                     ),
-                    title: const Text('Ambil dari Kamera', style: TextStyle(fontWeight: FontWeight.w500)),
+                    title: const Text('Ambil dari Kamera',
+                        style: TextStyle(fontWeight: FontWeight.w500)),
                     onTap: () {
                       Navigator.pop(context);
                       _pickImage(ImageSource.camera);
@@ -167,15 +177,33 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
 
         if (doc.exists && doc.data() != null) {
           final data = doc.data() as Map<String, dynamic>;
-          if (data.containsKey('nama')) _namaController.text = data['nama'] ?? '';
-          if (data.containsKey('tglLahir')) _tglLahirController.text = data['tglLahir'] ?? '';
-          if (data.containsKey('gender')) _genderController.text = data['gender'] ?? '';
-          if (data.containsKey('noHp')) _noHpController.text = data['noHp'] ?? '';
-          if (data.containsKey('alamat')) _alamatController.text = data['alamat'] ?? '';
-          if (data.containsKey('pekerjaan')) _pekerjaanController.text = data['pekerjaan'] ?? '';
-          if (data.containsKey('instansi')) _instansiController.text = data['instansi'] ?? '';
-          if (data.containsKey('alergi')) _alergiController.text = data['alergi'] ?? '';
-          if (data.containsKey('photoBase64')) _base64Image = data['photoBase64'];
+          if (data.containsKey('nama')) {
+            _namaController.text = data['nama'] ?? '';
+          }
+          if (data.containsKey('tglLahir')) {
+            _tglLahirController.text = data['tglLahir'] ?? '';
+          }
+          if (data.containsKey('gender')) {
+            _genderController.text = data['gender'] ?? '';
+          }
+          if (data.containsKey('noHp')) {
+            _noHpController.text = data['noHp'] ?? '';
+          }
+          if (data.containsKey('alamat')) {
+            _alamatController.text = data['alamat'] ?? '';
+          }
+          if (data.containsKey('pekerjaan')) {
+            _pekerjaanController.text = data['pekerjaan'] ?? '';
+          }
+          if (data.containsKey('instansi')) {
+            _instansiController.text = data['instansi'] ?? '';
+          }
+          if (data.containsKey('alergi')) {
+            _alergiController.text = data['alergi'] ?? '';
+          }
+          if (data.containsKey('photoBase64')) {
+            _base64Image = data['photoBase64'];
+          }
         }
       } catch (e) {
         debugPrint("Gagal memuat profil: $e");
@@ -191,7 +219,9 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
 
   Future<void> _simpanPerubahan() async {
     final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      return;
+    }
 
     setState(() {
       _isSaving = true;
@@ -238,235 +268,332 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context, true),
-        ),
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6679F4)),
-        )
-            : Column(
-          children: [
-            const Text(
-              'Informasi Pribadi',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+      body: Column(
+        children: [
+          ClipPath(
+            clipper: _InfoLiquidClipper(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 42),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
+              child: SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: Stack(
                   children: [
-                    if (_showSuccessAlert)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF86EFAC), width: 1),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Color(0xFF22C55E), size: 20),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Perubahan berhasil disimpan!',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF166534),
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _showSuccessAlert = false;
-                                  });
-                                },
-                                child: const Icon(Icons.close, size: 16, color: Color(0xFF166534)),
-                              ),
-                            ],
-                          ),
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 22,
                         ),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: _showImagePickerModal,
-                            child: Stack(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: const Color(0xFF6679F4), width: 2),
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 36,
-                                    backgroundColor: const Color(0xFFF1F5F9),
-                                    child: ClipOval(
-                                      child: _buildProfileImage(),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF6679F4),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
-                                    ),
-                                    child: const Icon(
-                                      Icons.camera_alt,
-                                      size: 11,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _namaController.text.isEmpty ? 'Nama Pengguna' : _namaController.text,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _emailController.text,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        onPressed: () => Navigator.pop(context, true),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    _buildSectionCard(
-                      title: 'Data Diri',
-                      items: [
-                        _DataRowItem(icon: Icons.person_outline, label: 'Nama Lengkap', controller: _namaController),
-                        _DataRowItem(icon: Icons.cake_outlined, label: 'Tanggal Lahir', controller: _tglLahirController),
-                        _DataRowItem(icon: Icons.wc_outlined, label: 'Jenis Kelamin', controller: _genderController),
-                        _DataRowItem(icon: Icons.phone_outlined, label: 'No. HP', controller: _noHpController),
-                        _DataRowItem(icon: Icons.email_outlined, label: 'Email', controller: _emailController, readOnly: true),
-                        _DataRowItem(icon: Icons.location_on_outlined, label: 'Alamat', controller: _alamatController),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildSectionCard(
-                      title: 'Informasi Profesi',
-                      items: [
-                        _DataRowItem(icon: Icons.work_outline, label: 'Pekerjaan', controller: _pekerjaanController),
-                        _DataRowItem(icon: Icons.business_outlined, label: 'Instansi', controller: _instansiController),
-                        _DataRowItem(icon: Icons.medical_information_outlined, label: 'Riwayat Alergi', controller: _alergiController),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6679F4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _isSaving ? null : _simpanPerubahan,
-                        child: _isSaving
-                            ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                            : const Text(
-                          'Simpan Perubahan',
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 36),
+                        child: Text(
+                          'Informasi Pribadi',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 19,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          if (_showSuccessAlert)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBBF7D0), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded,
+                        color: Color(0xFF16A34A), size: 18),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Perubahan berhasil disimpan!',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showSuccessAlert = false;
+                        });
+                      },
+                      child: const Icon(Icons.close_rounded,
+                          size: 16, color: Color(0xFF166534)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          Expanded(
+            child: _isLoading
+                ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF5B4AF4)),
+            )
+                : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+              child: Column(
+                children: [
+                  // KARTU PROFIL AVATAR
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0F172A)
+                              .withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _showImagePickerModal,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: const Color(0xFF5B4AF4),
+                                      width: 2),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 32,
+                                  backgroundColor:
+                                  const Color(0xFFEEF2FF),
+                                  child: ClipOval(
+                                      child: _buildProfileImage()),
+                                ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF5B4AF4),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_rounded,
+                                    size: 11,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _namaController.text.isEmpty
+                                    ? 'Nama Pengguna'
+                                    : _namaController.text,
+                                style: const TextStyle(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                _emailController.text,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  _buildSectionCard(
+                    title: 'Data Diri',
+                    items: [
+                      _DataRowItem(
+                          icon: Icons.person_outline_rounded,
+                          label: 'Nama Lengkap',
+                          controller: _namaController),
+                      _DataRowItem(
+                          icon: Icons.cake_outlined,
+                          label: 'Tanggal Lahir',
+                          controller: _tglLahirController),
+                      _DataRowItem(
+                          icon: Icons.wc_outlined,
+                          label: 'Jenis Kelamin',
+                          controller: _genderController),
+                      _DataRowItem(
+                          icon: Icons.phone_outlined,
+                          label: 'No. HP',
+                          controller: _noHpController),
+                      _DataRowItem(
+                          icon: Icons.email_outlined,
+                          label: 'Email',
+                          controller: _emailController,
+                          readOnly: true),
+                      _DataRowItem(
+                          icon: Icons.location_on_outlined,
+                          label: 'Alamat',
+                          controller: _alamatController),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  _buildSectionCard(
+                    title: 'Informasi Profesi',
+                    items: [
+                      _DataRowItem(
+                          icon: Icons.work_outline_rounded,
+                          label: 'Pekerjaan',
+                          controller: _pekerjaanController),
+                      _DataRowItem(
+                          icon: Icons.business_outlined,
+                          label: 'Instansi',
+                          controller: _instansiController),
+                      _DataRowItem(
+                          icon: Icons.medical_information_outlined,
+                          label: 'Riwayat Alergi',
+                          controller: _alergiController),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(
+                16, 10, 16, MediaQuery.of(context).padding.bottom + 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, -3),
+                ),
+              ],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5B4AF4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  elevation: 0,
+                ),
+                onPressed: _isSaving ? null : _simpanPerubahan,
+                child: _isSaving
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                    : const Text(
+                  'Simpan Perubahan',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildProfileImage() {
     if (_imageFile != null) {
-      return Image.file(_imageFile!, width: 72, height: 72, fit: BoxFit.cover);
+      return Image.file(_imageFile!, width: 64, height: 64, fit: BoxFit.cover);
     } else if (_base64Image != null && _base64Image!.isNotEmpty) {
       try {
         return Image.memory(
           base64Decode(_base64Image!),
-          width: 72,
-          height: 72,
+          width: 64,
+          height: 64,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) =>
-          const Icon(Icons.person, size: 36, color: Color(0xFF94A3B8)),
+          const Icon(Icons.person, size: 32, color: Color(0xFF94A3B8)),
         );
       } catch (_) {}
     }
-    return const Icon(Icons.person, size: 36, color: Color(0xFF94A3B8));
+    return const Icon(Icons.person, size: 32, color: Color(0xFF94A3B8));
   }
 
   Widget _buildSectionCard({
@@ -476,25 +603,33 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
             child: Text(
               title,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: Color(0xFF0F172A),
               ),
             ),
           ),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           ListView.separated(
+            padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,
@@ -503,19 +638,20 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
             itemBuilder: (context, index) {
               final item = items[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(9),
                       ),
                       child: Icon(
                         item.icon,
                         size: 18,
-                        color: const Color(0xFF6679F4),
+                        color: const Color(0xFF5B4AF4),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -524,9 +660,9 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                       child: Text(
                         item.label,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF475569),
+                          color: Color(0xFF64748B),
                         ),
                       ),
                     ),
@@ -538,7 +674,9 @@ class _InformasiPribadiPageState extends State<InformasiPribadiPage> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: item.readOnly ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                          color: item.readOnly
+                              ? const Color(0xFF94A3B8)
+                              : const Color(0xFF0F172A),
                         ),
                         decoration: const InputDecoration(
                           isDense: true,
@@ -570,4 +708,37 @@ class _DataRowItem {
     required this.controller,
     this.readOnly = false,
   });
+}
+
+class _InfoLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 35);
+
+    var firstControlPoint = Offset(size.width * 0.28, size.height);
+    var firstEndPoint = Offset(size.width * 0.55, size.height - 25);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.8, size.height - 50);
+    var secondEndPoint = Offset(size.width, size.height - 18);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
