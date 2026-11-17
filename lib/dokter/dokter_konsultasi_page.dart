@@ -270,6 +270,22 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        // Tombol Back di AppBar mengembalikan tab ke Beranda (Index 0)
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+          onPressed: () {
+            final berandaState = context.findAncestorStateOfType<State>();
+            if (berandaState != null && berandaState.mounted) {
+              try {
+                (berandaState as dynamic).setState(() {
+                  (berandaState as dynamic).currentIndex = 0;
+                });
+              } catch (_) {}
+            }
+          },
+        ),
         title: const Text(
           'Jadwal Booking Konsultasi',
           style: TextStyle(
@@ -278,9 +294,6 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
             color: Color(0xFF0F172A),
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        automaticallyImplyLeading: false,
         actions: [
           TextButton.icon(
             onPressed: _openRiwayat,
