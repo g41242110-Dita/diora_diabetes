@@ -77,7 +77,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Fungsi untuk mengambil dan mengunggah gambar dari Kamera atau Galeri
   Future<void> _pickAndUploadImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -136,7 +135,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Menampilkan modal pilihan Kamera & Galeri (seperti WhatsApp / referensi)
   void _showImagePickerModal() {
     showModalBottomSheet(
       context: context,
@@ -181,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: const Color(0xFFEEF2FF),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.camera_alt, color: Color(0xFF4F46E5)),
+                      child: const Icon(Icons.camera_alt, color: Color(0xFF5B4AF4)),
                     ),
                     title: const Text('Kamera', style: TextStyle(fontWeight: FontWeight.w500)),
                     onTap: () {
@@ -197,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: const Color(0xFFEEF2FF),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.photo_library, color: Color(0xFF4F46E5)),
+                      child: const Icon(Icons.photo_library, color: Color(0xFF5B4AF4)),
                     ),
                     title: const Text('Galeri', style: TextStyle(fontWeight: FontWeight.w500)),
                     onTap: () {
@@ -217,10 +215,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _getInitials(String name) {
     if (name.trim().isEmpty) return 'U';
     List<String> names = name.trim().split(' ');
-    if (names.length >= 2) {
-      return '${names[0][0]}${names[1][0]}'.toUpperCase();
+    if (names.isNotEmpty) {
+      return names[0][0].toUpperCase();
     }
-    return names[0][0].toUpperCase();
+    return 'U';
   }
 
   void _handleBackAction() {
@@ -229,6 +227,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 12;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -237,85 +237,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
-        body: SafeArea(
-          child: _isLoading
-              ? const Center(
-            child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
-          )
-              : Column(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  _buildTopGradientHeader(),
-                  Positioned(
-                    top: 65,
-                    left: 20,
-                    right: 20,
-                    child: _buildFloatingCard(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 105),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: _buildMenuList(),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
+        body: _isLoading
+            ? const Center(
+          child: CircularProgressIndicator(color: Color(0xFF5B4AF4)),
+        )
+            : Column(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                _buildTopGradientHeader(topPadding),
+                Positioned(
+                  top: topPadding + 53,
+                  left: 20,
+                  right: 20,
+                  child: _buildFloatingCard(),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 76),
+            Expanded(
+              child: _buildMenuList(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildTopGradientHeader() {
-    return Container(
-      width: double.infinity,
-      height: 155,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5), Color(0xFF4338CA)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildTopGradientHeader(double topPadding) {
+    return ClipPath(
+      clipper: _ProfilLiquidClipper(),
+      child: Container(
+        width: double.infinity,
+        height: topPadding + 165,
+        padding: EdgeInsets.fromLTRB(16, topPadding, 16, 12),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF3B0066),
+              Color(0xFF5B4AF4),
+              Color(0xFF388BFF),
+            ],
+            stops: [0.0, 0.5, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: _handleBackAction,
-            borderRadius: BorderRadius.circular(50),
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: double.infinity,
+            height: 38,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                  left: 0,
+                  child: InkWell(
+                    onTap: _handleBackAction,
+                    borderRadius: BorderRadius.circular(50),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
+                const Text(
+                  'Profil Saya',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          const Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Text(
-              'Profil Saya',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -350,7 +351,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4F46E5),
+                          color: const Color(0xFF5B4AF4),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -417,7 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             border: Border.all(color: const Color(0xFFEEF2FF), width: 4),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF4F46E5).withValues(alpha: 0.15),
+                color: const Color(0xFF5B4AF4).withValues(alpha: 0.15),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -449,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: Colors.white, width: 4),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F46E5).withValues(alpha: 0.15),
+            color: const Color(0xFF5B4AF4).withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -461,7 +462,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(
             fontSize: size * 0.36,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF4F46E5),
+            color: const Color(0xFF5B4AF4),
           ),
         ),
       ),
@@ -470,13 +471,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildMenuList() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildMenuItem(
             icon: Icons.person_outline_rounded,
-            iconColor: const Color(0xFF4F46E5),
+            iconColor: const Color(0xFF5B4AF4),
             bgColor: const Color(0xFFEEF2FF),
             title: 'Informasi Pribadi',
             subtitle: 'Ubah data diri & akun',
@@ -558,7 +559,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onTap,
     bool isLogout = false,
   }) {
-    // ignore: unnecessary_null_comparison
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -578,7 +578,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             child: Row(
               children: [
                 Container(
@@ -626,4 +626,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
+
+class _ProfilLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 40);
+
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    var secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
