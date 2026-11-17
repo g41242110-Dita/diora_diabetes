@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:firebase_auth/firebase_auth.dart';
 import 'login_page.dart';
 
 class KeluarPage extends StatelessWidget {
@@ -17,7 +17,7 @@ class KeluarPage extends StatelessWidget {
             padding: const EdgeInsets.all(28.0),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.12),
@@ -29,110 +29,83 @@ class KeluarPage extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Badge Icon Logout dengan Soft Gradient Red
                 Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF0F0), Color(0xFFFFDADA)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                  width: 64,
+                  height: 64,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEE2E2),
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF83B3B).withValues(alpha: 0.15),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: const Center(
                     child: Icon(
                       Icons.logout_rounded,
-                      color: Color(0xFFE53935),
-                      size: 34,
+                      color: Color(0xFFEF4444),
+                      size: 30,
                     ),
                   ),
                 ),
-                const SizedBox(height: 22),
-
-                // Judul Dialog
+                const SizedBox(height: 18),
                 const Text(
                   'Sesi Akan Berakhir',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                    letterSpacing: -0.3,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 10),
-
-                // Subtitle / Keterangan
+                const SizedBox(height: 8),
                 const Text(
-                  'Apakah Anda yakin ingin keluar?\nAnda perlu masuk kembali untuk mengakses akun Diora.',
+                  'Apakah Anda yakin ingin keluar?\nAnda perlu masuk kembali untuk mengakses akun.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     color: Color(0xFF64748B),
-                    height: 1.45,
+                    height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 30),
-
-                // Action Buttons Row
+                const SizedBox(height: 24),
                 Row(
                   children: [
-                    // Tombol Batal
                     Expanded(
                       child: SizedBox(
-                        height: 48,
+                        height: 46,
                         child: TextButton(
                           style: TextButton.styleFrom(
                             backgroundColor: const Color(0xFFF1F5F9),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(23),
                             ),
                           ),
                           onPressed: () => Navigator.pop(dialogContext),
                           child: const Text(
                             'Batal',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF475569),
+                              color: Color(0xFF64748B),
                             ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
-
-                    // Tombol Ya, Keluar
                     Expanded(
                       child: SizedBox(
-                        height: 48,
+                        height: 46,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE53935),
+                            backgroundColor: const Color(0xFFEF4444),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(23),
                             ),
-                            shadowColor: const Color(0xFFE53935).withValues(alpha: 0.3),
                           ),
                           onPressed: () async {
-                            Navigator.pop(dialogContext); // Tutup Pop-Up
-
-                            // 1. SIGN OUT DARI FIREBASE AUTH
+                            Navigator.pop(dialogContext);
                             await FirebaseAuth.instance.signOut();
 
                             if (!context.mounted) return;
-
-                            // 2. Pindah ke LoginPage & Bersihkan Stack Navigation
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(
@@ -144,7 +117,7 @@ class KeluarPage extends StatelessWidget {
                           child: const Text(
                             'Keluar',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -164,137 +137,200 @@ class KeluarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF6679F4)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Judul Halaman
-                const Text(
-                  'Keluar',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+      body: Column(
+        children: [
+          ClipPath(
+            clipper: _LogoutLiquidClipper(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 42),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const Spacer(flex: 1),
-
-                // Ikon Logout Lingkaran Merah Utama
-                Container(
-                  width: 190,
-                  height: 190,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFCE8E6),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.logout_rounded,
-                      size: 85,
-                      color: Color(0xFFF83B3B),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Text Pertanyaan & Subtitle
-                const Text(
-                  'Yakin Ingin Keluar?',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Anda akan mengakhiri\nsesi dan keluar dari aplikasi',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF475569),
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Tombol Ya, Keluar (Triggers Dialog)
-                SizedBox(
-                  width: 220,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6679F4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: () => _showLogoutConfirmationDialog(context),
-                    child: const Text(
-                      'Ya, Keluar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        onPressed: () => Navigator.pop(context),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Tombol Batal
-                SizedBox(
-                  width: 220,
-                  height: 48,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black, width: 1.2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 36),
+                        child: Text(
+                          'Keluar',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Batal',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
-                const Spacer(flex: 2),
-              ],
+              ),
             ),
           ),
-        ),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 130,
+                      height: 130,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFEE2E2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.logout_rounded,
+                          size: 60,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Yakin Ingin Keluar?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Anda akan mengakhiri sesi dan keluar dari aplikasi Diora.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () => _showLogoutConfirmationDialog(context),
+                        child: const Text(
+                          'Ya, Keluar',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(
+                              color: Color(0xFFCBD5E1), width: 1.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Batal',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _LogoutLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 35);
+
+    var firstControlPoint = Offset(size.width * 0.28, size.height);
+    var firstEndPoint = Offset(size.width * 0.55, size.height - 25);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.8, size.height - 50);
+    var secondEndPoint = Offset(size.width, size.height - 18);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
