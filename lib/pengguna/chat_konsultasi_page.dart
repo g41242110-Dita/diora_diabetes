@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'doctor_model.dart';
 import 'konsultasi_selesai_page.dart';
 
@@ -30,7 +31,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
   bool _isLoadingSkrining = true;
   bool _sudahSkrining = false;
 
-  // Variabel untuk melacak status jika sedang mengedit pesan
   String? _editingMessageId;
 
   @override
@@ -45,30 +45,67 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     super.dispose();
   }
 
-  // 1. Cek apakah user sudah pernah melakukan skrining di 'screening_results'
-  Future<void> _cekStatusSkrining() async {
+  // Helper untuk mengambil daftar hasil skrining milik user yang sedang login
+  Future _ambilDataSkriningUser() async {
+    final String? uid = FirebaseAuth.instance.currentUser?.uid;
+    var hasilList = [];
+
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('screening_results')
-          .where('user_id', isEqualTo: widget.currentUserId)
-          .get();
-
-      if (query.docs.isEmpty) {
-        final fallbackQuery = await FirebaseFirestore.instance
+      // 1. Cari berdasarkan Firebase Auth UID (paling akurat)
+      if (uid != null && uid.isNotEmpty) {
+        final byUid = await FirebaseFirestore.instance
             .collection('screening_results')
+            .where('user_id', isEqualTo: uid)
             .get();
-
-        if (fallbackQuery.docs.isEmpty) {
-          setState(() {
-            _sudahSkrining = false;
-            _isLoadingSkrining = false;
-          });
-          return;
+        if (byUid.docs.isNotEmpty) {
+          hasilList = byUid.docs.map((d) => d.data()).toList();
         }
       }
 
+      // 2. Jika kosong, cari berdasarkan currentUserId
+      if (hasilList.isEmpty && widget.currentUserId.isNotEmpty) {
+        final byCurrentUser = await FirebaseFirestore.instance
+            .collection('screening_results')
+            .where('user_id', isEqualTo: widget.currentUserId)
+            .get();
+        if (byCurrentUser.docs.isNotEmpty) {
+          hasilList = byCurrentUser.docs.map((d) => d.data()).toList();
+        }
+      }
+
+      // 3. Jika masih kosong, cari berdasarkan field 'nama'
+      if (hasilList.isEmpty && widget.currentUserId.isNotEmpty) {
+        final byNama = await FirebaseFirestore.instance
+            .collection('screening_results')
+            .where('nama', isEqualTo: widget.currentUserId)
+            .get();
+        if (byNama.docs.isNotEmpty) {
+          hasilList = byNama.docs.map((d) => d.data()).toList();
+        }
+      }
+
+      // Urutkan berdasarkan waktu agar data terbaru berada di urutan akhir (.last)
+      if (hasilList.isNotEmpty) {
+        hasilList.sort((dataA, dataB) {
+          final dynamic tsA = dataA['created_at'] ?? dataA['timestamp'];
+          final dynamic tsB = dataB['created_at'] ?? dataB['timestamp'];
+          if (tsA == null || tsB == null) return 0;
+          return tsA.compareTo(tsB);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error saat mengambil data skrining user: $e');
+    }
+
+    return hasilList;
+  }
+
+  // 1. Cek apakah user sudah pernah melakukan skrining
+  Future<void> _cekStatusSkrining() async {
+    try {
+      final listData = await _ambilDataSkriningUser();
       setState(() {
-        _sudahSkrining = true;
+        _sudahSkrining = listData.isNotEmpty;
         _isLoadingSkrining = false;
       });
     } catch (e) {
@@ -80,7 +117,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     }
   }
 
-  // 2. Tarik dan Kirim Hasil Skrining Persis Sesuai Data Asli Tes Pengguna
+  // 2. Tarik dan Kirim Hasil Skrining Terbaru Milik User Sendiri via Penjepit
   Future<void> _tarikDanKirimHasilSkriningViaPenjepit() async {
     try {
       final chatRef = FirebaseFirestore.instance
@@ -102,28 +139,20 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         return;
       }
 
-      var query = await FirebaseFirestore.instance
-          .collection('screening_results')
-          .where('user_id', isEqualTo: widget.currentUserId)
-          .get();
+      final listData = await _ambilDataSkriningUser();
 
-      if (query.docs.isEmpty) {
-        query = await FirebaseFirestore.instance
-            .collection('screening_results')
-            .get();
-      }
-
-      if (query.docs.isEmpty) {
+      if (listData.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Belum ada data hasil skrining ditemukan.')),
+                content: Text('Belum ada data hasil skrining untuk akun Anda.')),
           );
         }
         return;
       }
 
-      final dataSkrining = query.docs.last.data();
+      // Ambil data paling akhir (terbaru) setelah diurutkan
+      final dataSkrining = listData.last;
       final String nama = dataSkrining['nama'] ?? 'Pengguna';
       final String umur = (dataSkrining['umur'] ?? '-').toString();
       final String jenisKelamin = dataSkrining['jenisKelamin'] ?? '-';
@@ -168,7 +197,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Hasil skrining asli berhasil dikirim ke dokter!')),
+              content: Text('Hasil skrining terbaru berhasil dikirim ke dokter!')),
         );
       }
     } catch (e) {
@@ -342,7 +371,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       );
     }
 
-    // Jika belum melakukan skrining, kunci halaman chat dan beri tombol peringatan
     if (!_sudahSkrining) {
       return Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
@@ -440,7 +468,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
           backgroundColor: const Color(0xFFF8FAFC),
           body: Column(
             children: [
-              // HEADER GRADIENT MODERN SELARAS DENGAN HALAMAN KONSULTASI
+              // HEADER GRADIENT
               Container(
                 padding: EdgeInsets.fromLTRB(16, topPadding, 16, 14),
                 decoration: const BoxDecoration(
@@ -530,7 +558,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                 ),
               ),
 
-              // BANNER JADWAL AKTIF RAPI & PROPORSIONAL
+              // BANNER JADWAL AKTIF
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 padding:
