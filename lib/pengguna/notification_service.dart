@@ -72,4 +72,39 @@ class NotificationService {
   Future<void> cancelNotification(int id) async {
     await _flutterLocalNotificationsPlugin.cancel(id);
   }
+
+  /// =========================================================================
+  /// TAMBAHAN: Fungsi untuk memunculkan notifikasi pop-up & suara chat dokter
+  /// =========================================================================
+  Future<void> showChatNotification({
+    required int id,
+    required String namaPasien,
+    required String pesan,
+    bool isScreeningSummary = false,
+  }) async {
+    final String judul = isScreeningSummary
+        ? '📥 Laporan Skrining Baru dari $namaPasien'
+        : '💬 Pesan dari $namaPasien';
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'chat_dokter_channel',
+      'Chat Pasien',
+      channelDescription: 'Notifikasi pesan masuk dari pasien secara real-time',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'Pesan Baru',
+      playSound: true,
+      enableVibration: true,
+    );
+
+    const NotificationDetails notificationDetails =
+    NotificationDetails(android: androidDetails);
+
+    await _flutterLocalNotificationsPlugin.show(
+      id,
+      judul,
+      pesan,
+      notificationDetails,
+    );
+  }
 }
