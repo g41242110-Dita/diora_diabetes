@@ -22,20 +22,6 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
     super.dispose();
   }
 
-  /// Cek apakah shift dokter sedang aktif berdasarkan jam saat ini
-  bool _isShiftAktif(int jamMulai, int jamSelesai) {
-    if (jamMulai == 0 && jamSelesai == 0) return false;
-
-    final currentHour = DateTime.now().hour;
-
-    // Shift Malam Lintas Hari (contoh: 23.00 - 07.00)
-    if (jamMulai > jamSelesai) {
-      return (currentHour >= jamMulai || currentHour < jamSelesai);
-    }
-    // Shift Normal Hari yang Sama (contoh: 07.00 - 15.00)
-    return (currentHour >= jamMulai && currentHour < jamSelesai);
-  }
-
   String _formatShiftText(int jamMulai, int jamSelesai) {
     if (jamMulai == 0 && jamSelesai == 0) {
       return 'Libur Hari Ini';
@@ -49,86 +35,109 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
         children: [
-          // HEADER BIRU GRADIENT DENGAN SEARCH BAR
-          Container(
-            padding: EdgeInsets.fromLTRB(
-                16, MediaQuery.of(context).padding.top + 12, 16, 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6679F4), Color(0xFF8B5CF6)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_rounded,
-                            color: Colors.white, size: 20),
-                        onPressed: () => Navigator.maybePop(context),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Konsultasi',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ],
+          // HEADER GRADIENT DENGAN EFEK LIQUID/WAVE
+          ClipPath(
+            clipper: LiquidHeaderClipper(),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 52),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF3B0066), Color(0xFF5B4AF4), Color(0xFF388BFF)],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 16),
-                Container(
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) {
-                      setState(() {
-                        _searchQuery = val.toLowerCase();
-                      });
-                    },
-                    style: const TextStyle(fontSize: 13.5),
-                    decoration: const InputDecoration(
-                      hintText: 'Cari Dokter atau Spesialis ...',
-                      hintStyle:
-                      TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                      prefixIcon: Icon(Icons.search_rounded,
-                          size: 20, color: Color(0xFF6679F4)),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // TULISAN KONSULTASI DI TENGAH MENGGUNAKAN STACK
+                  SizedBox(
+                    height: 36,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 24,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => Navigator.maybePop(context),
+                          ),
+                        ),
+                        const Text(
+                          'Konsultasi',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+
+                  // SEARCH BAR RAMPING & CAPSULE ESTETIK
+                  Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF000000).withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF5B4AF4).withValues(alpha: 0.06),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val.toLowerCase();
+                        });
+                      },
+                      textAlignVertical: TextAlignVertical.center,
+                      style: const TextStyle(fontSize: 12.5),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        hintText: 'Cari Dokter atau Spesialis ...',
+                        hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          size: 18,
+                          color: Color(0xFF5B4AF4),
+                        ),
+                        prefixIconConstraints: BoxConstraints(
+                          minWidth: 38,
+                          minHeight: 40,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -160,7 +169,6 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                       doc.data() as Map<String, dynamic>, doc.id);
                 }).toList();
 
-                // Filter pencarian berdasarkan nama atau spesialis
                 if (_searchQuery.isNotEmpty) {
                   doctorsList = doctorsList.where((doc) {
                     return doc.nama.toLowerCase().contains(_searchQuery) ||
@@ -169,195 +177,177 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                 }
 
                 return SingleChildScrollView(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Pilih dokter yang sesuai dengan kebutuhanmu.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                      const SizedBox(height: 12),
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: doctorsList.length,
-                        separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final doctor = doctorsList[index];
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
+                  child: ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: doctorsList.length,
+                    separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final doctor = doctorsList[index];
 
-                          // STATUS MURNI MEMBACA DARI DATABASE FIREBASE
-                          final bool isOnline = doctor.isOnline;
-                          final bool isBusy = doctor.isBusyInChat;
-                          final String shiftText = _formatShiftText(
-                              doctor.jamMulai, doctor.jamSelesai);
+                      final bool isOnline = doctor.isOnline;
+                      final bool isBusy = doctor.isBusyInChat;
+                      final String shiftText = _formatShiftText(
+                          doctor.jamMulai, doctor.jamSelesai);
 
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFF1F5F9)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF0F172A)
-                                      .withValues(alpha: 0.04),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0F172A)
+                                  .withValues(alpha: 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(16),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(16),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DetailDokterPage(
-                                        doctor: doctor,
-                                        namaUser: widget.namaUser,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(14),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      const CircleAvatar(
-                                        radius: 28,
-                                        backgroundColor: Color(0xFFEEF2FF),
-                                        child: Icon(Icons.person_rounded,
-                                            size: 32,
-                                            color: Color(0xFF4F46E5)),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DetailDokterPage(
+                                    doctor: doctor,
+                                    namaUser: widget.namaUser,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const CircleAvatar(
+                                    radius: 28,
+                                    backgroundColor: Color(0xFFEEF2FF),
+                                    child: Icon(Icons.person_rounded,
+                                        size: 32, color: Color(0xFF4F46E5)),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                           crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                           children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                              MainAxisAlignment
-                                                  .spaceBetween,
-                                              crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    doctor.nama,
-                                                    style: const TextStyle(
-                                                      fontSize: 13.5,
-                                                      fontWeight:
-                                                      FontWeight.bold,
-                                                      color: Color(0xFF0F172A),
-                                                      height: 1.2,
-                                                    ),
-                                                    maxLines: 2,
-                                                    overflow:
-                                                    TextOverflow.ellipsis,
-                                                  ),
+                                            Expanded(
+                                              child: Text(
+                                                doctor.nama,
+                                                style: const TextStyle(
+                                                  fontSize: 13.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF0F172A),
+                                                  height: 1.2,
                                                 ),
-                                                const SizedBox(width: 8),
-
-                                                // BADGE STATUS DOKTER (BERDASARKAN FIREBASE)
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: isOnline
-                                                        ? (isBusy
-                                                        ? const Color(0xFFFFF7ED)
-                                                        : const Color(0xFFF0FDF4))
-                                                        : const Color(0xFFF1F5F9),
-                                                    borderRadius:
-                                                    BorderRadius.circular(6),
-                                                  ),
-                                                  child: Text(
-                                                    isOnline
-                                                        ? (isBusy
-                                                        ? 'Dalam Sesi'
-                                                        : 'Online')
-                                                        : 'Offline',
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      fontWeight:
-                                                      FontWeight.bold,
-                                                      color: isOnline
-                                                          ? (isBusy
-                                                          ? const Color(0xFFC2410C)
-                                                          : const Color(0xFF15803D))
-                                                          : const Color(0xFF64748B),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                            const SizedBox(height: 3),
-                                            Text(
-                                              doctor.spesialis,
-                                              style: const TextStyle(
-                                                  fontSize: 11,
-                                                  color: Color(0xFF64748B)),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                    Icons.star_rounded,
-                                                    size: 15,
-                                                    color: Colors.amber),
-                                                const SizedBox(width: 2),
-                                                Text(
-                                                  doctor.rating,
-                                                  style: const TextStyle(
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                      FontWeight.bold),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '(${doctor.ulasan} ulasan)',
-                                                  style: const TextStyle(
-                                                      fontSize: 11,
-                                                      color: Color(0xFF94A3B8)),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              shiftText,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4),
+                                              decoration: BoxDecoration(
                                                 color: isOnline
-                                                    ? const Color(0xFF16A34A)
-                                                    : const Color(0xFF94A3B8),
+                                                    ? (isBusy
+                                                    ? const Color(
+                                                    0xFFFFF7ED)
+                                                    : const Color(
+                                                    0xFFF0FDF4))
+                                                    : const Color(0xFFF1F5F9),
+                                                borderRadius:
+                                                BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                isOnline
+                                                    ? (isBusy
+                                                    ? 'Dalam Sesi'
+                                                    : 'Online')
+                                                    : 'Offline',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isOnline
+                                                      ? (isBusy
+                                                      ? const Color(
+                                                      0xFFC2410C)
+                                                      : const Color(
+                                                      0xFF15803D))
+                                                      : const Color(0xFF64748B),
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          doctor.spesialis,
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF64748B)),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.star_rounded,
+                                                size: 15, color: Colors.amber),
+                                            const SizedBox(width: 2),
+                                            Text(
+                                              doctor.rating,
+                                              style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '(${doctor.ulasan} ulasan)',
+                                              style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: Color(0xFF94A3B8)),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          shiftText,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: isOnline
+                                                ? const Color(0xFF16A34A)
+                                                : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
@@ -367,4 +357,38 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
       ),
     );
   }
+}
+
+// CUSTOM CLIPPER UNTUK EFEK GELOMBANG CAIRAN (LIQUID WAVE)
+class LiquidHeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 40);
+
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    var secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
