@@ -59,98 +59,115 @@ class _SkriningPageState extends State<SkriningPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(16, topPadding, 20, 24),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6679F4), Color(0xFF8DA0FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          ClipPath(
+            clipper: _SkriningLiquidClipper(),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, topPadding, 16, 52),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(28),
-                bottomRight: Radius.circular(28),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        size: 24,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        if (widget.onBackToHome != null) {
-                          widget.onBackToHome!();
-                        } else if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                      },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 22,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              if (widget.onBackToHome != null) {
+                                widget.onBackToHome!();
+                              } else if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              }
+                            },
+                          ),
+                        ),
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 36),
+                            child: Text(
+                              'Skrining Gejala Diabetes',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Skrining Gejala Diabetes',
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: const LinearProgressIndicator(
+                            value: 0.5,
+                            minHeight: 7,
+                            backgroundColor: Color(0x33FFFFFF),
+                            valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        '1/2',
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                           color: Colors.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: const LinearProgressIndicator(
-                          value: 0.5,
-                          minHeight: 7,
-                          backgroundColor: Color(0x33FFFFFF),
-                          valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      '1/2',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
               child: Container(
                 padding: const EdgeInsets.all(20.0),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                   border: Border.all(
@@ -175,10 +192,10 @@ class _SkriningPageState extends State<SkriningPage> {
                       style: TextStyle(
                         fontSize: 12.5,
                         color: Color(0xFF64748B),
-                        height: 1.3,
+                        height: 1.35,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     if (_showErrorBanner)
                       Container(
                         width: double.infinity,
@@ -238,7 +255,7 @@ class _SkriningPageState extends State<SkriningPage> {
                         dropdownColor: Colors.white,
                         style: const TextStyle(
                           fontSize: 13.5,
-                          color: Color(0xFF1E293B),
+                          color: Color(0xFF0F172A),
                         ),
                         hint: const Text(
                           'Pilih jenis kelamin',
@@ -274,7 +291,7 @@ class _SkriningPageState extends State<SkriningPage> {
                       height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6679F4),
+                          backgroundColor: const Color(0xFF5B4AF4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
@@ -307,7 +324,7 @@ class _SkriningPageState extends State<SkriningPage> {
       style: const TextStyle(
         fontSize: 13.5,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF1E293B),
+        color: Color(0xFF0F172A),
       ),
     );
   }
@@ -326,7 +343,7 @@ class _SkriningPageState extends State<SkriningPage> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+        style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
         onChanged: (val) {
           if (_showErrorBanner && val.isNotEmpty) {
             setState(() {
@@ -344,4 +361,37 @@ class _SkriningPageState extends State<SkriningPage> {
       ),
     );
   }
+}
+
+class _SkriningLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 40);
+
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    var secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
