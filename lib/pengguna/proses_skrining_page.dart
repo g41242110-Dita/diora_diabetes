@@ -49,7 +49,8 @@ class _ProsesSkriningPageState extends State<ProsesSkriningPage> {
         'Gatal gatal': widget.answers['Gatal gatal'] ?? 0,
         'Mudah marah': widget.answers['Mudah marah'] ?? 0,
         'Luka sulit sembuh': widget.answers['Luka sulit sembuh'] ?? 0,
-        'Kelemahan sebagian tubuh': widget.answers['Kelemahan sebagian tubuh'] ?? 0,
+        'Kelemahan sebagian tubuh':
+        widget.answers['Kelemahan sebagian tubuh'] ?? 0,
         'Kaku otot': widget.answers['Kaku otot'] ?? 0,
         'Rambut rontok': widget.answers['Rambut rontok'] ?? 0,
         'Obesitas': widget.answers['Obesitas'] ?? 0,
@@ -83,7 +84,9 @@ class _ProsesSkriningPageState extends State<ProsesSkriningPage> {
                 builder: (context) => HasilSkriningPage(
                   nama: widget.answers['Nama'] ?? 'Pengguna',
                   umur: widget.answers['Umur'].toString(),
-                  jenisKelamin: widget.answers['Jenis Kelamin'] == 1 ? 'Laki-laki' : 'Perempuan',
+                  jenisKelamin: widget.answers['Jenis Kelamin'] == 1
+                      ? 'Laki-laki'
+                      : 'Perempuan',
                   isPositif: isPositif,
                 ),
               ),
@@ -92,7 +95,6 @@ class _ProsesSkriningPageState extends State<ProsesSkriningPage> {
         }
       });
     } catch (e, stackTrace) {
-      // Menggunakan developer.log sebagai pengganti print() untuk production logging
       developer.log(
         'Gagal mengirim atau memproses data skrining',
         error: e,
@@ -110,68 +112,152 @@ class _ProsesSkriningPageState extends State<ProsesSkriningPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
     int persen = (_progress * 100).toInt();
 
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                const Icon(
-                  Icons.assignment_turned_in_rounded,
-                  size: 130,
-                  color: Color(0xFF6679F4),
-                ),
-                const SizedBox(height: 28),
-                const Text(
-                  'Menganalisis Jawaban . . .',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: Column(
+          children: [
+            ClipPath(
+              clipper: _ProsesLiquidClipper(),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.fromLTRB(16, topPadding, 16, 46),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF3B0066),
+                      Color(0xFF5B4AF4),
+                      Color(0xFF388BFF),
+                    ],
+                    stops: [0.0, 0.5, 1.0],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Mohon tunggu sebentar, ya.\nModel AI sedang memproses hasil skrining Anda.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    height: 1.4,
+                child: const SizedBox(
+                  width: double.infinity,
+                  height: 36,
+                  child: Center(
+                    child: Text(
+                      'Proses Skrining',
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-                const Spacer(),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: _progress,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey.shade200,
-                    color: const Color(0xFF6679F4),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$persen%',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 30),
-              ],
+              ),
             ),
-          ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(),
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEEF2FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.assignment_turned_in_rounded,
+                          size: 74,
+                          color: Color(0xFF5B4AF4),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      'Menganalisis Jawaban . . .',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Mohon tunggu sebentar, ya.\nModel AI sedang memproses hasil skrining Anda.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                    const Spacer(),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: _progress,
+                        minHeight: 8,
+                        backgroundColor: const Color(0xFFE2E8F0),
+                        color: const Color(0xFF5B4AF4),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$persen%',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFF5B4AF4),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 28),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _ProsesLiquidClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    var path = Path();
+    path.lineTo(0, size.height - 40);
+
+    var firstControlPoint = Offset(size.width * 0.25, size.height);
+    var firstEndPoint = Offset(size.width * 0.5, size.height - 30);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
+
+    var secondControlPoint = Offset(size.width * 0.75, size.height - 60);
+    var secondEndPoint = Offset(size.width, size.height - 20);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
