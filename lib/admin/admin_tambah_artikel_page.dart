@@ -1,3 +1,5 @@
+// ignore_for_file: spelling
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -48,29 +50,63 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
   @override
   void initState() {
     super.initState();
-    _judulController = TextEditingController(text: widget.dataArtikel?['title'] ?? '');
-    _isiController = TextEditingController(text: widget.dataArtikel?['content'] ?? '');
+    _judulController =
+        TextEditingController(text: widget.dataArtikel?['title'] ?? '');
     _status = widget.dataArtikel?['status'] ?? 'Publis';
-    _existingImageUrl = widget.dataArtikel?['thumbnail'] ?? widget.dataArtikel?['imageUrl'];
+    _existingImageUrl =
+        widget.dataArtikel?['thumbnail'] ?? widget.dataArtikel?['imageUrl'];
 
-    // Load inline images jika ada data lama
+    // 1. Load inline_images jika sudah ada
     if (widget.dataArtikel?['inline_images'] != null) {
-      Map<String, dynamic> rawMap = Map<String, dynamic>.from(widget.dataArtikel!['inline_images']);
-      _inlineImages = rawMap.map((key, value) => MapEntry(key, value.toString()));
+      final rawMap =
+      Map<String, dynamic>.from(widget.dataArtikel!['inline_images']);
+      _inlineImages =
+          rawMap.map((key, value) => MapEntry(key, value.toString()));
       _imageCounter = _inlineImages.length + 1;
     }
 
+    // 2. Bersihkan string Base64 mentah jika ada di dalam content artikel lama
+    //    lalu ubah menjadi tag [FOTO_1] + simpan ke _inlineImages agar bisa dipratinjau sebagai foto
+    String initialContent = (widget.dataArtikel?['content'] ?? '').toString();
+    final base64Regex = RegExp(
+      r'(!\[.*?\]\()?(data:image\/[a-zA-Z0-9+.-]+;base64,[A-Za-z0-9+/=\s]+)\)?',
+    );
+
+    initialContent = initialContent.replaceAllMapped(base64Regex, (match) {
+      final rawDataUri = (match.group(2) ?? '').replaceAll(RegExp(r'\s+'), '');
+      if (rawDataUri.isEmpty) return '';
+
+      String? existingTag;
+      for (final entry in _inlineImages.entries) {
+        if (entry.value == rawDataUri) {
+          existingTag = entry.key;
+          break;
+        }
+      }
+
+      if (existingTag != null) return '\n$existingTag\n';
+
+      final newTag = '[FOTO_$_imageCounter]';
+      _inlineImages[newTag] = rawDataUri;
+      _imageCounter++;
+      return '\n$newTag\n';
+    });
+
+    _isiController = TextEditingController(text: initialContent.trim());
+
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 450),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animController, curve: Curves.easeOut),
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.06),
+      begin: const Offset(0, 0.03),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic));
+    ).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
 
     _animController.forward();
   }
@@ -83,59 +119,65 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     super.dispose();
   }
 
-  // 1. PILIH THUMBNAIL UTAMA DARI GALERI (KOMPRES BASE64 RINGAN)
   Future<void> _pickThumbnailFromGallery() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 500,
-        imageQuality: 50,
+        maxWidth: 600,
+        imageQuality: 60,
       );
       if (pickedFile != null) {
-        var bytes = await pickedFile.readAsBytes();
-        String base64Image = base64Encode(bytes);
+        final bytes = await pickedFile.readAsBytes();
+        final base64Image = base64Encode(bytes);
         setState(() {
-          _base64Thumbnail = "data:image/jpeg;base64,$base64Image";
+          _base64Thumbnail = 'data:image/jpeg;base64,$base64Image';
         });
       }
     } catch (e) {
-      debugPrint("Gagal mengambil gambar thumbnail: $e");
+      debugPrint('Gagal mengambil gambar thumbnail: $e');
     }
   }
 
-  // 2. SISIPKAN GAMBAR GALERI DENGAN TAG BERSIH [FOTO_1], [FOTO_2]
   Future<void> _insertImageToContent() async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 600,
-        imageQuality: 55,
+        maxWidth: 650,
+        imageQuality: 60,
       );
       if (pickedFile != null) {
-        var bytes = await pickedFile.readAsBytes();
-        String base64Image = "data:image/jpeg;base64,${base64Encode(bytes)}";
+        final bytes = await pickedFile.readAsBytes();
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
 
-        String tag = "[FOTO_$_imageCounter]";
+        final tag = '[FOTO_$_imageCounter]';
         setState(() {
           _inlineImages[tag] = base64Image;
           _imageCounter++;
         });
 
-        // Sisipkan penanda tag bersih ke dalam teks kursor
-        _insertTextAtCursor("\n\n$tag\n\n");
+        _insertTextAtCursor('\n\n$tag\n\n');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Foto disisipkan sebagai penanda $tag!'),
-              backgroundColor: const Color(0xFF166534),
+              content: Text(
+                'Foto disisipkan sebagai $tag (akan tampil sebagai foto di pembaca).',
+              ),
+              backgroundColor: const Color(0xFF0D9488),
             ),
           );
         }
       }
     } catch (e) {
-      debugPrint("Gagal menyisipkan gambar: $e");
+      debugPrint('Gagal menyisipkan gambar: $e');
     }
+  }
+
+  void _removeInlineImage(String tag) {
+    setState(() {
+      _inlineImages.remove(tag);
+      _isiController.text = _isiController.text.replaceAll(tag, '').trim();
+    });
   }
 
   void _insertTextAtCursor(String insertText) {
@@ -143,14 +185,17 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     final selection = _isiController.selection;
 
     if (selection.isValid && selection.baseOffset >= 0) {
-      final newText = text.replaceRange(selection.start, selection.end, insertText);
+      final newText =
+      text.replaceRange(selection.start, selection.end, insertText);
       _isiController.value = TextEditingValue(
         text: newText,
-        selection: TextSelection.collapsed(offset: selection.start + insertText.length),
+        selection:
+        TextSelection.collapsed(offset: selection.start + insertText.length),
       );
     } else {
       _isiController.text += insertText;
-      _isiController.selection = TextSelection.collapsed(offset: _isiController.text.length);
+      _isiController.selection =
+          TextSelection.collapsed(offset: _isiController.text.length);
     }
   }
 
@@ -175,7 +220,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     });
   }
 
-  // 3. SIMPAN ARTIKEL KE FIRESTORE DATABASE
   Future<void> _simpanArtikelKeFirestore() async {
     final judul = _judulController.text.trim();
     final isi = _isiController.text.trim();
@@ -184,7 +228,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Judul dan isi artikel tidak boleh kosong!'),
-          backgroundColor: Color(0xFFEF4444),
+          backgroundColor: Color(0xFFE11D48),
         ),
       );
       return;
@@ -195,7 +239,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     });
 
     try {
-      String finalThumbnail = _base64Thumbnail ?? _existingImageUrl ?? '';
+      final finalThumbnail = _base64Thumbnail ?? _existingImageUrl ?? '';
 
       final data = {
         'title': judul,
@@ -203,18 +247,23 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
         'thumbnail': finalThumbnail,
         'inline_images': _inlineImages,
         'status': _status,
-        'created_at': widget.dataArtikel?['created_at'] ?? FieldValue.serverTimestamp(),
+        'created_at':
+        widget.dataArtikel?['created_at'] ?? FieldValue.serverTimestamp(),
         'updated_at': FieldValue.serverTimestamp(),
       };
 
       if (widget.docId != null) {
-        await FirebaseFirestore.instance.collection('articles').doc(widget.docId).update(data);
+        await FirebaseFirestore.instance
+            .collection('articles')
+            .doc(widget.docId)
+            .update(data);
       } else {
         await FirebaseFirestore.instance.collection('articles').add(data);
 
         if (_status == 'Publis') {
-          QuerySnapshot userSnapshot = await FirebaseFirestore.instance.collection('users').get();
-          for (var doc in userSnapshot.docs) {
+          final userSnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+          for (final doc in userSnapshot.docs) {
             await FirebaseFirestore.instance.collection('notifications').add({
               'user_id': doc.id,
               'title': 'Artikel Terbaru 📚',
@@ -233,7 +282,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
         _tampilkanPopupSukses();
       }
     } catch (e) {
-      debugPrint("Gagal menyimpan artikel: $e");
+      debugPrint('Gagal menyimpan artikel: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -241,7 +290,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menyimpan artikel: $e'),
-            backgroundColor: const Color(0xFFEF4444),
+            backgroundColor: const Color(0xFFE11D48),
           ),
         );
       }
@@ -254,34 +303,37 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           elevation: 20,
           child: Padding(
-            padding: const EdgeInsets.all(32.0),
+            padding: const EdgeInsets.all(28.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(22),
+                  padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFFE0E7FF), Color(0xFFBFDBFE)],
+                      colors: [Color(0xFFE0E7FF), Color(0xFFC7D2FE)],
                     ),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.verified_rounded,
-                    color: Color(0xFF2563EB),
-                    size: 60,
+                    color: Color(0xFF4F46E5),
+                    size: 56,
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 Text(
-                  _status == 'Publis' ? 'Artikel Berhasil Dipublikasi! ✨' : 'Artikel Disimpan ke Draf! 📁',
+                  _status == 'Publis'
+                      ? 'Artikel Berhasil Dipublikasi! ✨'
+                      : 'Artikel Disimpan ke Draf! 📁',
                   style: const TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -291,16 +343,22 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                       ? 'Artikel edukasi diabetes Anda kini aktif dan dapat diakses pembaca.'
                       : 'Perubahan artikel telah diamankan dalam bentuk draf.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B), height: 1.4),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFF4F46E5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
                     ),
                     onPressed: () {
@@ -309,7 +367,11 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                     },
                     child: const Text(
                       'Kembali ke Kelola Artikel',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -321,18 +383,19 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     );
   }
 
-  // WIDGET MENAMPILKAN THUMBNAIL (BISA LOGO NETWORKING ATAU BASE64)
-  Widget _buildThumbnailWidget() {
-    String? imgSource = _base64Thumbnail ?? _existingImageUrl;
-    if (imgSource == null || imgSource.isEmpty) {
-      return const SizedBox();
-    }
-
-    if (imgSource.startsWith('data:image')) {
+  Widget _buildImageFromSource(String imgSource) {
+    if (imgSource.startsWith('data:image') || !imgSource.startsWith('http')) {
       try {
-        final bytes = base64Decode(imgSource.split(',').last);
-        return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
-      } catch (e) {
+        final cleanBase64 =
+        imgSource.contains(',') ? imgSource.split(',').last : imgSource;
+        final bytes = base64Decode(cleanBase64);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } catch (_) {
         return const Icon(Icons.broken_image, size: 40, color: Colors.grey);
       }
     }
@@ -342,389 +405,692 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+      errorBuilder: (_, __, ___) =>
+      const Icon(Icons.broken_image, size: 40, color: Colors.grey),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isEditMode = widget.docId != null;
-    final hasThumbnail = _base64Thumbnail != null || (_existingImageUrl != null && _existingImageUrl!.isNotEmpty);
+    final thumbnailSource = _base64Thumbnail ?? _existingImageUrl ?? '';
+    final hasThumbnail = thumbnailSource.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // HEADER
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF3B82F6), Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(32),
-                        bottomRight: Radius.circular(32),
+      backgroundColor: const Color(0xFFF3F6FC),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // 1. HEADER LIQUID WAVE SERAGAM
+              SliverToBoxAdapter(
+                child: _buildLiquidHeader(context, isEditMode),
+              ),
+
+              // 2. FORM INPUT FULL-WIDTH LEGA & RAPI
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    // SECTION 1: JUDUL ARTIKEL
+                    _buildCleanCard(
+                      icon: Icons.title_rounded,
+                      title: 'Judul Artikel',
+                      child: TextField(
+                        controller: _judulController,
+                        maxLines: 2,
+                        minLines: 1,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                        decoration: InputDecoration(
+                          hintText:
+                          'Contoh: 5 Langkah Mudah Mencegah Risiko Diabetes...',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide:
+                            const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide:
+                            const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF4F46E5),
+                              width: 1.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () {
-                                if (widget.onBack != null) {
-                                  widget.onBack!();
-                                } else if (Navigator.canPop(context)) {
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF2563EB), size: 18),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              isEditMode ? 'Edit Artikel' : 'Tambah Artikel',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 22,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
+                    const SizedBox(height: 16),
+
+                    // SECTION 2: THUMBNAIL UTAMA ARTIKEL
+                    _buildCleanCard(
+                      icon: Icons.image_rounded,
+                      title: 'Gambar Sampul (Thumbnail)',
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: _pickThumbnailFromGallery,
+                        child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          height: hasThumbnail ? 190 : 135,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                            border: Border.all(
+                              color: const Color(0xFFC7D2FE),
+                              width: 1.4,
+                            ),
                           ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.favorite_rounded, color: Color(0xFFFCA5A5), size: 22),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Buat konten edukasi kesehatan & pencegahan diabetes terpercaya.',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.3,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: hasThumbnail
+                                ? Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: _buildImageFromSource(
+                                    thumbnailSource,
                                   ),
                                 ),
-                              ),
-                            ],
+                                Positioned(
+                                  right: 12,
+                                  bottom: 12,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black
+                                          .withValues(alpha: 0.7),
+                                      borderRadius:
+                                      BorderRadius.circular(10),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.camera_alt_outlined,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                        SizedBox(width: 5),
+                                        Text(
+                                          'Ganti Gambar',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                                : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFEEF2FF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.add_photo_alternate_rounded,
+                                    color: Color(0xFF4F46E5),
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Pilih Gambar Sampul dari Galeri',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    color: Color(0xFF1E1B4B),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                const Text(
+                                  'Format JPG / PNG',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
 
-                  // FORM INPUT ARTIKEL
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
+                    // SECTION 3: ISI ARTIKEL & FORMAT TATA LETAK
+                    _buildCleanCard(
+                      icon: Icons.edit_note_rounded,
+                      title: 'Isi Artikel & Tata Letak',
+                      trailing: TextButton.icon(
+                        onPressed: _insertImageToContent,
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEEF2FF),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
                           ),
-                        ],
-                        border: Border.all(color: const Color(0xFFE0E0FF), width: 1.2),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.add_photo_alternate_rounded,
+                          size: 16,
+                          color: Color(0xFF4F46E5),
+                        ),
+                        label: const Text(
+                          'Sisipkan Foto',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF4F46E5),
+                          ),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. JUDUL ARTIKEL
-                          _buildSectionCard(
-                            icon: Icons.title_rounded,
-                            title: 'Judul Artikel',
-                            child: TextField(
-                              controller: _judulController,
-                              style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-                              decoration: InputDecoration(
-                                hintText: 'Contoh: 5 Langkah Mudah Mencegah Risiko Diabetes...',
-                                hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // 2. THUMBNAIL UTAMA ARTIKEL
-                          _buildSectionCard(
-                            icon: Icons.image_rounded,
-                            title: 'Thumbnail Utama Artikel',
-                            child: InkWell(
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(16),
-                              onTap: _pickThumbnailFromGallery,
-                              child: Container(
-                                width: double.infinity,
-                                height: hasThumbnail ? 170 : 120,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFF93C5FD), width: 1.5),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: hasThumbnail
-                                      ? Stack(
-                                    children: [
-                                      Positioned.fill(child: _buildThumbnailWidget()),
-                                      Align(
-                                        alignment: Alignment.topRight,
-                                        child: Container(
-                                          margin: const EdgeInsets.all(10),
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.65),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Text(
-                                            'Ganti Gambar',
-                                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                          ),
+                              border:
+                              Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Toolbar Editor
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      topRight: Radius.circular(16),
+                                    ),
+                                    border: Border(
+                                      bottom:
+                                      BorderSide(color: Color(0xFFE2E8F0)),
+                                    ),
+                                  ),
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: [
+                                        _buildToolbarButton(Icons.format_bold,
+                                            'bold', _isBoldActive),
+                                        _buildToolbarButton(Icons.format_italic,
+                                            'italic', _isItalicActive),
+                                        _buildToolbarButton(
+                                            Icons.format_underlined,
+                                            'underline',
+                                            _isUnderlineActive),
+                                        Container(
+                                          height: 18,
+                                          width: 1,
+                                          color: const Color(0xFFE2E8F0),
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 6),
                                         ),
-                                      ),
-                                    ],
-                                  )
-                                      : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(colors: [Color(0xFFE0E7FF), Color(0xFFBFDBFE)]),
-                                          shape: BoxShape.circle,
+                                        _buildToolbarButton(
+                                            Icons.format_align_left,
+                                            'align_left',
+                                            _textAlign == TextAlign.left),
+                                        _buildToolbarButton(
+                                            Icons.format_align_center,
+                                            'align_center',
+                                            _textAlign == TextAlign.center),
+                                        _buildToolbarButton(
+                                            Icons.format_align_right,
+                                            'align_right',
+                                            _textAlign == TextAlign.right),
+                                        _buildToolbarButton(
+                                            Icons.format_align_justify,
+                                            'align_justify',
+                                            _textAlign == TextAlign.justify),
+                                        Container(
+                                          height: 18,
+                                          width: 1,
+                                          color: const Color(0xFFE2E8F0),
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 6),
                                         ),
-                                        child: const Icon(Icons.add_photo_alternate_rounded, color: Color(0xFF2563EB), size: 26),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Pilih Gambar Thumbnail dari Galeri',
-                                        style: TextStyle(fontSize: 12, color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      const Text('Format: JPG, PNG (Tersimpan Otomatis)', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                                    ],
+                                        _buildToolbarButton(
+                                            Icons.format_list_bulleted,
+                                            'bullet',
+                                            false),
+                                        _buildToolbarButton(
+                                            Icons.format_list_numbered,
+                                            'number',
+                                            false),
+                                        _buildToolbarButton(
+                                            Icons.link, 'link', false),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
+
+                                // Kolom Teks Isi Artikel yang Lega
+                                TextField(
+                                  controller: _isiController,
+                                  maxLines: 14,
+                                  minLines: 10,
+                                  textAlign: _textAlign,
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    color: const Color(0xFF0F172A),
+                                    height: 1.55,
+                                    fontWeight: _isBoldActive
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontStyle: _isItalicActive
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                                    decoration: _isUnderlineActive
+                                        ? TextDecoration.underline
+                                        : TextDecoration.none,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText:
+                                    'Tulis isi artikel edukasi kesehatan secara lengkap di sini...\n\nGunakan tombol "Sisipkan Foto" di atas jika ingin menambahkan gambar ke dalam isi bacaan.',
+                                    hintStyle: TextStyle(
+                                      fontSize: 13.5,
+                                      color: Color(0xFF94A3B8),
+                                      height: 1.45,
+                                    ),
+                                    contentPadding: EdgeInsets.all(16),
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 20),
 
-                          // 3. ISI ARTIKEL & TOOLBAR
-                          _buildSectionCard(
-                            icon: Icons.edit_note_rounded,
-                            title: 'Isi Artikel & Format Tata Letak',
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                          // PRATINJAU FOTO YANG DISISIPKAN DI DALAM ISI ARTIKEL
+                          if (_inlineImages.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            const Text(
+                              'Foto yang Disisipkan dalam Artikel:',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF475569),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // TOOLBAR EDITOR
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                                      border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                            ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              height: 106,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: _inlineImages.entries.map((entry) {
+                                  return Container(
+                                    width: 118,
+                                    margin: const EdgeInsets.only(right: 10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: const Color(0xFFCBD5E1),
+                                      ),
                                     ),
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(13),
+                                      child: Stack(
                                         children: [
-                                          _buildToolbarButton(Icons.format_bold, 'bold', _isBoldActive),
-                                          _buildToolbarButton(Icons.format_italic, 'italic', _isItalicActive),
-                                          _buildToolbarButton(Icons.format_underlined, 'underline', _isUnderlineActive),
-                                          Container(height: 16, width: 1, color: const Color(0xFFCBD5E1), margin: const EdgeInsets.symmetric(horizontal: 4)),
-                                          _buildToolbarButton(Icons.format_align_left, 'align_left', _textAlign == TextAlign.left),
-                                          _buildToolbarButton(Icons.format_align_center, 'align_center', _textAlign == TextAlign.center),
-                                          _buildToolbarButton(Icons.format_align_right, 'align_right', _textAlign == TextAlign.right),
-                                          _buildToolbarButton(Icons.format_align_justify, 'align_justify', _textAlign == TextAlign.justify),
-                                          Container(height: 16, width: 1, color: const Color(0xFFCBD5E1), margin: const EdgeInsets.symmetric(horizontal: 4)),
-                                          _buildToolbarButton(Icons.format_list_bulleted, 'bullet', false),
-                                          _buildToolbarButton(Icons.format_list_numbered, 'number', false),
-                                          _buildToolbarButton(Icons.link, 'link', false),
-                                          IconButton(
-                                            icon: const Icon(Icons.add_photo_alternate_rounded, size: 20, color: Color(0xFF2563EB)),
-                                            onPressed: _insertImageToContent,
-                                            tooltip: 'Sisipkan Foto dari Galeri ke Teks',
-                                            constraints: const BoxConstraints(),
-                                            padding: const EdgeInsets.all(6),
+                                          Positioned.fill(
+                                            child: _buildImageFromSource(
+                                              entry.value,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            left: 6,
+                                            bottom: 6,
+                                            child: Container(
+                                              padding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 7,
+                                                vertical: 3,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black
+                                                    .withValues(alpha: 0.65),
+                                                borderRadius:
+                                                BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                entry.key,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: 5,
+                                            right: 5,
+                                            child: GestureDetector(
+                                              onTap: () =>
+                                                  _removeInlineImage(entry.key),
+                                              child: Container(
+                                                padding:
+                                                const EdgeInsets.all(4),
+                                                decoration: const BoxDecoration(
+                                                  color: Color(0xFFE11D48),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.close_rounded,
+                                                  size: 13,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                  // INPUT TEKS ARTIKEL
-                                  TextField(
-                                    controller: _isiController,
-                                    maxLines: 12,
-                                    textAlign: _textAlign,
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      color: const Color(0xFF0F172A),
-                                      fontWeight: _isBoldActive ? FontWeight.bold : FontWeight.normal,
-                                      fontStyle: _isItalicActive ? FontStyle.italic : FontStyle.normal,
-                                      decoration: _isUnderlineActive ? TextDecoration.underline : TextDecoration.none,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Tulis isi artikel lengkap mengenai edukasi kesehatan...\n\nTekan tombol icon gambar di toolbar untuk menyisipkan foto.',
-                                      hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
-                                      contentPadding: EdgeInsets.all(14),
-                                      border: InputBorder.none,
-                                    ),
-                                  ),
-                                ],
+                                  );
+                                }).toList(),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
 
-                          // 4. STATUS PUBLIKASI
-                          _buildSectionCard(
-                            icon: Icons.publish_rounded,
-                            title: 'Status Publikasi',
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildStatusCard('Draf', 'Simpan Draf')),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildStatusCard('Publis', 'Publikasikan')),
-                              ],
+                    // SECTION 4: STATUS PUBLIKASI
+                    _buildCleanCard(
+                      icon: Icons.publish_rounded,
+                      title: 'Status Publikasi',
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatusCard(
+                              value: 'Draf',
+                              label: 'Simpan Draf',
+                              icon: Icons.edit_note_rounded,
                             ),
                           ),
-                          const SizedBox(height: 28),
-
-                          // TOMBOL AKSI
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                    side: const BorderSide(color: Color(0xFF2563EB), width: 1.8),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                  ),
-                                  onPressed: () {
-                                    if (widget.onBack != null) widget.onBack!();
-                                  },
-                                  child: const Text(
-                                    'Batal',
-                                    style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2563EB),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: _isLoading ? null : _simpanArtikelKeFirestore,
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                  )
-                                      : Text(
-                                    isEditMode ? 'Simpan Perubahan' : 'Simpan Artikel',
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildStatusCard(
+                              value: 'Publis',
+                              label: 'Publikasikan',
+                              icon: Icons.public_rounded,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 22),
+
+                    // TOMBOL AKSI BATAL & SIMPAN
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              side: const BorderSide(
+                                color: Color(0xFF4F46E5),
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            onPressed: () {
+                              if (widget.onBack != null) widget.onBack!();
+                            },
+                            child: const Text(
+                              'Batal',
+                              style: TextStyle(
+                                color: Color(0xFF4F46E5),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF4F46E5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              elevation: 0,
+                            ),
+                            onPressed:
+                            _isLoading ? null : _simpanArtikelKeFirestore,
+                            child: _isLoading
+                                ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                                : Text(
+                              isEditMode
+                                  ? 'Simpan Perubahan'
+                                  : 'Simpan Artikel',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ]),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionCard({required IconData icon, required String title, required Widget child}) {
+  /// Header Liquid Wave seragam
+  Widget _buildLiquidHeader(BuildContext context, bool isEditMode) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
+    return Stack(
+      children: [
+        ClipPath(
+          clipper: _TambahArtikelLiquidHeaderClipper(offsetY: 10),
+          child: Container(
+            width: double.infinity,
+            height: topPadding + 88,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF4F46E5).withValues(alpha: 0.22),
+                  const Color(0xFF38BDF8).withValues(alpha: 0.22),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+        ),
+        ClipPath(
+          clipper: _TambahArtikelLiquidHeaderClipper(offsetY: 0),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(16, topPadding, 16, 36),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF4338CA),
+                  Color(0xFF4F46E5),
+                  Color(0xFF3B82F6),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  right: -35,
+                  top: -35,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 145,
+                      height: 145,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.24),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: -25,
+                  bottom: -20,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFF38BDF8).withValues(alpha: 0.30),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 36,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 36),
+                          child: Text(
+                            isEditMode ? 'Edit Artikel' : 'Tambah Artikel',
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Kembali',
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            if (widget.onBack != null) {
+                              widget.onBack!();
+                            } else if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Kartu Tunggal Full-Width agar tampilan lega & tidak berlapis-lapis
+  Widget _buildCleanCard({
+    required IconData icon,
+    required String title,
+    required Widget child,
+    Widget? trailing,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF8FAFC), Color(0xFFF0F6FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.1),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -734,21 +1100,28 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 16, color: const Color(0xFF2563EB)),
+                child: Icon(icon, size: 17, color: const Color(0xFF4F46E5)),
               ),
               const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF1E3A8A)),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
               ),
+              if (trailing != null) trailing,
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 13),
           child,
         ],
       ),
@@ -760,49 +1133,64 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       borderRadius: BorderRadius.circular(8),
       onTap: () => _formatTeks(action),
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFDBEAFE) : Colors.transparent,
+          color: isActive ? const Color(0xFFE0E7FF) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 18, color: isActive ? const Color(0xFF1D4ED8) : const Color(0xFF64748B)),
+        child: Icon(
+          icon,
+          size: 19,
+          color: isActive ? const Color(0xFF4338CA) : const Color(0xFF64748B),
+        ),
       ),
     );
   }
 
-  Widget _buildStatusCard(String value, String label) {
-    bool isSelected = _status == value;
+  Widget _buildStatusCard({
+    required String value,
+    required String label,
+    required IconData icon,
+  }) {
+    final bool isSelected = _status == value;
     return InkWell(
       onTap: () => setState(() => _status = value),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFCBD5E1),
-            width: isSelected ? 1.8 : 1,
+            color: isSelected
+                ? const Color(0xFF4F46E5)
+                : const Color(0xFFCBD5E1),
+            width: isSelected ? 1.6 : 1.1,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
-              size: 16,
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_off,
+              color: isSelected
+                  ? const Color(0xFF4F46E5)
+                  : const Color(0xFF94A3B8),
+              size: 18,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 7),
             Flexible(
               child: Text(
                 label,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 12,
+                  color: isSelected
+                      ? const Color(0xFF312E81)
+                      : const Color(0xFF475569),
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 13.5,
                 ),
               ),
             ),
@@ -810,5 +1198,42 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
         ),
       ),
     );
+  }
+}
+
+class _TambahArtikelLiquidHeaderClipper extends CustomClipper<Path> {
+  final double offsetY;
+
+  _TambahArtikelLiquidHeaderClipper({this.offsetY = 0});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final h = size.height - offsetY;
+
+    path.lineTo(0, h - 22);
+
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      h + 6,
+      size.width * 0.52,
+      h - 14,
+    );
+
+    path.quadraticBezierTo(
+      size.width * 0.80,
+      h - 32,
+      size.width,
+      h - 10,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _TambahArtikelLiquidHeaderClipper oldClipper) {
+    return oldClipper.offsetY != offsetY;
   }
 }
