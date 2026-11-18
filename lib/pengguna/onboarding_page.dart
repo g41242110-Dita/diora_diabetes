@@ -23,12 +23,12 @@ class _OnboardingPageState extends State<OnboardingPage>
 
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 2200),
     )..repeat(reverse: true);
 
     _floatingController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2600),
     )..repeat(reverse: true);
 
     _pulseAnimation = Tween<double>(begin: 0.88, end: 1.12).animate(
@@ -50,77 +50,92 @@ class _OnboardingPageState extends State<OnboardingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F5FF),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Stack(
           children: [
-            // Lingkaran gradasi terang di latar belakang
+            // --- GELEMBUNG LATAR BELAKANG UTAMA ---
             Positioned(
-              top: -60,
+              top: -50,
               right: -40,
               child: ScaleTransition(
                 scale: _pulseAnimation,
                 child: Container(
-                  width: 240,
-                  height: 240,
+                  width: 260,
+                  height: 260,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF6679F4).withValues(alpha: 0.12),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 200,
-              left: -50,
-              child: ScaleTransition(
-                scale: _pulseAnimation,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.redAccent.withValues(alpha: 0.08),
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF4F46E5).withValues(alpha: 0.22),
+                        const Color(0xFF3B82F6).withValues(alpha: 0.05),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
 
-            // Dekorasi ikon mengapung terang
             Positioned(
-              top: 100,
-              right: 40,
+              top: 190,
+              left: -70,
+              child: ScaleTransition(
+                scale: _pulseAnimation,
+                child: Container(
+                  width: 230,
+                  height: 230,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFEF4444).withValues(alpha: 0.16),
+                        const Color(0xFFF59E0B).withValues(alpha: 0.04),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            Positioned(
+              bottom: 100,
+              right: -30,
+              child: Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                ),
+              ),
+            ),
+
+            // --- IKON KESEHATAN DI KANAN ATAS ---
+            Positioned(
+              top: 95,
+              right: 45,
               child: AnimatedBuilder(
                 animation: _floatingAnimation,
                 builder: (context, child) {
                   return Transform.translate(
                     offset: Offset(0, _floatingAnimation.value),
-                    child: const Opacity(
-                      opacity: 0.4,
-                      child: Icon(
-                        Icons.health_and_safety,
-                        size: 34,
-                        color: Color(0xFF6679F4),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4F46E5).withValues(alpha: 0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            Positioned(
-              bottom: 250,
-              left: 35,
-              child: AnimatedBuilder(
-                animation: _floatingAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(0, -_floatingAnimation.value),
-                    child: const Opacity(
-                      opacity: 0.4,
-                      child: Icon(
-                        Icons.water_drop,
-                        size: 30,
-                        color: Colors.redAccent,
+                      child: const Icon(
+                        Icons.health_and_safety,
+                        size: 26,
+                        color: Color(0xFF4F46E5),
                       ),
                     ),
                   );
@@ -128,17 +143,16 @@ class _OnboardingPageState extends State<OnboardingPage>
               ),
             ),
 
-            // Konten Utama
+            // --- KONTEN UTAMA (1 HALAMAN) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 30),
-
                   const Spacer(flex: 1),
 
-                  // Ilustrasi di dalam Card Putih Terang Bersih
+                  // FOTO / ILUSTRASI DENGAN CAHAYA PEMANCAR (GLOW)
                   Center(
                     child: AnimatedBuilder(
                       animation: _pulseAnimation,
@@ -147,14 +161,26 @@ class _OnboardingPageState extends State<OnboardingPage>
                           padding: const EdgeInsets.all(28),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(36),
+                            borderRadius: BorderRadius.circular(38),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF6679F4).withValues(
-                                  alpha: 0.15 * _pulseAnimation.value,
+                                color: const Color(0xFF4F46E5).withValues(
+                                  alpha: 0.4 * _pulseAnimation.value,
                                 ),
-                                blurRadius: 26,
-                                offset: const Offset(0, 10),
+                                blurRadius: 50,
+                                spreadRadius: 4,
+                                offset: const Offset(0, 14),
+                              ),
+                              BoxShadow(
+                                color: const Color(0xFFEF4444).withValues(
+                                  alpha: 0.25,
+                                ),
+                                blurRadius: 25,
+                                offset: const Offset(0, -5),
                               ),
                             ],
                           ),
@@ -170,75 +196,106 @@ class _OnboardingPageState extends State<OnboardingPage>
 
                   const Spacer(flex: 1),
 
-                  // Judul Teks Terang & Tegas
-                  const Text(
-                    'Kenali Risiko\nDiabetes Sejak Dini',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
-                      height: 1.2,
-                      letterSpacing: -0.5,
+                  // --- JUDUL DENGAN GAYA TULISAN ELEGAN / ARTISTIK (SEMICLASSIC) ---
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontSize: 27,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        height: 1.25,
+                        letterSpacing: -0.5,
+                      ),
+                      children: [
+                        TextSpan(text: 'Kenali '),
+                        TextSpan(
+                          text: 'Risiko\n',
+                          style: TextStyle(
+                            color: Color(0xFF4F46E5),
+                            fontStyle: FontStyle.italic, // Memberikan sentuhan artistik/semi-serif
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        TextSpan(text: 'Diabetes Sejak Dini'),
+                      ],
                     ),
                   ),
 
                   const SizedBox(height: 14),
 
-                  // Deskripsi
+                  // DESKRIPSI DENGAN GAYA ELEGAN
                   const Text(
                     'Lakukan skrining mandiri secara akurat, dapatkan rekomendasi terbaik, dan jaga kesehatan masa depan bersama Diora.',
                     style: TextStyle(
                       fontSize: 14,
                       color: Color(0xFF64748B),
-                      height: 1.5,
+                      height: 1.6,
+                      letterSpacing: 0.2,
                     ),
                   ),
 
                   const Spacer(flex: 2),
 
-                  // Tombol Mulai dengan Warna Asli/Sebelumnya (0xFF6679F4)
+                  // --- TOMBOL MULAI (SUDAH DIKECILKAN) ---
                   SizedBox(
                     width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DaftarAkunPage(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6679F4),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                    height: 48,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF4F46E5), Color(0xFF6679F4)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        shadowColor: Colors.transparent,
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Mulai',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 18),
                         ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DaftarAkunPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Mulai',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward_rounded, size: 18),
+                          ],
+                        ),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Teks Versi
+                  // TEKS VERSI
                   const Center(
                     child: Text(
                       'VERSI 1.0',
@@ -253,6 +310,39 @@ class _OnboardingPageState extends State<OnboardingPage>
 
                   const SizedBox(height: 12),
                 ],
+              ),
+            ),
+
+            // --- IKON TETESAN DARAH DI DEPAN (DI POJOK KANAN ATAS FOTO) ---
+            Positioned(
+              top: 85,
+              right: 22,
+              child: AnimatedBuilder(
+                animation: _floatingAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, -_floatingAnimation.value),
+                    child: Container(
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEF4444).withValues(alpha: 0.45),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.water_drop,
+                        size: 32,
+                        color: Color(0xFFEF4444),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
