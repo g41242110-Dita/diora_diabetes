@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'admin_beranda_page.dart';
+import 'admin_pengguna_page.dart';
 import 'admin_skrining_page.dart';
 import 'admin_laporan_skrining_page.dart';
 import 'admin_profil_page.dart';
@@ -19,20 +20,54 @@ class _AdminMenuPagesState extends State<AdminMenuPages> {
 
   @override
   Widget build(BuildContext context) {
-    // Buat daftar halaman di dalam method build
     final List<Widget> pages = [
-      const AdminBerandaPage(),            // Index 0: Beranda
-      const _DummyPage(title: 'Pengguna'), // Index 1: Pengguna
-      const AdminSkriningPage(),           // Index 2: Skrining
-      const AdminLaporanSkriningPage(),    // Index 3: Laporan
+      AdminBerandaPage(
+        isActive: _selectedIndex == 0,
+        onNavigateToPengguna: () {
+          setState(() {
+            _selectedIndex = 1;
+          });
+        },
+        onNavigateToSkrining: () {
+          setState(() {
+            _selectedIndex = 2;
+          });
+        },
+        onNavigateToArtikel: () {
+          setState(() {
+            _selectedIndex = 4;
+          });
+        },
+      ),                                // Index 0: Beranda
+      AdminPenggunaPage(
+        onBack: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),                                // Index 1: Pengguna (Aktif & Real-time)
+      AdminSkriningPage(
+        onBack: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),                                // Index 2: Skrining
+      const AdminLaporanSkriningPage(), // Index 3: Laporan
       AdminArtikelPage(
         onBackToBeranda: () {
           setState(() {
-            _selectedIndex = 0; // Pindah langsung ke Beranda
+            _selectedIndex = 0;
           });
         },
-      ),                                   // Index 4: Artikel
-      const AdminProfilPage(),             // Index 5: Profil
+      ),                                // Index 4: Artikel
+      AdminProfilPage(
+        onBackToHome: () {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        },
+      ),                                // Index 5: Profil
     ];
 
     return Scaffold(
@@ -47,21 +82,6 @@ class _AdminMenuPagesState extends State<AdminMenuPages> {
             _selectedIndex = index;
           });
         },
-      ),
-    );
-  }
-}
-
-class _DummyPage extends StatelessWidget {
-  final String title;
-  const _DummyPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Halaman $title',
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
