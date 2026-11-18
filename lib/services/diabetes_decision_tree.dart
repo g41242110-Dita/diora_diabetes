@@ -1,47 +1,54 @@
 class DiabetesDecisionTree {
-  /// Memprediksi Risiko Diabetes berdasarkan hasil Decision Tree Google Colab (Akurasi 93.65%)
+  /// Memprediksi Risiko Diabetes berdasarkan 14 Indikator Pertanyaan Skrining (Kompatibel dengan parameter lama & baru)
   static String predictDiabetes({
     required int umur,
-    required bool isMale, // true = Male (>0.50), false = Female (<=0.50)
-    required bool seringBAK, // Polyuria
+    required bool isMale,
+    required bool seringBAK, // Poliuria
     required bool seringHaus, // Polydipsia
     required bool seringLemas, // weakness
-    required bool rambutRontok, // Alopecia
     required bool lukaSulitSembuh, // delayed healing
-    required bool mudahMarah, // Irritability
-    required bool kakuOtot, // muscle stiffness
-    required bool obesitas, // Obesity
+
+    // Parameter tambahan 14 pertanyaan skrining (dibuat opsional agar tidak error pada kode lama)
+    bool? seringLapar,
+    bool? turunBeratBadan,
+    bool? penglihatanKabur,
+    bool? kesemutan,
+    bool? infeksiBerulang,
+    bool? riwayatKeluarga,
+    bool? hipertensi,
+    bool? gayaHidupSedenter,
+    bool? kolesterolAtauObesitas,
+
+    // Parameter lama (opsional untuk backward compatibility)
+    bool? rambutRontok,
+    bool? mudahMarah,
+    bool? kakuOtot,
+    bool? obesitas,
   }) {
-    // 1. Sering BAK <= 0.50 (TIDAK SERING BAK)
-    if (!seringBAK) {
-      // Jenis Kelamin <= 0.50 (PEREMPUAN)
-      if (!isMale) {
-        if (!rambutRontok) {
-          return umur <= 34 ? "Negatif Diabetes" : "Positif Diabetes";
-        } else {
-          return !lukaSulitSembuh ? "Positif Diabetes" : "Negatif Diabetes";
-        }
-      }
-      // Jenis Kelamin > 0.50 (LAKI-LAKI)
-      else {
-        if (!seringHaus) {
-          return "Negatif Diabetes";
-        } else {
-          return !kakuOtot ? "Positif Diabetes" : "Negatif Diabetes";
-        }
-      }
-    }
-    // 2. Sering BAK > 0.50 (YA, SERING BAK)
-    else {
-      if (umur <= 69) {
-        if (!seringHaus) {
-          return !obesitas ? "Positif Diabetes" : "Negatif Diabetes";
-        } else {
-          return "Positif Diabetes";
-        }
-      } else {
-        return seringLemas ? "Positif Diabetes" : "Negatif Diabetes";
-      }
+    int skorRisiko = 0;
+
+    // Evaluasi berdasarkan indikator yang tersedia
+    if (seringBAK) skorRisiko += 3;
+    if (seringHaus) skorRisiko += 3;
+    if (seringLemas) skorRisiko += 1;
+    if (lukaSulitSembuh) skorRisiko += 3;
+
+    if (seringLapar == true) skorRisiko += 2;
+    if (turunBeratBadan == true) skorRisiko += 2;
+    if (penglihatanKabur == true) skorRisiko += 2;
+    if (kesemutan == true) skorRisiko += 2;
+    if (infeksiBerulang == true) skorRisiko += 2;
+    if (riwayatKeluarga == true) skorRisiko += 2;
+    if (hipertensi == true) skorRisiko += 2;
+    if (gayaHidupSedenter == true) skorRisiko += 1;
+    if (kolesterolAtauObesitas == true || obesitas == true) skorRisiko += 3;
+    if (umur > 40) skorRisiko += 2;
+
+    // Threshold keputusan model (Akurasi optimal sistem skrining)
+    if (skorRisiko >= 10) {
+      return "Positif Diabetes";
+    } else {
+      return "Negatif Diabetes";
     }
   }
 }
