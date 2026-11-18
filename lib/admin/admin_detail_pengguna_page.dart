@@ -1,190 +1,916 @@
+// ignore_for_file: spell_check_on_only_sample_attachments
+
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AdminDetailPenggunaPage extends StatelessWidget {
-  final Map<String, dynamic> userData;
+class AdminDetailPenggunaPage extends StatefulWidget {
+  final Map<String, String> userData;
 
-  const AdminDetailPenggunaPage({super.key, required this.userData});
+  const AdminDetailPenggunaPage({
+    super.key,
+    required this.userData,
+  });
+
+  @override
+  State<AdminDetailPenggunaPage> createState() =>
+      _AdminDetailPenggunaPageState();
+}
+
+class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
+  bool _showAllScreenings = false;
+
+  String _val(String key, {String fallback = '-'}) {
+    final raw = (widget.userData[key] ?? '').trim();
+    return raw.isEmpty ? fallback : raw;
+  }
+
+  String _getInitials(String name) {
+    final cleaned = name.trim();
+    if (cleaned.isEmpty || cleaned == '-') return 'U';
+    final parts = cleaned.split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
+  String _formatDate(dynamic raw) {
+    if (raw == null) return '-';
+    DateTime? dt;
+    if (raw is Timestamp) {
+      dt = raw.toDate();
+    } else if (raw is DateTime) {
+      dt = raw;
+    } else if (raw is int) {
+      dt = raw > 100000000000
+          ? DateTime.fromMillisecondsSinceEpoch(raw)
+          : DateTime.fromMillisecondsSinceEpoch(raw * 1000);
+    } else if (raw is String && raw.trim().isNotEmpty) {
+      dt = DateTime.tryParse(raw.trim());
+      if (dt == null) return raw.trim();
+    }
+
+    if (dt == null) return '-';
+    const bulan = [
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
+    ];
+    final day = dt.day.toString().padLeft(2, '0');
+    return '$day ${bulan[dt.month]} ${dt.year}';
+  }
+
+  bool _isPositiveResult(Map<String, dynamic> data) {
+    final raw = (data['status'] ??
+        data['hasil'] ??
+        data['result'] ??
+        data['prediction'] ??
+        data['risk_level'] ??
+        '')
+        .toString()
+        .toLowerCase();
+
+    return raw.contains('positif') ||
+        raw.contains('positive') ||
+        raw.contains('tinggi') ||
+        raw.contains('high') ||
+        raw.contains('diabetes');
+  }
 
   @override
   Widget build(BuildContext context) {
+    final String uid = _val('uid', fallback: '');
+    final String nama = _val('nama', fallback: 'Pengguna');
+    final String email = _val('email');
+    final String role = _val('role', fallback: 'Pengguna');
+    final String status = _val('status', fallback: 'Aktif');
+    final String tglLahir = _val('tglLahir');
+    final String gender = _val('gender');
+    final String noHp = _val('noHp');
+    final String alamat = _val('alamat');
+    final String pekerjaan = _val('pekerjaan');
+    final String instansi = _val('instansi');
+    final String alergi = _val('alergi', fallback: 'Tidak Ada');
+    final String photoBase64 = _val('photoBase64', fallback: '');
+
+    final bool isAktif = status.toLowerCase() == 'aktif';
+    final bool isDokter = role.toLowerCase() == 'dokter';
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4C63E6)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Detail Pengguna',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF4C63E6),
+      backgroundColor: const Color(0xFFF3F6FC),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // 1. HEADER LIQUID WAVE SAMA PERSIS DENGAN DATA PENGGUNA
+          SliverToBoxAdapter(
+            child: _buildLiquidHeader(context),
           ),
-        ),
+
+          // 2. KONTEN DETAIL PENGGUNA
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // KARTU PROFIL UTAMA
+                _buildProfileSummaryCard(
+                  nama: nama,
+                  email: email,
+                  role: role,
+                  status: status,
+                  isAktif: isAktif,
+                  isDokter: isDokter,
+                  photoBase64: photoBase64,
+                ),
+                const SizedBox(height: 16),
+
+                // KARTU DATA DIRI
+                _buildSectionCard(
+                  title: 'Data Diri',
+                  icon: Icons.badge_rounded,
+                  iconBg: const Color(0xFFE0E7FF),
+                  iconColor: const Color(0xFF4F46E5),
+                  rows: [
+                    _InfoRowData(
+                      icon: Icons.person_outline_rounded,
+                      label: 'Nama Lengkap',
+                      value: nama,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Tanggal Lahir',
+                      value: tglLahir,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.wc_rounded,
+                      label: 'Jenis Kelamin',
+                      value: gender,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.phone_outlined,
+                      label: 'No. HP',
+                      value: noHp,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.mail_outline_rounded,
+                      label: 'Email',
+                      value: email,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.location_on_outlined,
+                      label: 'Alamat',
+                      value: alamat,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // KARTU INFORMASI PROFESI
+                _buildSectionCard(
+                  title: 'Informasi Profesi',
+                  icon: Icons.work_outline_rounded,
+                  iconBg: const Color(0xFFCCFBF1),
+                  iconColor: const Color(0xFF0D9488),
+                  rows: [
+                    _InfoRowData(
+                      icon: Icons.business_center_outlined,
+                      label: 'Pekerjaan',
+                      value: pekerjaan,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.apartment_rounded,
+                      label: 'Instansi',
+                      value: instansi,
+                    ),
+                    _InfoRowData(
+                      icon: Icons.block_rounded,
+                      label: 'Riwayat Alergi',
+                      value: alergi,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // KARTU RIWAYAT SKRINING REAL-TIME
+                _buildScreeningHistoryCard(uid: uid, email: email),
+              ]),
+            ),
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Card Header User
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE2E8FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 36, color: Color(0xFF5B71F5)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userData['nama'],
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          userData['email'],
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF818CF8),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      userData['status'],
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  )
+    );
+  }
+
+  /// Header Liquid Wave identik dengan AdminPenggunaPage
+  Widget _buildLiquidHeader(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
+
+    return Stack(
+      children: [
+        // Layer bayangan liquid lembut di belakang gelombang utama
+        ClipPath(
+          clipper: _DetailLiquidHeaderClipper(offsetY: 10),
+          child: Container(
+            width: double.infinity,
+            height: topPadding + 88,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF4F46E5).withValues(alpha: 0.22),
+                  const Color(0xFF38BDF8).withValues(alpha: 0.22),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-            const SizedBox(height: 16),
+          ),
+        ),
 
-            // Section Data Diri
-            _buildSectionCard('Data Diri', [
-              _buildRowItem(Icons.group_outlined, 'Nama Lengkap', userData['nama']),
-              _buildRowItem(Icons.calendar_today_outlined, 'Tanggal Lahir', userData['tglLahir']),
-              _buildRowItem(Icons.wc_outlined, 'Jenis Kelamin', userData['gender']),
-              _buildRowItem(Icons.phone_outlined, 'No. HP', userData['noHp']),
-              _buildRowItem(Icons.email_outlined, 'Email', userData['email']),
-              _buildRowItem(Icons.location_on_outlined, 'Alamat', userData['alamat']),
-            ]),
-            const SizedBox(height: 16),
-
-            // Section Informasi Profesi
-            _buildSectionCard('Informasi Profesi', [
-              _buildRowItem(Icons.work_outline, 'Pekerjaan', userData['pekerjaan']),
-              _buildRowItem(Icons.business_outlined, 'Instansi', userData['instansi']),
-              _buildRowItem(Icons.block_outlined, 'Riwayat Alergi', userData['alergi']),
-            ]),
-            const SizedBox(height: 16),
-
-            // Section Riwayat Skrining
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+        // Layer utama liquid wave header
+        ClipPath(
+          clipper: _DetailLiquidHeaderClipper(offsetY: 0),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(16, topPadding, 16, 36),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF4338CA),
+                  Color(0xFF4F46E5),
+                  Color(0xFF3B82F6),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Gelembung cahaya liquid di sudut kanan atas
+                Positioned(
+                  right: -35,
+                  top: -35,
+                  child: Container(
+                    width: 145,
+                    height: 145,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.24),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Gelembung liquid halus di sudut kiri bawah
+                Positioned(
+                  left: -25,
+                  bottom: -20,
+                  child: Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          const Color(0xFF38BDF8).withValues(alpha: 0.30),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Baris Navigasi: Tombol Kembali + Judul di Tengah
+                SizedBox(
+                  width: double.infinity,
+                  height: 36,
+                  child: Stack(
                     children: [
-                      const Text('Riwayat Skrining', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text('Lihat Semua >', style: TextStyle(fontSize: 11, color: Color(0xFF4C63E6))),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          tooltip: 'Kembali',
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 36),
+                          child: Text(
+                            'Detail Pengguna',
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_month, color: Color(0xFF4C63E6), size: 28),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('01 September 2026', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                              Text('Skrining Diabetes', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF818CF8),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text('Positif', style: TextStyle(color: Colors.white, fontSize: 10)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileAvatar(String nama, String photoBase64) {
+    if (photoBase64.isNotEmpty) {
+      try {
+        final cleanBase64 = photoBase64.contains(',')
+            ? photoBase64.split(',').last
+            : photoBase64;
+        return ClipOval(
+          child: Image.memory(
+            base64Decode(cleanBase64),
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildInitialCircle(nama),
+          ),
+        );
+      } catch (_) {}
+    }
+    return _buildInitialCircle(nama);
+  }
+
+  Widget _buildInitialCircle(String nama) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4F46E5), Color(0xFF3B82F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        _getInitials(nama),
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
         ),
       ),
     );
   }
 
-  Widget _buildSectionCard(String title, List<Widget> children) {
+  /// Kartu Ringkasan Profil di Bagian Atas
+  Widget _buildProfileSummaryCard({
+    required String nama,
+    required String email,
+    required String role,
+    required String status,
+    required bool isAktif,
+    required bool isDokter,
+    required String photoBase64,
+  }) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFF4F46E5).withValues(alpha: 0.18),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: _buildProfileAvatar(nama, photoBase64),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nama,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    // Badge Role
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isDokter
+                                ? Icons.medical_services_rounded
+                                : Icons.person_rounded,
+                            size: 12,
+                            color: const Color(0xFF4F46E5),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            role,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Badge Status
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isAktif
+                            ? const Color(0xFFDCFCE7)
+                            : const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: isAktif
+                              ? const Color(0xFF15803D)
+                              : const Color(0xFFDC2626),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Kartu Section (Data Diri / Informasi Profesi) yang rapi dengan pembatas lembut
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required List<_InfoRowData> rows,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 17, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
-          ...children,
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          ...List.generate(rows.length, (index) {
+            final item = rows[index];
+            final bool isLast = index == rows.length - 1;
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        item.icon,
+                        size: 17,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 108,
+                        child: Text(
+                          item.label,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.value,
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isLast)
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              ],
+            );
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildRowItem(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey))),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+  /// Kartu Riwayat Skrining Real-Time dari Firestore
+  Widget _buildScreeningHistoryCard({
+    required String uid,
+    required String email,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('screening_results')
+            .snapshots(),
+        builder: (context, snapshot) {
+          final allDocs = snapshot.data?.docs ?? [];
+
+          // Cocokkan riwayat skrining milik pengguna berdasarkan uid atau email
+          final userDocs = allDocs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final docUid =
+            (data['userId'] ?? data['uid'] ?? data['user_id'] ?? '')
+                .toString()
+                .trim();
+            final docEmail =
+            (data['email'] ?? data['userEmail'] ?? '').toString().trim();
+
+            final matchUid = uid.isNotEmpty && docUid == uid;
+            final matchEmail = email.isNotEmpty &&
+                email != '-' &&
+                docEmail.toLowerCase() == email.toLowerCase();
+
+            return matchUid || matchEmail;
+          }).toList();
+
+          final displayedDocs = _showAllScreenings
+              ? userDocs
+              : userDocs.take(2).toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDBEAFE),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.monitor_heart_rounded,
+                          size: 17,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Riwayat Skrining',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (userDocs.length > 2)
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showAllScreenings = !_showAllScreenings;
+                        });
+                      },
+                      child: Text(
+                        _showAllScreenings
+                            ? 'Sembunyikan'
+                            : 'Lihat Semua (${userDocs.length})',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF4F46E5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                  ),
+                )
+              else if (userDocs.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Text(
+                    'Pengguna ini belum memiliki riwayat skrining.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: displayedDocs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final dateText = _formatDate(
+                      data['created_at'] ??
+                          data['createdAt'] ??
+                          data['tanggal'] ??
+                          data['timestamp'],
+                    );
+                    final isPositive = _isPositiveResult(data);
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0E7FF),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            child: const Icon(
+                              Icons.calendar_month_rounded,
+                              size: 18,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  dateText,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'Skrining Diabetes',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isPositive
+                                  ? const Color(0xFFFEE2E2)
+                                  : const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              isPositive ? 'Positif' : 'Negatif',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: isPositive
+                                    ? const Color(0xFFDC2626)
+                                    : const Color(0xFF15803D),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          );
+        },
+      ),
     );
+  }
+}
+
+class _InfoRowData {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoRowData({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+}
+
+/// Clipper Gelombang Liquid Organik yang sama persis dengan AdminPenggunaPage
+class _DetailLiquidHeaderClipper extends CustomClipper<Path> {
+  final double offsetY;
+
+  _DetailLiquidHeaderClipper({this.offsetY = 0});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final h = size.height - offsetY;
+
+    path.lineTo(0, h - 22);
+
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      h + 6,
+      size.width * 0.52,
+      h - 14,
+    );
+
+    path.quadraticBezierTo(
+      size.width * 0.80,
+      h - 32,
+      size.width,
+      h - 10,
+    );
+
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _DetailLiquidHeaderClipper oldClipper) {
+    return oldClipper.offsetY != offsetY;
   }
 }
