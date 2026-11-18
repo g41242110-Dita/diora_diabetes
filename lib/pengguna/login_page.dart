@@ -325,13 +325,12 @@ class _LoginPageState extends State<LoginPage>
                     children: [
                       const SizedBox(height: 2),
 
-                      // AREA HEADER: LOGO (Diturunkan & Didekatkan) + TETESAN DARAH DI KANAN ATAS
+                      // AREA HEADER: LOGO & TETESAN DARAH
                       SizedBox(
                         height: 145,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Logo Diora diturunkan sedikit menggunakan Padding top
                             Padding(
                               padding: const EdgeInsets.only(top: 14),
                               child: SizedBox(
@@ -343,8 +342,6 @@ class _LoginPageState extends State<LoginPage>
                                 ),
                               ),
                             ),
-
-                            // Badge Tetesan Darah Berdenyut Lembut di Pojok Kanan Atas
                             Positioned(
                               top: 6,
                               right: 12,
@@ -377,7 +374,7 @@ class _LoginPageState extends State<LoginPage>
 
                       const SizedBox(height: 2),
 
-                      // JUDUL "Masuk" & SUBJUDUL DI TENGAH (Lebih dekat dengan logo)
+                      // JUDUL "Masuk" & SUBJUDUL
                       const Text(
                         'Masuk',
                         textAlign: TextAlign.center,
@@ -485,7 +482,7 @@ class _LoginPageState extends State<LoginPage>
 
                             const SizedBox(height: 8),
 
-                            // Baris Kotak Captcha Distorsi Noise & Gelombang + Refresh
+                            // Baris Kotak Captcha & Refresh
                             Row(
                               children: [
                                 Expanded(
@@ -689,7 +686,7 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
 
-          // 4. BANNER ERROR MELAYANG
+          // 4. BANNER ERROR MERAH PENUH (Gaya Baru ala Daftar Akun)
           if (showErrorBanner)
             Positioned(
               top: 10,
@@ -708,14 +705,13 @@ class _LoginPageState extends State<LoginPage>
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
-                    border: Border.all(color: const Color(0xFFF87171)),
-                    borderRadius: BorderRadius.circular(20),
+                    color: const Color(0xFFEF4444),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 15,
                         offset: const Offset(0, 6),
                       ),
@@ -725,39 +721,26 @@ class _LoginPageState extends State<LoginPage>
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(2),
                         decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
+                          color: Colors.white,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
+                          Icons.priority_high_rounded,
+                          color: Color(0xFFEF4444),
                           size: 16,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Gagal Melanjutkan!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              errorMessage,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          errorMessage,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       GestureDetector(
@@ -767,14 +750,11 @@ class _LoginPageState extends State<LoginPage>
                           });
                         },
                         child: const Padding(
-                          padding: EdgeInsets.only(bottom: 12, left: 8),
-                          child: Text(
-                            '✕',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.bold,
-                            ),
+                          padding: EdgeInsets.only(left: 8),
+                          child: Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 18,
                           ),
                         ),
                       ),
@@ -837,76 +817,53 @@ class DistortedCaptchaPainter extends CustomPainter {
 
     for (int i = 0; i < charCount; i++) {
       final char = code[i];
-      final color = charColors[(i + random.nextInt(3)) % charColors.length];
-      final angle = (random.nextDouble() - 0.5) * 0.45;
-      final offsetY = (random.nextDouble() - 0.5) * 10;
-      final fontSize = 24.0 + random.nextDouble() * 4;
+      final color = charColors[random.nextInt(charColors.length)];
 
-      final shadowSpan = TextSpan(
-        text: char,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w900,
-          fontStyle: FontStyle.italic,
-          color: color.withValues(alpha: 0.25),
+      TextPainter textPainter = TextPainter(
+        text: TextSpan(
+          text: char,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
         ),
-      );
-      final shadowPainter = TextPainter(
-        text: shadowSpan,
         textDirection: TextDirection.ltr,
-      )..layout();
-
-      final textSpan = TextSpan(
-        text: char,
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w900,
-          fontStyle: FontStyle.italic,
-          color: color,
-        ),
       );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      )..layout();
 
-      final x = 20 + (i * stepX) + (stepX - textPainter.width) / 2;
-      final y = (size.height - textPainter.height) / 2 + offsetY;
+      textPainter.layout();
 
       canvas.save();
-      canvas.translate(x + textPainter.width / 2, y + textPainter.height / 2);
-      canvas.rotate(angle);
-      canvas.translate(-textPainter.width / 2, -textPainter.height / 2);
+      double x = 16 + (i * stepX) + random.nextDouble() * 4;
+      double y = (size.height - textPainter.height) / 2 + (random.nextDouble() * 10 - 5);
 
-      shadowPainter.paint(canvas, const Offset(-2, -1.5));
+      canvas.translate(x, y);
+      double angle = (random.nextDouble() - 0.5) * 0.5; // Rotasi acak (-0.25 sampai 0.25 radian)
+      canvas.rotate(angle);
+
       textPainter.paint(canvas, Offset.zero);
       canvas.restore();
     }
 
-    // 4. Dua garis kurva gelombang melintang di atas teks
-    for (int lineIdx = 0; lineIdx < 2; lineIdx++) {
-      final wavePaint = Paint()
-        ..color = const Color(0xFF9F1239).withValues(alpha: 0.45)
-        ..strokeWidth = 1.3
-        ..style = PaintingStyle.stroke;
+    // 4. Garis gelombang pengganggu (noise lines) di atas teks
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
 
-      final path = Path();
-      final startY = size.height * (0.35 + random.nextDouble() * 0.4);
-      path.moveTo(8, startY);
+    for (int l = 0; l < 3; l++) {
+      linePaint.color = noiseColors[random.nextInt(noiseColors.length)];
+      Path path = Path();
+      double startY = random.nextDouble() * size.height;
+      path.moveTo(0, startY);
 
-      final cp1x = size.width * 0.35;
-      final cp1y = size.height * (lineIdx == 0 ? 0.1 : 0.9);
-      final cp2x = size.width * 0.70;
-      final cp2y = size.height * (lineIdx == 0 ? 0.95 : 0.1);
-      final endY = size.height * (0.25 + random.nextDouble() * 0.5);
-
-      path.cubicTo(cp1x, cp1y, cp2x, cp2y, size.width - 8, endY);
-      canvas.drawPath(path, wavePaint);
+      for (double x = 0; x < size.width; x += 20) {
+        double y = startY + sin(x * 0.05 + l) * 8 + (random.nextDouble() * 6 - 3);
+        path.lineTo(x, y);
+      }
+      canvas.drawPath(path, linePaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant DistortedCaptchaPainter oldDelegate) {
-    return oldDelegate.code != code || oldDelegate.seed != seed;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
