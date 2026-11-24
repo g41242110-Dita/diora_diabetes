@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -24,13 +27,34 @@ class DokterBerandaPage extends StatefulWidget {
 
 class DokterBerandaPageState extends State<DokterBerandaPage> {
   int currentIndex = 0;
+  bool hasUnreadNotif = false;
+  bool _isInitialBookingLoad = true;
+  bool _isInitialChatLoad = true;
+
   final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
+
+  static const AndroidNotificationChannel _dioraAlertChannel =
+  AndroidNotificationChannel(
+    'diora_dokter_alerts_v1',
+    'Notifikasi Pasien & Chat Dokter',
+    description: 'Pemberitahuan booking konsultasi dan pesan pasien baru',
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
+    showBadge: true,
+  );
+
+  String get _activeDoctorId =>
+      (widget.doctorId != null && widget.doctorId!.trim().isNotEmpty)
+          ? widget.doctorId!.trim()
+          : '1';
 
   @override
   void initState() {
     super.initState();
     _initLocalNotification();
+    _dengarkanBookingMasuk();
     _dengarkanPesanChatMasuk();
   }
 
@@ -52,67 +76,130 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
     _localNotificationsPlugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (androidImplementation != null) {
+      await androidImplementation.createNotificationChannel(_dioraAlertChannel);
       await androidImplementation.requestNotificationsPermission();
     }
   }
 
-  Future<void> _showChatNotification({
+  Future<void> _showHeadsUpNotification({
+    required String judul,
     required String pesan,
-    required bool isSummary,
   }) async {
-    final String judul = isSummary
-        ? '📥 Laporan Skrining PDF dari Pasien'
-        : '💬 Pesan Baru dari Pasien';
-
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'chat_dokter_channel',
-      'Chat Pasien',
-      channelDescription: 'Notifikasi pesan masuk dari pasien secara real-time',
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      _dioraAlertChannel.id,
+      _dioraAlertChannel.name,
+      channelDescription: _dioraAlertChannel.description,
       importance: Importance.max,
       priority: Priority.high,
-      ticker: 'Pesan Baru',
+      ticker: judul,
       playSound: true,
       enableVibration: true,
+      visibility: NotificationVisibility.public,
     );
 
-    const NotificationDetails notificationDetails =
+    final NotificationDetails notificationDetails =
     NotificationDetails(android: androidDetails);
 
     await _localNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
       judul,
       pesan,
       notificationDetails,
     );
   }
 
-  void _dengarkanPesanChatMasuk() {
-    final String activeDoctorId = widget.doctorId ?? '1';
-
+  void _dengarkanBookingMasuk() {
     FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('senderId', isNotEqualTo: activeDoctorId)
+        .collection('consultation_bookings')
+        .where('doctor_id', isEqualTo: _activeDoctorId)
         .snapshots()
         .listen((snapshot) {
-      for (var change in snapshot.docChanges) {
+      if (_isInitialBookingLoad) {
+        _isInitialBookingLoad = false;
+        return;
+      }
+
+      for (final change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
-          final data = change.doc.data() as Map<String, dynamic>;
-          final String pesanTeks = data['text'] ?? 'Mengirim pesan baru...';
+          final data = change.doc.data() as Map<String, dynamic>? ?? {};
+          final namaPasien = (data['user_id'] ??
+              data['bookedByUserId'] ??
+              data['patient_name'] ??
+              'Pasien')
+              .toString();
+          final jamSesi =
+          (data['booking_time'] ?? data['jam_sesi'] ?? '').toString();
+          final tanggal =
+          (data['booking_date'] ?? data['tanggal'] ?? '').toString();
+
+          if (!mounted) return;
+          setState(() => hasUnreadNotif = true);
+
+          final detailWaktu = [
+            if (tanggal.isNotEmpty) tanggal,
+            if (jamSesi.isNotEmpty) '$jamSesi WIB',
+          ].join(' • ');
+
+          _showHeadsUpNotification(
+            judul: 'Booking Konsultasi Baru',
+            pesan: detailWaktu.isNotEmpty
+                ? '$namaPasien menjadwalkan konsultasi ($detailWaktu).'
+                : '$namaPasien menjadwalkan konsultasi baru.',
+          );
+        }
+      }
+    });
+  }
+
+  void _dengarkanPesanChatMasuk() {
+    FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where('senderId', isNotEqualTo: _activeDoctorId)
+        .snapshots()
+        .listen((snapshot) {
+      if (_isInitialChatLoad) {
+        _isInitialChatLoad = false;
+        return;
+      }
+
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final String roomPath = change.doc.reference.parent.parent?.id ?? '';
+          final bool isRoomMilikDokter = roomPath.isEmpty ||
+              !roomPath.contains('_') ||
+              roomPath.contains('_${_activeDoctorId}_') ||
+              roomPath.endsWith('_$_activeDoctorId');
+          if (!isRoomMilikDokter) continue;
+
+          final data = change.doc.data() as Map<String, dynamic>? ?? {};
+          final String pesanTeks =
+          (data['text'] ?? 'Mengirim pesan baru...').toString();
           final bool isSummary = data['isScreeningSummary'] == true;
 
-          _showChatNotification(pesan: pesanTeks, isSummary: isSummary);
+          if (!mounted) return;
+          setState(() => hasUnreadNotif = true);
+
+          _showHeadsUpNotification(
+            judul: isSummary
+                ? 'Laporan Skrining PDF dari Pasien'
+                : 'Pesan Baru dari Pasien',
+            pesan: pesanTeks,
+          );
         }
       }
     });
   }
 
   void _bukaHalamanNotifikasi(BuildContext context) {
-    final String activeDoctorId = widget.doctorId ?? '1';
+    if (hasUnreadNotif) {
+      setState(() => hasUnreadNotif = false);
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DokterNotifikasiPage(
-          doctorId: activeDoctorId,
+          doctorId: _activeDoctorId,
           onNavigateToTab: (index) {
             setState(() {
               currentIndex = index;
@@ -125,25 +212,25 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final String activeDoctorId = widget.doctorId ?? '1';
-
     final List<Widget> pages = [
       _DokterDashboardContentView(
-        doctorId: activeDoctorId,
+        doctorId: _activeDoctorId,
+        hasUnreadNotif: hasUnreadNotif,
         onNotificationTap: () => _bukaHalamanNotifikasi(context),
       ),
       DokterSkriningPage(
+        doctorId: _activeDoctorId,
         onBackToHome: () => setState(() => currentIndex = 0),
       ),
       DokterKonsultasiPage(
-        doctorId: activeDoctorId,
+        doctorId: _activeDoctorId,
         onBackToHome: () => setState(() => currentIndex = 0),
       ),
       DokterLokasiPage(
-        doctorId: activeDoctorId,
+        doctorId: _activeDoctorId,
         onBackToHome: () => setState(() => currentIndex = 0),
       ),
-      DokterProfilPage(doctorId: activeDoctorId),
+      DokterProfilPage(doctorId: _activeDoctorId),
     ];
 
     return PopScope(
@@ -224,12 +311,72 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
 
 class _DokterDashboardContentView extends StatelessWidget {
   final String doctorId;
+  final bool hasUnreadNotif;
   final VoidCallback onNotificationTap;
 
   const _DokterDashboardContentView({
     required this.doctorId,
+    required this.hasUnreadNotif,
     required this.onNotificationTap,
   });
+
+  Uint8List? _decodePhotoBytes(dynamic rawBase64) {
+    if (rawBase64 == null) return null;
+    final str = rawBase64.toString().trim();
+    if (str.isEmpty) return null;
+    try {
+      final cleaned = str.contains(',') ? str.split(',').last : str;
+      return base64Decode(cleaned);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isDokumenPdfSkriningData(Map<String, dynamic> msgData) {
+    final bool isSummary = msgData['isScreeningSummary'] == true;
+    final String messageType =
+    (msgData['message_type'] ?? '').toString().toLowerCase();
+    final String type = (msgData['type'] ?? '').toString().toLowerCase();
+    final String fileType =
+    (msgData['fileType'] ?? '').toString().toLowerCase();
+    final String text =
+    (msgData['text'] ?? msgData['message'] ?? '').toString().toLowerCase();
+    final String fileName =
+    (msgData['fileName'] ?? '').toString().toLowerCase();
+    final String fileUrl = (msgData['fileUrl'] ??
+        msgData['pdfUrl'] ??
+        msgData['attachmentUrl'] ??
+        '')
+        .toString()
+        .toLowerCase();
+
+    return isSummary ||
+        messageType == 'screening_attachment' ||
+        messageType == 'pdf' ||
+        type == 'pdf' ||
+        fileType == 'pdf' ||
+        fileName.endsWith('.pdf') ||
+        fileUrl.endsWith('.pdf') ||
+        text.contains('.pdf') ||
+        text.contains('hasil skrining') ||
+        text.contains('screening');
+  }
+
+  bool _isPesanMilikDokter(DocumentSnapshot doc) {
+    final String docId = doctorId.trim();
+    if (docId.isEmpty) return true;
+
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final String fieldDoctorId =
+    (data['doctor_id'] ?? data['doctorId'] ?? '').toString().trim();
+    if (fieldDoctorId.isNotEmpty) {
+      return fieldDoctorId == docId;
+    }
+
+    final String roomPath = doc.reference.parent.parent?.id ?? '';
+    if (roomPath.isEmpty || !roomPath.contains('_')) return true;
+    return roomPath.contains('_${docId}_') || roomPath.endsWith('_$docId');
+  }
 
   String _namaHari(int weekday) {
     const hariMap = {
@@ -340,6 +487,8 @@ class _DokterDashboardContentView extends StatelessWidget {
         String spesialisasi = 'Dokter Spesialis Penyakit Dalam';
         bool sedangPraktik = false;
         Map<String, dynamic> jadwalShift = {};
+        Uint8List? photoBytes;
+        String? photoUrl;
 
         if (doctorSnapshot.hasData && doctorSnapshot.data!.exists) {
           final docData = doctorSnapshot.data!.data() as Map<String, dynamic>;
@@ -348,6 +497,18 @@ class _DokterDashboardContentView extends StatelessWidget {
           jadwalShift =
               (docData['jadwal_shift'] as Map<String, dynamic>?) ?? {};
           sedangPraktik = _cekSedangPraktik(jadwalShift);
+          photoBytes = _decodePhotoBytes(docData['photoBase64']);
+          if (docData['photoUrl'] != null &&
+              docData['photoUrl'].toString().trim().isNotEmpty) {
+            photoUrl = docData['photoUrl'].toString().trim();
+          }
+        }
+
+        ImageProvider? avatarProvider;
+        if (photoBytes != null) {
+          avatarProvider = MemoryImage(photoBytes);
+        } else if (photoUrl != null) {
+          avatarProvider = NetworkImage(photoUrl);
         }
 
         final String kodeJamShift = _getKodeJamShiftHariIni(jadwalShift);
@@ -366,42 +527,15 @@ class _DokterDashboardContentView extends StatelessWidget {
             return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collectionGroup('messages')
-                  .where('senderId', isNotEqualTo: doctorId)
                   .snapshots(),
               builder: (context, messageSnapshot) {
                 int totalPdfSkrining = 0;
 
                 if (messageSnapshot.hasData) {
                   for (final doc in messageSnapshot.data!.docs) {
-                    final String roomPath =
-                        doc.reference.parent.parent?.id ?? '';
-                    final bool isRoomMilikDokter = roomPath.isEmpty ||
-                        roomPath.contains('_${doctorId}_') ||
-                        roomPath.endsWith('_$doctorId');
-
-                    if (!isRoomMilikDokter) continue;
-
+                    if (!_isPesanMilikDokter(doc)) continue;
                     final msgData = doc.data() as Map<String, dynamic>;
-                    final bool isSummary =
-                        msgData['isScreeningSummary'] == true;
-                    final String text =
-                    (msgData['text'] ?? '').toString().toLowerCase();
-                    final String fileUrl = (msgData['fileUrl'] ??
-                        msgData['pdfUrl'] ??
-                        msgData['attachmentUrl'] ??
-                        '')
-                        .toString()
-                        .toLowerCase();
-                    final String fileType =
-                    (msgData['fileType'] ?? msgData['type'] ?? '')
-                        .toString()
-                        .toLowerCase();
-
-                    if (isSummary ||
-                        fileType == 'pdf' ||
-                        fileUrl.endsWith('.pdf') ||
-                        text.contains('.pdf') ||
-                        text.contains('hasil skrining')) {
+                    if (_isDokumenPdfSkriningData(msgData)) {
                       totalPdfSkrining++;
                     }
                   }
@@ -412,7 +546,6 @@ class _DokterDashboardContentView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // HEADER GRADIENT
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.only(
@@ -453,12 +586,15 @@ class _DokterDashboardContentView extends StatelessWidget {
                                           ),
                                         ],
                                       ),
-                                      child: const CircleAvatar(
+                                      child: CircleAvatar(
                                         radius: 22,
-                                        backgroundColor: Color(0xFFEEF2FF),
-                                        child: Icon(Icons.person_rounded,
+                                        backgroundColor: const Color(0xFFEEF2FF),
+                                        backgroundImage: avatarProvider,
+                                        child: avatarProvider == null
+                                            ? const Icon(Icons.person_rounded,
                                             color: Color(0xFF6366F1),
-                                            size: 26),
+                                            size: 26)
+                                            : null,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -496,22 +632,44 @@ class _DokterDashboardContentView extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color:
-                                    Colors.white.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: onNotificationTap,
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(8),
-                                    icon: const Icon(
-                                      Icons.notifications_active_rounded,
-                                      color: Colors.white,
-                                      size: 20,
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: IconButton(
+                                        onPressed: onNotificationTap,
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                        icon: const Icon(
+                                          Icons.notifications_active_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    if (hasUnreadNotif)
+                                      Positioned(
+                                        top: 5,
+                                        right: 5,
+                                        child: Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEF4444),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -590,8 +748,6 @@ class _DokterDashboardContentView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // BANNER RINGKASAN HARI INI
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Container(
@@ -680,8 +836,6 @@ class _DokterDashboardContentView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 18),
-
-                      // GRID 4 KARTU UTAMA DENGAN ANGKA REAL-TIME DI POJOK KANAN ATAS
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Column(
@@ -794,8 +948,6 @@ class _DokterDashboardContentView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 18),
-
-                      // ANTREAN KONSULTASI HARI INI
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Row(
@@ -828,8 +980,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(18),
-                            border:
-                            Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
                           child: Column(
                             children: [
@@ -893,8 +1044,8 @@ class _DokterDashboardContentView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(18),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black
-                                          .withValues(alpha: 0.03),
+                                      color:
+                                      Colors.black.withValues(alpha: 0.03),
                                       blurRadius: 8,
                                       offset: const Offset(0, 3),
                                     ),
@@ -908,8 +1059,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFEEF2FF),
-                                        borderRadius:
-                                        BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                       child: const Icon(Icons.person_rounded,
                                           color: Color(0xFF6366F1), size: 24),
