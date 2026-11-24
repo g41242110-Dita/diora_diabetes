@@ -9,14 +9,13 @@ class LokasiPage extends StatefulWidget {
 }
 
 class _LokasiPageState extends State<LokasiPage> {
-  // 0: Akurat, 1: Sekitar
-  int _selectedOption = 0;
-
   void _navigateToDaftarKlinik(bool isGranted) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => DaftarKlinikPage(isLocationGranted: isGranted),
+        builder: (context) => DaftarKlinikPage(
+          isLocationGranted: isGranted,
+        ),
       ),
     );
   }
@@ -27,12 +26,12 @@ class _LokasiPageState extends State<LokasiPage> {
       backgroundColor: const Color(0xFFF4F6FB),
       body: Stack(
         children: [
-          // 1. LATAR BELAKANG HEADER MELENGKUNG (Senada dengan Halaman Login)
+          // 1. LATAR BELAKANG HEADER MELENGKUNG
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: 310,
+            height: 320,
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -103,19 +102,23 @@ class _LokasiPageState extends State<LokasiPage> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF6679F4), size: 20),
+                          icon: const Icon(
+                            Icons.arrow_back_rounded,
+                            color: Color(0xFF6679F4),
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 36),
 
                   // Ilustrasi / Ikon Lokasi di Tengah Atas
                   Center(
                     child: Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -129,7 +132,7 @@ class _LokasiPageState extends State<LokasiPage> {
                       ),
                       child: const Icon(
                         Icons.explore_rounded,
-                        size: 42,
+                        size: 46,
                         color: Color(0xFF6679F4),
                       ),
                     ),
@@ -137,7 +140,7 @@ class _LokasiPageState extends State<LokasiPage> {
 
                   const SizedBox(height: 24),
 
-                  // Judul & Deskripsi
+                  // Judul & Deskripsi (Mencakup Rumah Sakit, Puskesmas, dan Klinik)
                   const Text(
                     'Akses Lokasi Anda',
                     textAlign: TextAlign.center,
@@ -148,16 +151,16 @@ class _LokasiPageState extends State<LokasiPage> {
                       letterSpacing: -0.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: const TextSpan(
                         style: TextStyle(
                           fontSize: 13.5,
                           color: Color(0xFF475569),
-                          height: 1.4,
+                          height: 1.5,
                         ),
                         children: [
                           TextSpan(text: 'Izinkan '),
@@ -169,18 +172,18 @@ class _LokasiPageState extends State<LokasiPage> {
                             ),
                           ),
                           TextSpan(
-                            text: 'mengakses lokasi perangkat untuk menemukan klinik kesehatan terdekat dengan cepat.',
+                            text: 'mengakses lokasi perangkat Anda untuk menemukan layanan Rumah Sakit, Puskesmas, dan Klinik terdekat dengan cepat.',
                           ),
                         ],
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 36),
 
-                  // KARTU FORM UTAMA
+                  // KARTU TOMBOL IZIN LOKASI
                   Container(
-                    padding: const EdgeInsets.all(22),
+                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(28),
@@ -195,127 +198,6 @@ class _LokasiPageState extends State<LokasiPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Pilih Tingkat Akurasi',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Opsi Pilihan (Akurat vs Sekitar)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => _selectedOption = 0),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: _selectedOption == 0
-                                        ? const Color(0xFFEEF2FF)
-                                        : const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: _selectedOption == 0
-                                          ? const Color(0xFF6679F4)
-                                          : const Color(0xFFE2E8F0),
-                                      width: _selectedOption == 0 ? 1.5 : 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.network(
-                                          'https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=300',
-                                          width: 36,
-                                          height: 36,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const Icon(Icons.my_location, size: 20, color: Color(0xFF6679F4)),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      const Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Akurat',
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                                            ),
-                                            Text(
-                                              'Presisi tinggi',
-                                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => _selectedOption = 1),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: _selectedOption == 1
-                                        ? const Color(0xFFEEF2FF)
-                                        : const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color: _selectedOption == 1
-                                          ? const Color(0xFF6679F4)
-                                          : const Color(0xFFE2E8F0),
-                                      width: _selectedOption == 1 ? 1.5 : 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.network(
-                                          'https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=300',
-                                          width: 36,
-                                          height: 36,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => const Icon(Icons.map, size: 20, color: Colors.orange),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      const Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Sekitar',
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                                            ),
-                                            Text(
-                                              'Area umum',
-                                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
                         // Tombol Aksi 1: Izinkan Saat Aplikasi Digunakan
                         Container(
                           height: 50,
@@ -363,7 +245,10 @@ class _LokasiPageState extends State<LokasiPage> {
                             onPressed: () => _navigateToDaftarKlinik(true),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1E293B),
-                              side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+                              side: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                                width: 1.2,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(24),
                               ),
@@ -378,12 +263,12 @@ class _LokasiPageState extends State<LokasiPage> {
                           ),
                         ),
 
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
 
-                        // Tombol Aksi 3: Jangan Izinkan
+                        // Tombol Aksi 3: Jangan Izinkan -> Langsung kembali ke BerandaPage
                         Center(
                           child: TextButton(
-                            onPressed: () => _navigateToDaftarKlinik(false),
+                            onPressed: () => Navigator.pop(context),
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFFEF4444),
                             ),
