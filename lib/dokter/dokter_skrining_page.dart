@@ -2,9 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class DokterSkriningPage extends StatefulWidget {
+  final String? doctorId;
   final VoidCallback? onBackToHome;
 
-  const DokterSkriningPage({super.key, this.onBackToHome});
+  const DokterSkriningPage({super.key, this.doctorId, this.onBackToHome});
 
   @override
   State<DokterSkriningPage> createState() => _DokterSkriningPageState();
@@ -14,6 +15,63 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
   String _searchQuery = '';
   String _selectedFilter = 'Semua'; // 'Semua', 'Positif', 'Negatif', 'Pending'
 
+  String? get _normalizedDoctorId {
+    final id = widget.doctorId?.trim();
+    return (id != null && id.isNotEmpty) ? id : null;
+  }
+
+  bool _isMilikDokterAktif(DocumentSnapshot doc) {
+    final docId = _normalizedDoctorId;
+    if (docId == null) return true;
+
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final String fieldDoctorId =
+    (data['doctor_id'] ?? data['doctorId'] ?? '').toString().trim();
+    if (fieldDoctorId.isNotEmpty) {
+      return fieldDoctorId == docId;
+    }
+
+    final String roomId = doc.reference.parent.parent?.id ?? '';
+    if (roomId.isEmpty) return true;
+    final bool hasDoctorSegment = roomId.contains('_');
+    if (!hasDoctorSegment) return true;
+    return roomId.contains('_${docId}_') || roomId.endsWith('_$docId');
+  }
+
+  bool _isDokumenPdfSkrining(Map<String, dynamic> data) {
+    final bool isSummary = data['isScreeningSummary'] == true;
+    final String messageType =
+    (data['message_type'] ?? '').toString().toLowerCase();
+    final String type = (data['type'] ?? '').toString().toLowerCase();
+    final String fileType = (data['fileType'] ?? '').toString().toLowerCase();
+    final String text =
+    (data['text'] ?? data['message'] ?? '').toString().toLowerCase();
+    final String fileName = (data['fileName'] ?? '').toString().toLowerCase();
+    final String fileUrl = (data['fileUrl'] ??
+        data['pdfUrl'] ??
+        data['attachmentUrl'] ??
+        '')
+        .toString()
+        .toLowerCase();
+
+    return isSummary ||
+        messageType == 'screening_attachment' ||
+        messageType == 'pdf' ||
+        type == 'pdf' ||
+        fileType == 'pdf' ||
+        fileName.endsWith('.pdf') ||
+        fileUrl.endsWith('.pdf') ||
+        text.contains('.pdf') ||
+        text.contains('hasil skrining') ||
+        text.contains('screening');
+  }
+
+  String _extractLaporanText(Map<String, dynamic> data) {
+    final raw = (data['text'] ?? data['message'] ?? '').toString().trim();
+    if (raw.isNotEmpty) return raw;
+    return 'Lampiran hasil skrining pasien';
+  }
+
   bool _isPositiveResult(String tingkatRisiko, String laporanText) {
     final gabungan = '$tingkatRisiko $laporanText'.toLowerCase();
     return gabungan.contains('positif') ||
@@ -22,13 +80,17 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
   }
 
   String _extractNamaPasien(Map<String, dynamic> data, String laporanText) {
-    if (data['namaPasien'] != null &&
-        data['namaPasien'].toString().trim().isNotEmpty) {
-      return data['namaPasien'].toString().trim();
-    }
-    if (data['senderName'] != null &&
-        data['senderName'].toString().trim().isNotEmpty) {
-      return data['senderName'].toString().trim();
+    for (final key in [
+      'namaPasien',
+      'patientName',
+      'patient_name',
+      'senderName',
+      'senderId',
+      'sender_id',
+      'user_id',
+    ]) {
+      final val = data[key]?.toString().trim();
+      if (val != null && val.isNotEmpty) return val;
     }
     for (final line in laporanText.split('\n')) {
       final cleanLine = line.trim();
@@ -40,6 +102,11 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       }
     }
     return 'Pasien Terdaftar';
+  }
+
+  Timestamp? _extractTimestamp(Map<String, dynamic> data) {
+    final ts = data['timestamp'] ?? data['created_at'] ?? data['createdAt'];
+    return ts is Timestamp ? ts : null;
   }
 
   String _formatWaktu(Timestamp? timestamp) {
@@ -65,6 +132,18 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
     return '${dt.day} ${bulan[dt.month]} ${dt.year} • $jam:$menit WIB';
   }
 
+  int _compareDocTime(QueryDocumentSnapshot a, QueryDocumentSnapshot b) {
+    final dataA = a.data() as Map<String, dynamic>;
+    final dataB = b.data() as Map<String, dynamic>;
+    final tsA = _extractTimestamp(dataA);
+    final tsB = _extractTimestamp(dataB);
+
+    if (tsA == null && tsB == null) return 0;
+    if (tsA == null) return -1;
+    if (tsB == null) return 1;
+    return tsB.compareTo(tsA);
+  }
+
   void _bukaPreviewDokumenPdf(
       BuildContext context, {
         required DocumentReference docRef,
@@ -74,7 +153,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
         required String tingkatRisiko,
         required String waktuKirim,
       }) {
-    final String laporanText = (data['text'] ?? '').toString();
+    final String laporanText = _extractLaporanText(data);
     final bool isVerified = data['isVerified'] == true;
     final TextEditingController catatanController = TextEditingController(
       text: (data['catatanVerifikasi'] ?? '').toString(),
@@ -116,7 +195,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  // Header Dokumen PDF
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 14, 14, 12),
                     child: Row(
@@ -169,14 +247,11 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                     ),
                   ),
                   const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-                  // Isi Kertas Laporan Medis
                   Expanded(
                     child: ListView(
                       controller: scrollController,
                       padding: const EdgeInsets.all(20),
                       children: [
-                        // Lembar Putih Ala Dokumen PDF Klinis
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
@@ -322,8 +397,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Catatan Verifikasi Dokter
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -349,7 +422,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                                 readOnly: isVerified,
                                 decoration: InputDecoration(
                                   hintText:
-                                  'Contoh: Dianjurkan cek HbA1c & GDP di Klinik Sentosa...',
+                                  'Contoh: Dianjurkan cek HbA1c & GDP di fasyankes mitra Jember...',
                                   hintStyle: const TextStyle(fontSize: 11.5),
                                   filled: true,
                                   fillColor: const Color(0xFFF8FAFC),
@@ -364,21 +437,19 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                           ),
                         ),
                         const SizedBox(height: 18),
-
-                        // Tombol Aksi Verifikasi
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: isVerified
                                 ? null
                                 : () async {
-                              await docRef.update({
+                              await docRef.set({
                                 'isVerified': true,
                                 'catatanVerifikasi':
                                 catatanController.text.trim(),
                                 'verifiedAt':
                                 FieldValue.serverTimestamp(),
-                              });
+                              }, SetOptions(merge: true));
                               if (sheetContext.mounted) {
                                 Navigator.pop(sheetContext);
                               }
@@ -631,6 +702,23 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
             .collectionGroup('messages')
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Gagal memuat data skrining: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.redAccent,
+                  ),
+                ),
+              ),
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting &&
               !snapshot.hasData) {
             return const Center(
@@ -640,32 +728,13 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
           final allDocs = snapshot.data?.docs ?? [];
 
-          // Ambil semua pesan yang merupakan laporan skrining / PDF
           final List<QueryDocumentSnapshot> pdfDocs = allDocs.where((doc) {
+            if (!_isMilikDokterAktif(doc)) return false;
             final data = doc.data() as Map<String, dynamic>;
-            final bool isSummary = data['isScreeningSummary'] == true;
-            final String type = (data['type'] ?? '').toString().toLowerCase();
-            final String text = (data['text'] ?? '').toString().toLowerCase();
-            final String fileName =
-            (data['fileName'] ?? '').toString().toLowerCase();
-
-            return isSummary ||
-                type == 'pdf' ||
-                fileName.endsWith('.pdf') ||
-                text.contains('hasil skrining');
+            return _isDokumenPdfSkrining(data);
           }).toList();
 
-          // Urutkan terbaru di atas
-          pdfDocs.sort((a, b) {
-            final tsA =
-            (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
-            final tsB =
-            (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
-            if (tsA == null && tsB == null) return 0;
-            if (tsA == null) return 1;
-            if (tsB == null) return -1;
-            return tsB.compareTo(tsA);
-          });
+          pdfDocs.sort(_compareDocTime);
 
           int totalPositif = 0;
           int totalNegatif = 0;
@@ -673,7 +742,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
           for (final doc in pdfDocs) {
             final data = doc.data() as Map<String, dynamic>;
-            final String text = (data['text'] ?? '').toString();
+            final String text = _extractLaporanText(data);
             final String risiko =
             (data['tingkatRisiko'] ?? 'Risiko Rendah').toString();
             if (_isPositiveResult(risiko, text)) {
@@ -688,7 +757,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
           final filteredDocs = pdfDocs.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            final String text = (data['text'] ?? '').toString();
+            final String text = _extractLaporanText(data);
             final String risiko =
             (data['tingkatRisiko'] ?? 'Risiko Rendah').toString();
             final String nama = _extractNamaPasien(data, text);
@@ -712,7 +781,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
-              // 1. Ringkasan Statistik PDF
               _buildSummaryHeader(
                 pdfDocs.length,
                 totalPositif,
@@ -720,8 +788,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 belumVerifikasi,
               ),
               const SizedBox(height: 14),
-
-              // 2. Pencarian Pasien
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -742,8 +808,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // 3. Filter Tab (Semua / Positif / Negatif / Belum Verifikasi)
               _buildFilterRow(
                 pdfDocs.length,
                 totalPositif,
@@ -751,8 +815,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 belumVerifikasi,
               ),
               const SizedBox(height: 14),
-
-              // 4. Daftar Dokumen PDF
               if (filteredDocs.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(28),
@@ -783,11 +845,11 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
               else
                 ...filteredDocs.map((docSnapshot) {
                   final data = docSnapshot.data() as Map<String, dynamic>;
-                  final String laporanText = (data['text'] ?? '').toString();
+                  final String laporanText = _extractLaporanText(data);
                   final String tingkatRisiko =
                   (data['tingkatRisiko'] ?? 'Risiko Rendah').toString();
                   final bool isVerified = data['isVerified'] == true;
-                  final Timestamp? timestamp = data['timestamp'] as Timestamp?;
+                  final Timestamp? timestamp = _extractTimestamp(data);
                   final String waktuKirim = _formatWaktu(timestamp);
                   final String namaPasien =
                   _extractNamaPasien(data, laporanText);
