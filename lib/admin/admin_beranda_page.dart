@@ -1,6 +1,7 @@
 // ignore_for_file: spelling
 
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,6 +32,23 @@ class AdminBerandaPage extends StatefulWidget {
 class _AdminBerandaPageState extends State<AdminBerandaPage> {
   int? _selectedMonthIndex; // Null = tampilkan data keseluruhan
 
+  // Cache stream & bytes foto agar avatar tidak berkedip saat pindah tab
+  Stream<DocumentSnapshot>? _adminProfileStream;
+  String? _lastBase64String;
+  Uint8List? _cachedAvatarBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _adminProfileStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots();
+    }
+  }
+
   @override
   void didUpdateWidget(covariant AdminBerandaPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -52,6 +70,29 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
       setState(() {
         _selectedMonthIndex = null;
       });
+    }
+  }
+
+  Uint8List? _getDecodedAvatarBytes(String? photoBase64) {
+    if (photoBase64 == null || photoBase64.isEmpty) {
+      _lastBase64String = null;
+      _cachedAvatarBytes = null;
+      return null;
+    }
+
+    if (_lastBase64String == photoBase64 && _cachedAvatarBytes != null) {
+      return _cachedAvatarBytes;
+    }
+
+    try {
+      final cleanBase64 = photoBase64.contains(',')
+          ? photoBase64.split(',').last
+          : photoBase64;
+      _cachedAvatarBytes = base64Decode(cleanBase64);
+      _lastBase64String = photoBase64;
+      return _cachedAvatarBytes;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -98,7 +139,6 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
 
   /// Pengecekan status positif/negatif yang akurat berdasarkan field `hasilPrediksi`
   bool _isPositiveStatus(Map<String, dynamic> data) {
-    // 1. Prioritaskan pengecekan field hasilPrediksi dari database
     final hasilPrediksi = (data['hasilPrediksi'] ?? '').toString().toLowerCase();
 
     if (hasilPrediksi.contains('negatif') ||
@@ -115,7 +155,6 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
       return true;
     }
 
-    // 2. Cek flag boolean / angka alternatif
     if (data['isPositive'] == true ||
         data['is_positive'] == true ||
         data['prediction'] == 1 ||
@@ -449,12 +488,7 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
     final user = FirebaseAuth.instance.currentUser;
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: user != null
-          ? FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots()
-          : const Stream.empty(),
+      stream: _adminProfileStream ?? const Stream.empty(),
       builder: (context, snapshot) {
         String adminName = 'Admin';
         String? adminPhotoBase64;
@@ -624,19 +658,16 @@ class _AdminBerandaPageState extends State<AdminBerandaPage> {
     required String? photoBase64,
     required String adminName,
   }) {
-    if (photoBase64 != null && photoBase64.isNotEmpty) {
-      try {
-        final cleanBase64 = photoBase64.contains(',')
-            ? photoBase64.split(',').last
-            : photoBase64;
-        return Image.memory(
-          base64Decode(cleanBase64),
-          width: 52,
-          height: 52,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildInitialsFallback(adminName),
-        );
-      } catch (_) {}
+    final bytes = _getDecodedAvatarBytes(photoBase64);
+    if (bytes != null) {
+      return Image.memory(
+        bytes,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => _buildInitialsFallback(adminName),
+      );
     }
     return _buildInitialsFallback(adminName);
   }

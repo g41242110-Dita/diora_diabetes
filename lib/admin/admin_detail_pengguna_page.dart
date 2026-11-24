@@ -1,5 +1,6 @@
-// ignore_for_file: spell_check_on_only_sample_attachments
+// ignore_for_file: spell_check_on_only_sample_attachments, depend_on_referenced_packages, avoid_types_as_parameter_names
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,6 +21,99 @@ class AdminDetailPenggunaPage extends StatefulWidget {
 class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
   bool _showAllScreenings = false;
 
+  static const _possibleCollections = [
+    'screening_results',
+    'screenings',
+    'skrining',
+    'riwayat_skrining',
+    'hasil_skrining',
+    'screening_history',
+  ];
+
+  final _docsBySource = <String, dynamic>{};
+  final _subscriptions = <StreamSubscription>[];
+  bool _isLoadingScreenings = true;
+  String? _streamError;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenAllScreeningSources();
+  }
+
+  @override
+  void dispose() {
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    super.dispose();
+  }
+
+  String _resolveUserId() {
+    final candidates = [
+      widget.userData['uid'],
+      widget.userData['id'],
+      widget.userData['userId'],
+      widget.userData['user_id'],
+      widget.userData['docId'],
+    ];
+    for (final c in candidates) {
+      if (c != null && c.trim().isNotEmpty && c.trim() != '-') {
+        return c.trim();
+      }
+    }
+    return '';
+  }
+
+  void _attachStream(String sourceKey, Stream queryStream) {
+    final sub = queryStream.listen(
+          (snapshot) {
+        if (!mounted) return;
+        setState(() {
+          _docsBySource[sourceKey] = snapshot.docs;
+          _isLoadingScreenings = false;
+        });
+      },
+      onError: (e) {
+        if (!mounted) return;
+        setState(() {
+          _streamError = e.toString();
+          _isLoadingScreenings = false;
+        });
+      },
+    );
+    _subscriptions.add(sub);
+  }
+
+  void _listenAllScreeningSources() {
+    final firestore = FirebaseFirestore.instance;
+    final uid = _resolveUserId();
+
+    for (final col in _possibleCollections) {
+      _attachStream('root_$col', firestore.collection(col).snapshots());
+    }
+
+    if (uid.isNotEmpty) {
+      const subCollections = [
+        'screening_results',
+        'screenings',
+        'skrining',
+        'riwayat_skrining',
+        'hasil_skrining',
+      ];
+      for (final subCol in subCollections) {
+        _attachStream(
+          'sub_$subCol',
+          firestore
+              .collection('users')
+              .doc(uid)
+              .collection(subCol)
+              .snapshots(),
+        );
+      }
+    }
+  }
+
   String _val(String key, {String fallback = '-'}) {
     final raw = (widget.userData[key] ?? '').trim();
     return raw.isEmpty ? fallback : raw;
@@ -35,23 +129,28 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     return parts[0][0].toUpperCase();
   }
 
-  String _formatDate(dynamic raw) {
-    if (raw == null) return '-';
-    DateTime? dt;
-    if (raw is Timestamp) {
-      dt = raw.toDate();
-    } else if (raw is DateTime) {
-      dt = raw;
-    } else if (raw is int) {
-      dt = raw > 100000000000
+  DateTime? _parseDateTime(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is DateTime) return raw;
+    if (raw is int) {
+      return raw > 100000000000
           ? DateTime.fromMillisecondsSinceEpoch(raw)
           : DateTime.fromMillisecondsSinceEpoch(raw * 1000);
-    } else if (raw is String && raw.trim().isNotEmpty) {
-      dt = DateTime.tryParse(raw.trim());
-      if (dt == null) return raw.trim();
+    }
+    if (raw is String && raw.trim().isNotEmpty) {
+      return DateTime.tryParse(raw.trim());
+    }
+    return null;
+  }
+
+  String _formatDate(dynamic raw) {
+    if (raw == null) return '-';
+    final dt = _parseDateTime(raw);
+    if (dt == null) {
+      return raw is String && raw.trim().isNotEmpty ? raw.trim() : '-';
     }
 
-    if (dt == null) return '-';
     const bulan = [
       '',
       'Januari',
@@ -71,12 +170,16 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     return '$day ${bulan[dt.month]} ${dt.year}';
   }
 
-  bool _isPositiveResult(Map<String, dynamic> data) {
+  bool _isPositiveResult(Map data) {
     final raw = (data['status'] ??
         data['hasil'] ??
         data['result'] ??
         data['prediction'] ??
+        data['prediksi'] ??
         data['risk_level'] ??
+        data['riskLevel'] ??
+        data['kategori'] ??
+        data['diagnosis'] ??
         '')
         .toString()
         .toLowerCase();
@@ -85,12 +188,123 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
         raw.contains('positive') ||
         raw.contains('tinggi') ||
         raw.contains('high') ||
-        raw.contains('diabetes');
+        raw.contains('berisiko') ||
+        raw == '1' ||
+        raw == 'true';
+  }
+
+  bool _belongsToUser(
+      Map data, {
+        required bool isFromSubcollection,
+        required String uid,
+        required String email,
+        required String nama,
+      }) {
+    if (isFromSubcollection) return true;
+
+    final userMap = data['user'] is Map ? data['user'] as Map : null;
+
+    final docUid = (data['userId'] ??
+        data['uid'] ??
+        data['user_id'] ??
+        data['idUser'] ??
+        data['id_user'] ??
+        data['penggunaId'] ??
+        userMap?['uid'] ??
+        userMap?['id'] ??
+        '')
+        .toString()
+        .trim();
+
+    final docEmail = (data['email'] ??
+        data['userEmail'] ??
+        data['user_email'] ??
+        userMap?['email'] ??
+        '')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    final docNama = (data['nama'] ??
+        data['name'] ??
+        data['userName'] ??
+        data['namaLengkap'] ??
+        userMap?['nama'] ??
+        userMap?['name'] ??
+        '')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    final matchUid = uid.isNotEmpty && docUid == uid;
+    final matchEmail = email.isNotEmpty &&
+        email != '-' &&
+        docEmail.isNotEmpty &&
+        docEmail == email.toLowerCase();
+    final matchNama = docUid.isEmpty &&
+        docEmail.isEmpty &&
+        nama.isNotEmpty &&
+        nama != 'Pengguna' &&
+        docNama == nama.toLowerCase();
+
+    return matchUid || matchEmail || matchNama;
+  }
+
+  List _getMergedUserScreenings({
+    required String uid,
+    required String email,
+    required String nama,
+  }) {
+    final uniqueItems = <String, Map>{};
+
+    _docsBySource.forEach((sourceKey, docs) {
+      final isSub = sourceKey.startsWith('sub_');
+      if (docs is Iterable) {
+        for (final doc in docs) {
+          final rawData = doc.data();
+          if (rawData is Map) {
+            if (_belongsToUser(
+              rawData,
+              isFromSubcollection: isSub,
+              uid: uid,
+              email: email,
+              nama: nama,
+            )) {
+              uniqueItems['${sourceKey}_${doc.id}'] = rawData;
+            }
+          }
+        }
+      }
+    });
+
+    final resultList = uniqueItems.values.toList();
+
+    resultList.sort((a, b) {
+      final dtA = _parseDateTime(
+        a['created_at'] ??
+            a['createdAt'] ??
+            a['tanggal'] ??
+            a['date'] ??
+            a['timestamp'],
+      ) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final dtB = _parseDateTime(
+        b['created_at'] ??
+            b['createdAt'] ??
+            b['tanggal'] ??
+            b['date'] ??
+            b['timestamp'],
+      ) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return dtB.compareTo(dtA);
+    });
+
+    return resultList;
   }
 
   @override
   Widget build(BuildContext context) {
-    final String uid = _val('uid', fallback: '');
+    final String uid = _resolveUserId();
     final String nama = _val('nama', fallback: 'Pengguna');
     final String email = _val('email');
     final String role = _val('role', fallback: 'Pengguna');
@@ -107,22 +321,24 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     final bool isAktif = status.toLowerCase() == 'aktif';
     final bool isDokter = role.toLowerCase() == 'dokter';
 
+    final userScreenings = _getMergedUserScreenings(
+      uid: uid,
+      email: email,
+      nama: nama,
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F6FC),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // 1. HEADER LIQUID WAVE SAMA PERSIS DENGAN DATA PENGGUNA
           SliverToBoxAdapter(
             child: _buildLiquidHeader(context),
           ),
-
-          // 2. KONTEN DETAIL PENGGUNA
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 32),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // KARTU PROFIL UTAMA
                 _buildProfileSummaryCard(
                   nama: nama,
                   email: email,
@@ -133,8 +349,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                   photoBase64: photoBase64,
                 ),
                 const SizedBox(height: 16),
-
-                // KARTU DATA DIRI
                 _buildSectionCard(
                   title: 'Data Diri',
                   icon: Icons.badge_rounded,
@@ -174,8 +388,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // KARTU INFORMASI PROFESI
                 _buildSectionCard(
                   title: 'Informasi Profesi',
                   icon: Icons.work_outline_rounded,
@@ -200,9 +412,7 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // KARTU RIWAYAT SKRINING REAL-TIME
-                _buildScreeningHistoryCard(uid: uid, email: email),
+                _buildScreeningHistoryCard(userScreenings),
               ]),
             ),
           ),
@@ -211,13 +421,11 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     );
   }
 
-  /// Header Liquid Wave identik dengan AdminPenggunaPage
   Widget _buildLiquidHeader(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top + 16;
 
     return Stack(
       children: [
-        // Layer bayangan liquid lembut di belakang gelombang utama
         ClipPath(
           clipper: _DetailLiquidHeaderClipper(offsetY: 10),
           child: Container(
@@ -235,8 +443,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
             ),
           ),
         ),
-
-        // Layer utama liquid wave header
         ClipPath(
           clipper: _DetailLiquidHeaderClipper(offsetY: 0),
           child: Container(
@@ -256,7 +462,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // Gelembung cahaya liquid di sudut kanan atas
                 Positioned(
                   right: -35,
                   top: -35,
@@ -274,7 +479,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                     ),
                   ),
                 ),
-                // Gelembung liquid halus di sudut kiri bawah
                 Positioned(
                   left: -25,
                   bottom: -20,
@@ -292,8 +496,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                     ),
                   ),
                 ),
-
-                // Baris Navigasi: Tombol Kembali + Judul di Tengah
                 SizedBox(
                   width: double.infinity,
                   height: 36,
@@ -393,7 +595,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     );
   }
 
-  /// Kartu Ringkasan Profil di Bagian Atas
   Widget _buildProfileSummaryCard({
     required String nama,
     required String email,
@@ -467,7 +668,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                   spacing: 6,
                   runSpacing: 4,
                   children: [
-                    // Badge Role
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -499,8 +699,6 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
                         ],
                       ),
                     ),
-
-                    // Badge Status
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -533,13 +731,12 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     );
   }
 
-  /// Kartu Section (Data Diri / Informasi Profesi) yang rapi dengan pembatas lembut
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
-    required List<_InfoRowData> rows,
+    required List rows,
   }) {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
@@ -582,7 +779,7 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           ...List.generate(rows.length, (index) {
-            final item = rows[index];
+            final item = rows[index] as _InfoRowData;
             final bool isLast = index == rows.length - 1;
             return Column(
               children: [
@@ -634,11 +831,10 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
     );
   }
 
-  /// Kartu Riwayat Skrining Real-Time dari Firestore
-  Widget _buildScreeningHistoryCard({
-    required String uid,
-    required String email,
-  }) {
+  Widget _buildScreeningHistoryCard(List userDocs) {
+    final displayedDocs =
+    _showAllScreenings ? userDocs : userDocs.take(2).toList();
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -653,213 +849,184 @@ class _AdminDetailPenggunaPageState extends State<AdminDetailPenggunaPage> {
           ),
         ],
       ),
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('screening_results')
-            .snapshots(),
-        builder: (context, snapshot) {
-          final allDocs = snapshot.data?.docs ?? [];
-
-          // Cocokkan riwayat skrining milik pengguna berdasarkan uid atau email
-          final userDocs = allDocs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final docUid =
-            (data['userId'] ?? data['uid'] ?? data['user_id'] ?? '')
-                .toString()
-                .trim();
-            final docEmail =
-            (data['email'] ?? data['userEmail'] ?? '').toString().trim();
-
-            final matchUid = uid.isNotEmpty && docUid == uid;
-            final matchEmail = email.isNotEmpty &&
-                email != '-' &&
-                docEmail.toLowerCase() == email.toLowerCase();
-
-            return matchUid || matchEmail;
-          }).toList();
-
-          final displayedDocs = _showAllScreenings
-              ? userDocs
-              : userDocs.take(2).toList();
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDBEAFE),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.monitor_heart_rounded,
-                          size: 17,
-                          color: Color(0xFF2563EB),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Riwayat Skrining',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (userDocs.length > 2)
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _showAllScreenings = !_showAllScreenings;
-                        });
-                      },
-                      child: Text(
-                        _showAllScreenings
-                            ? 'Sembunyikan'
-                            : 'Lihat Semua (${userDocs.length})',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF4F46E5),
-                        ),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDBEAFE),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    child: const Icon(
+                      Icons.monitor_heart_rounded,
+                      size: 17,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Riwayat Skrining',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 14),
-
-              if (snapshot.connectionState == ConnectionState.waiting)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Color(0xFF4F46E5),
-                      ),
+              if (userDocs.length > 2)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showAllScreenings = !_showAllScreenings;
+                    });
+                  },
+                  child: Text(
+                    _showAllScreenings
+                        ? 'Sembunyikan'
+                        : 'Lihat Semua (${userDocs.length})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF4F46E5),
                     ),
                   ),
-                )
-              else if (userDocs.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 14,
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (_isLoadingScreenings && userDocs.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Color(0xFF4F46E5),
                   ),
+                ),
+              ),
+            )
+          else if (userDocs.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                vertical: 16,
+                horizontal: 14,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Text(
+                _streamError != null
+                    ? 'Tidak dapat memuat riwayat skrining. Periksa aturan akses Firestore.'
+                    : 'Pengguna ini belum memiliki riwayat skrining.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )
+          else
+            Column(
+              children: displayedDocs.map((rawItem) {
+                final data = rawItem as Map;
+                final dateText = _formatDate(
+                  data['created_at'] ??
+                      data['createdAt'] ??
+                      data['tanggal'] ??
+                      data['date'] ??
+                      data['timestamp'],
+                );
+                final isPositive = _isPositiveResult(data);
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: const Text(
-                    'Pengguna ini belum memiliki riwayat skrining.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                )
-              else
-                Column(
-                  children: displayedDocs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    final dateText = _formatDate(
-                      data['created_at'] ??
-                          data['createdAt'] ??
-                          data['tanggal'] ??
-                          data['timestamp'],
-                    );
-                    final isPositive = _isPositiveResult(data);
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0E7FF),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_month_rounded,
+                          size: 18,
+                          color: Color(0xFF4F46E5),
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE0E7FF),
-                              borderRadius: BorderRadius.circular(11),
-                            ),
-                            child: const Icon(
-                              Icons.calendar_month_rounded,
-                              size: 18,
-                              color: Color(0xFF4F46E5),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  dateText,
-                                  style: const TextStyle(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  'Skrining Diabetes',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF64748B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isPositive
-                                  ? const Color(0xFFFEE2E2)
-                                  : const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              isPositive ? 'Positif' : 'Negatif',
-                              style: TextStyle(
-                                fontSize: 11.5,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              dateText,
+                              style: const TextStyle(
+                                fontSize: 13.5,
                                 fontWeight: FontWeight.w800,
-                                color: isPositive
-                                    ? const Color(0xFFDC2626)
-                                    : const Color(0xFF15803D),
+                                color: Color(0xFF0F172A),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Skrining Diabetes',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  }).toList(),
-                ),
-            ],
-          );
-        },
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isPositive
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          isPositive ? 'Positif' : 'Negatif',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: isPositive
+                                ? const Color(0xFFDC2626)
+                                : const Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
       ),
     );
   }
@@ -877,7 +1044,6 @@ class _InfoRowData {
   });
 }
 
-/// Clipper Gelombang Liquid Organik yang sama persis dengan AdminPenggunaPage
 class _DetailLiquidHeaderClipper extends CustomClipper<Path> {
   final double offsetY;
 
