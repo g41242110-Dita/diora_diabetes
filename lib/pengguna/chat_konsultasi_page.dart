@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'doctor_model.dart';
 import 'konsultasi_selesai_page.dart';
 
@@ -45,9 +44,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     super.dispose();
   }
 
-  // Helper untuk mengambil dan mencocokkan data skrining secara fleksibel
   Future _ambilDataSkriningUser() async {
-    var hasilList = [];
+    var hasilList = List.empty(growable: true);
 
     try {
       var queryAll = await FirebaseFirestore.instance
@@ -58,7 +56,6 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         final targetRaw = widget.currentUserId.trim().toLowerCase();
         final targetParts = targetRaw.split(' ');
 
-        // Filter dokumen berdasarkan kecocokan nama
         var filteredDocs = queryAll.docs.where((doc) {
           final data = doc.data();
           final dbName = (data['nama'] ?? '').toString().trim().toLowerCase();
@@ -66,11 +63,11 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
           if (dbName.isEmpty) return false;
 
           bool isMatch = dbName == targetRaw ||
-              targetParts.any((part) => part.length > 2 && dbName.contains(part));
+              targetParts
+                  .any((part) => part.length > 2 && dbName.contains(part));
           return isMatch;
         }).toList();
 
-        // Jika tidak ketemu dengan filter kata, ambil semua dokumen terbaru
         if (filteredDocs.isEmpty) {
           filteredDocs = queryAll.docs;
         }
@@ -78,11 +75,14 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         hasilList = filteredDocs.map((d) => d.data()).toList();
       }
 
-      // Urutkan berdasarkan waktu (terbaru di akhir / .last)
       if (hasilList.isNotEmpty) {
         hasilList.sort((dataA, dataB) {
-          final dynamic tsA = dataA['created_at'] ?? dataA['timestamp'] ?? dataA['waktuSkrining'];
-          final dynamic tsB = dataB['created_at'] ?? dataB['timestamp'] ?? dataB['waktuSkrining'];
+          final dynamic tsA = dataA['created_at'] ??
+              dataA['timestamp'] ??
+              dataA['waktuSkrining'];
+          final dynamic tsB = dataB['created_at'] ??
+              dataB['timestamp'] ??
+              dataB['waktuSkrining'];
           if (tsA == null || tsB == null) return 0;
           if (tsA is Timestamp && tsB is Timestamp) {
             return tsA.compareTo(tsB);
@@ -120,15 +120,15 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
           .doc(widget.roomId)
           .collection('messages');
 
-      final existingSummary = await chatRef
-          .where('isScreeningSummary', isEqualTo: true)
-          .get();
+      final existingSummary =
+      await chatRef.where('isScreeningSummary', isEqualTo: true).get();
 
       if (existingSummary.docs.isNotEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Hasil skrining sudah dilampirkan sebelumnya.')),
+                content:
+                Text('Dokumen PDF hasil skrining sudah dikirim sebelumnya.')),
           );
         }
         return;
@@ -146,24 +146,32 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         return;
       }
 
-      // Ambil data paling akhir (terbaru) setelah diurutkan
-      final dataSkrining = listData.last;
-      final String nama = dataSkrining['nama'] ?? widget.currentUserId;
-      final String umur = (dataSkrining['umur'] ?? dataSkrining['usia'] ?? dataSkrining['age'] ?? '-').toString();
-      final String jenisKelamin = dataSkrining['jenisKelamin'] ?? dataSkrining['gender'] ?? '-';
+      final dataSkrining = listData.last as Map<String, dynamic>;
+      final String nama =
+      (dataSkrining['nama'] ?? widget.currentUserId).toString();
+      final String umur = (dataSkrining['umur'] ??
+          dataSkrining['usia'] ??
+          dataSkrining['age'] ??
+          '-')
+          .toString();
+      final String jenisKelamin =
+      (dataSkrining['jenisKelamin'] ?? dataSkrining['gender'] ?? '-')
+          .toString();
 
-      // Mengambil variasi key prediksi dari database Firestore
-      final String hasilPrediksi = dataSkrining['hasilPrediksi'] ??
+      final String hasilPrediksi = (dataSkrining['hasilPrediksi'] ??
           dataSkrining['hasilprediksi'] ??
           dataSkrining['hasillprediksi'] ??
           dataSkrining['statusEvaluasi'] ??
-          'Positif Diabetes';
+          'Positif Diabetes')
+          .toString();
 
       final String bak = dataSkrining['seringBAK'] == true ? 'Ya' : 'Tidak';
       final String haus = dataSkrining['seringHaus'] == true ? 'Ya' : 'Tidak';
       final String lemas = dataSkrining['seringLemas'] == true ? 'Ya' : 'Tidak';
-      final String rambutRontok = dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
-      final String luka = dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
+      final String rambutRontok =
+      dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
+      final String luka =
+      dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
       final String marah = dataSkrining['mudahMarah'] == true ? 'Ya' : 'Tidak';
       final String kaku = dataSkrining['kakuOtot'] == true ? 'Ya' : 'Tidak';
       final String obesitas = dataSkrining['obesitas'] == true ? 'Ya' : 'Tidak';
@@ -183,18 +191,27 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       ringkasanDetail += '7. Sering mengalami kaku otot: $kaku\n';
       ringkasanDetail += '8. Mengalami obesitas / kelebihan BB: $obesitas';
 
+      final String fileNamePdf =
+          'Hasil_Skrining_Diabetes_${nama.replaceAll(' ', '_')}.pdf';
+
       await chatRef.add({
         'senderId': widget.currentUserId,
+        'namaPasien': nama,
         'text': ringkasanDetail,
         'tingkatRisiko': hasilPrediksi,
+        'fileName': fileNamePdf,
+        'type': 'pdf',
         'timestamp': FieldValue.serverTimestamp(),
         'isScreeningSummary': true,
+        'isVerified': false,
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Hasil skrining terbaru berhasil dikirim ke dokter!')),
+          SnackBar(
+            content: Text('Dokumen $fileNamePdf berhasil dikirim ke dokter!'),
+            backgroundColor: const Color(0xFF059669),
+          ),
         );
       }
     } catch (e) {
@@ -657,7 +674,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                               Text(
                                 belumMulai
                                     ? 'Ruang chat akan otomatis terbuka saat memasuki jadwal konsultasi (${widget.slotWaktu}).'
-                                    : 'Tekan ikon penjepit (📎) di bawah untuk melampirkan hasil skrining mandiri Anda ke dokter.',
+                                    : 'Tekan ikon penjepit (📎) di bawah untuk mengirim dokumen PDF hasil skrining Anda ke dokter.',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF64748B),
@@ -683,7 +700,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                         final bool isMe =
                             data['senderId'] == widget.currentUserId;
                         final bool isSummary =
-                            data['isScreeningSummary'] == true;
+                            data['isScreeningSummary'] == true ||
+                                data['type'] == 'pdf';
                         final bool isEdited = data['isEdited'] == true;
                         final String jamFormatted =
                         _formatTimestamp(data['timestamp'] as Timestamp?);
@@ -697,6 +715,10 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                                   .toString()
                                   .toLowerCase()
                                   .contains('tinggi');
+                          final String fileName = (data['fileName'] ??
+                              'Hasil_Skrining_Diabetes.pdf')
+                              .toString();
+
                           return Container(
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.all(14),
@@ -716,51 +738,82 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Row(
-                                      children: [
-                                        Icon(Icons.assignment_turned_in_rounded,
-                                            size: 16,
-                                            color: Color(0xFF5B4AF4)),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          'Hasil Skrining Pasien',
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEEF2FF),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade50,
+                                          borderRadius:
+                                          BorderRadius.circular(10),
+                                        ),
+                                        child: const Icon(
+                                          Icons.picture_as_pdf_rounded,
+                                          size: 20,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              fileName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            const Text(
+                                              'Dokumen PDF Skrining Terkirim',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF5B4AF4),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: isPositif
+                                              ? Colors.red.shade50
+                                              : Colors.green.shade50,
+                                          borderRadius:
+                                          BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: isPositif
+                                                  ? Colors.red.shade200
+                                                  : Colors.green.shade200),
+                                        ),
+                                        child: Text(
+                                          data['tingkatRisiko'] ?? 'Risiko',
                                           style: TextStyle(
-                                            fontSize: 12.5,
+                                            fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF0F172A),
+                                            color: isPositif
+                                                ? Colors.redAccent
+                                                : Colors.green,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: isPositif
-                                            ? Colors.red.shade50
-                                            : Colors.green.shade50,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: isPositif
-                                                ? Colors.red.shade200
-                                                : Colors.green.shade200),
                                       ),
-                                      child: Text(
-                                        data['tingkatRisiko'] ?? 'Risiko',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: isPositif
-                                              ? Colors.redAccent
-                                              : Colors.green,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -998,7 +1051,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           constraints: const BoxConstraints(),
                           icon: const Icon(Icons.attach_file_rounded,
                               color: Color(0xFF5B4AF4), size: 22),
-                          tooltip: 'Kirim Hasil Skrining Asli',
+                          tooltip: 'Kirim Dokumen PDF Hasil Skrining',
                           onPressed:
                           _tarikDanKirimHasilSkriningViaPenjepit,
                         ),
@@ -1034,7 +1087,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           borderRadius: BorderRadius.circular(20),
                           child: CircleAvatar(
                             radius: 20,
-                            backgroundColor: _editingMessageId != null
+                            backgroundColor:
+                            _editingMessageId != null
                                 ? Colors.orange
                                 : const Color(0xFF5B4AF4),
                             child: Icon(
