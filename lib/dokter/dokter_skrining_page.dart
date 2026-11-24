@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DokterSkriningPage extends StatefulWidget {
-  const DokterSkriningPage({super.key});
+  final VoidCallback? onBackToHome;
+
+  const DokterSkriningPage({super.key, this.onBackToHome});
 
   @override
   State<DokterSkriningPage> createState() => _DokterSkriningPageState();
 }
 
 class _DokterSkriningPageState extends State<DokterSkriningPage> {
-  int selectedFilterIndex = 0;
   String searchQuery = "";
 
   @override
@@ -19,22 +20,9 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // Tombol back di AppBar mengembalikan tab langsung ke Beranda (Index 0)
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
-          onPressed: () {
-            // Mencari state dari DokterBerandaPage untuk mengubah index tab kembali ke Beranda (0)
-            final berandaState = context.findAncestorStateOfType<State>();
-            if (berandaState != null && berandaState.mounted) {
-              try {
-                (berandaState as dynamic).setState(() {
-                  (berandaState as dynamic).currentIndex = 0;
-                });
-              } catch (_) {
-                // Fallback aman jika gagal
-              }
-            }
-          },
+          onPressed: widget.onBackToHome ?? () => Navigator.of(context).maybePop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +83,6 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                   }
 
                   final docs = snapshot.data!.docs;
-
                   final filteredDocs = docs.where((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     final textContent = (data['text'] ?? '').toString().toLowerCase();

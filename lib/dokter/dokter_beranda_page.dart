@@ -4,7 +4,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
-// IMPORT HALAMAN DOKTER SESUAI STRUKTUR FOLDER
 import 'dokter_curved_nav_bar.dart';
 import 'dokter_skrining_page.dart';
 import 'dokter_konsultasi_page.dart';
@@ -100,7 +99,6 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
     });
   }
 
-  // Fungsi untuk membuka halaman penuh Notifikasi
   void _bukaHalamanNotifikasi(BuildContext context) {
     final String activeDoctorId = widget.doctorId ?? '1';
     Navigator.push(
@@ -120,9 +118,16 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
         doctorId: activeDoctorId,
         onNotificationTap: () => _bukaHalamanNotifikasi(context),
       ),
-      const DokterSkriningPage(),
-      DokterKonsultasiPage(doctorId: activeDoctorId),
-      const DokterLokasiPage(),
+      DokterSkriningPage(
+        onBackToHome: () => setState(() => currentIndex = 0),
+      ),
+      DokterKonsultasiPage(
+        doctorId: activeDoctorId,
+        onBackToHome: () => setState(() => currentIndex = 0),
+      ),
+      DokterLokasiPage(
+        onBackToHome: () => setState(() => currentIndex = 0),
+      ),
       const DokterProfilPage(),
     ];
 
@@ -184,9 +189,6 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
   }
 }
 
-// =========================================================================
-// HALAMAN FULL SCREEN NOTIFIKASI
-// =========================================================================
 class _DokterNotifikasiFullScreenPage extends StatelessWidget {
   final String doctorId;
   const _DokterNotifikasiFullScreenPage({required this.doctorId});
@@ -353,9 +355,6 @@ class _DokterDashboardContentView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // -----------------------------------------------------------------
-              // 1. HEADER BERSIH (TANPA GARIS PEMBATAS)
-              // -----------------------------------------------------------------
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.only(top: 50.0, left: 20.0, right: 20.0, bottom: 35.0),
@@ -495,12 +494,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 18),
-
-              // -----------------------------------------------------------------
-              // 2. BANNER INFO PRAKTIK DINAMIS
-              // -----------------------------------------------------------------
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Container(
@@ -560,12 +554,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 18),
-
-              // -----------------------------------------------------------------
-              // 3. GRID MENU UTAMA & LAYANAN
-              // -----------------------------------------------------------------
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
@@ -655,12 +644,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 18),
-
-              // -----------------------------------------------------------------
-              // 4. ANTREAN KONSULTASI PASIEN REAL-TIME
-              // -----------------------------------------------------------------
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
@@ -686,7 +670,6 @@ class _DokterDashboardContentView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('doctors')
@@ -859,7 +842,6 @@ class _DokterDashboardContentView extends StatelessWidget {
                   );
                 },
               ),
-
               const SizedBox(height: 24),
             ],
           ),
