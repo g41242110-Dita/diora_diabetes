@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class DokterLokasiPage extends StatefulWidget {
-  const DokterLokasiPage({super.key});
+  final VoidCallback? onBackToHome;
+
+  const DokterLokasiPage({super.key, this.onBackToHome});
 
   @override
   State<DokterLokasiPage> createState() => _DokterLokasiPageState();
@@ -10,7 +12,7 @@ class DokterLokasiPage extends StatefulWidget {
 class _DokterLokasiPageState extends State<DokterLokasiPage> {
   int _selectedIndex = 1;
 
-  final dynamic _daftarFaskes = [
+  final List _daftarFaskes = [
     {
       'nama': 'Klinik Sehat Sentosa',
       'alamat': 'Jl. Merdeka No. 15 Jember',
@@ -62,36 +64,19 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
-          onPressed: () {
-            final berandaState = context.findAncestorStateOfType<State>();
-            if (berandaState != null && berandaState.mounted) {
-              try {
-                (berandaState as dynamic).setState(() {
-                  (berandaState as dynamic).currentIndex = 0;
-                });
-              } catch (_) {}
-            }
-          },
+          onPressed: widget.onBackToHome ?? () => Navigator.of(context).maybePop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Lokasi Praktik dan Faskes',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 17,
-                color: Color(0xFF0F172A),
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF0F172A)),
             ),
             const SizedBox(height: 2),
             Text(
               'Fasilitas kesehatan rujukan skrining & laboratorium glukosa',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.normal,
-              ),
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -105,12 +90,8 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
               border: Border.all(color: const Color(0xFFC7D2FE)),
             ),
             child: Text(
-              '${(_daftarFaskes as List).length} Lokasi',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4F46E5),
-              ),
+              '${_daftarFaskes.length} Lokasi',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
             ),
           ),
         ],
@@ -118,11 +99,11 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
       body: ListView.builder(
         padding: const EdgeInsets.all(20.0),
         physics: const BouncingScrollPhysics(),
-        itemCount: (_daftarFaskes as List).length,
+        itemCount: _daftarFaskes.length,
         itemBuilder: (context, index) {
           final faskes = _daftarFaskes[index];
           final bool isDinasAktif = _selectedIndex == index;
-          final List<dynamic> fasilitasList = faskes['fasilitas'] ?? [];
+          final List fasilitasList = faskes['fasilitas'] ?? [];
 
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
@@ -131,9 +112,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isDinasAktif
-                    ? const Color(0xFF4F46E5)
-                    : const Color(0xFFE2E8F0),
+                color: isDinasAktif ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
                 width: isDinasAktif ? 1.5 : 1.0,
               ),
               boxShadow: [
@@ -156,11 +135,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                         color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.local_hospital_rounded,
-                        color: Color(0xFF475569),
-                        size: 24,
-                      ),
+                      child: const Icon(Icons.local_hospital_rounded, color: Color(0xFF475569), size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -169,27 +144,19 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                         children: [
                           Text(
                             faskes['nama'].toString(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Color(0xFF0F172A),
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             faskes['alamat'].toString(),
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              color: Color(0xFF64748B),
-                            ),
+                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                           ),
                         ],
                       ),
                     ),
                     if (isDinasAktif)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(12),
@@ -202,11 +169,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                             SizedBox(width: 4),
                             Text(
                               'Dinas Aktif',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF166534),
-                              ),
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
                             ),
                           ],
                         ),
@@ -218,34 +181,17 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      const Icon(Icons.near_me_outlined,
-                          size: 13, color: Color(0xFF64748B)),
+                      const Icon(Icons.near_me_outlined, size: 13, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),
-                      Text(
-                        faskes['jarakWaktu'].toString(),
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF64748B)),
-                      ),
+                      Text(faskes['jarakWaktu'].toString(), style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                       const SizedBox(width: 12),
-                      const Icon(Icons.star_rounded,
-                          size: 14, color: Colors.amber),
+                      const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
                       const SizedBox(width: 2),
-                      Text(
-                        faskes['rating'].toString(),
-                        style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A)),
-                      ),
+                      Text(faskes['rating'].toString(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
                       const SizedBox(width: 12),
-                      const Icon(Icons.phone_outlined,
-                          size: 13, color: Color(0xFF64748B)),
+                      const Icon(Icons.phone_outlined, size: 13, color: Color(0xFF64748B)),
                       const SizedBox(width: 4),
-                      Text(
-                        faskes['telepon'].toString(),
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF64748B)),
-                      ),
+                      Text(faskes['telepon'].toString(), style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                     ],
                   ),
                 ),
@@ -255,19 +201,14 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.access_time_rounded,
-                        size: 14, color: Color(0xFF4F46E5)),
+                    const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF4F46E5)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         faskes['jadwal'].toString(),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4F46E5),
-                        ),
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
                       ),
                     ),
                   ],
@@ -275,11 +216,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                 const SizedBox(height: 10),
                 const Text(
                   'Layanan dan Fasilitas Terpadu:',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF475569),
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
                 ),
                 const SizedBox(height: 4),
                 Column(
@@ -290,16 +227,11 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Row(
                         children: [
-                          const Text('• ',
-                              style: TextStyle(
-                                  color: Color(0xFF94A3B8), fontSize: 11)),
+                          const Text('• ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                           Expanded(
                             child: Text(
                               item.toString(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF64748B),
-                              ),
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                             ),
                           ),
                         ],
@@ -320,8 +252,7 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                                'Faskes dinas utama diubah ke ${faskes['nama']}'),
+                            content: Text('Faskes dinas utama diubah ke ${faskes['nama']}'),
                             backgroundColor: const Color(0xFF4F46E5),
                             duration: const Duration(seconds: 2),
                           ),
@@ -329,17 +260,11 @@ class _DokterLokasiPageState extends State<DokterLokasiPage> {
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: const Text(
                         'Set Sebagai Faskes Dinas Utama Hari Ini',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
-                        ),
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                       ),
                     ),
                   ),
