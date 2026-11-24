@@ -6,6 +6,7 @@ import 'admin_skrining_page.dart';
 import 'admin_artikel_page.dart';
 import 'admin_profil_page.dart';
 import 'admin_curved_nav_bar.dart';
+import 'admin_activity_notification_service.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -18,7 +19,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    AdminActivityNotificationService.instance.startListening();
+  }
+
+  @override
+  void dispose() {
+    AdminActivityNotificationService.instance.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    AdminActivityNotificationService.instance.attachContext(context);
+
     final List<Widget> pages = [
       AdminBerandaPage(
         isActive: _selectedIndex == 0,
@@ -26,8 +41,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         onNavigateToSkrining: () => setState(() => _selectedIndex = 2),
         onNavigateToArtikel: () => setState(() => _selectedIndex = 3),
       ),
-      const AdminPenggunaPage(),
-      const AdminSkriningPage(),
+      AdminPenggunaPage(
+        onBack: () => setState(() => _selectedIndex = 0),
+      ),
+      AdminSkriningPage(
+        onBack: () => setState(() => _selectedIndex = 0),
+      ),
       AdminArtikelPage(
         onBackToBeranda: () => setState(() => _selectedIndex = 0),
       ),
