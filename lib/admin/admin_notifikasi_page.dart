@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_activity_notification_service.dart';
 
 class NotifikasiAplikasiAdminPage extends StatefulWidget {
   const NotifikasiAplikasiAdminPage({super.key});
@@ -10,8 +11,43 @@ class NotifikasiAplikasiAdminPage extends StatefulWidget {
 
 class _NotifikasiAplikasiAdminPageState
     extends State<NotifikasiAplikasiAdminPage> {
+  final _notifService = AdminActivityNotificationService.instance;
+
   bool _aktifkanNotifikasi = true;
   bool _notifikasiAktivitasUser = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _aktifkanNotifikasi = _notifService.aktifkanNotifikasi;
+    _notifikasiAktivitasUser = _notifService.notifikasiAktivitasUser;
+    _initPrefs();
+  }
+
+  Future<void> _initPrefs() async {
+    await _notifService.loadPreferences();
+    if (!mounted) return;
+    setState(() {
+      _aktifkanNotifikasi = _notifService.aktifkanNotifikasi;
+      _notifikasiAktivitasUser = _notifService.notifikasiAktivitasUser;
+    });
+  }
+
+  Future<void> _updatePrefs({
+    required bool aktifkanNotifikasi,
+    required bool notifikasiAktivitasUser,
+  }) async {
+    setState(() {
+      _aktifkanNotifikasi = aktifkanNotifikasi;
+      _notifikasiAktivitasUser =
+      aktifkanNotifikasi ? notifikasiAktivitasUser : false;
+    });
+
+    await _notifService.setPreferences(
+      aktifkanNotifikasi: _aktifkanNotifikasi,
+      notifikasiAktivitasUser: _notifikasiAktivitasUser,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +109,12 @@ class _NotifikasiAplikasiAdminPageState
                           subtitle: 'Terima semua notifikasi aplikasi admin',
                           value: _aktifkanNotifikasi,
                           onChanged: (value) {
-                            setState(() {
-                              _aktifkanNotifikasi = value;
-                            });
+                            _updatePrefs(
+                              aktifkanNotifikasi: value,
+                              notifikasiAktivitasUser: value
+                                  ? (_notifikasiAktivitasUser || true)
+                                  : false,
+                            );
                           },
                         ),
                         const Divider(height: 1, color: Color(0xFFF1F5F9)),
@@ -86,12 +125,15 @@ class _NotifikasiAplikasiAdminPageState
                           title: 'Aktivitas Pengguna',
                           subtitle:
                           'Pemberitahuan saat ada skrining atau pendaftaran baru',
-                          value: _notifikasiAktivitasUser,
-                          onChanged: (value) {
-                            setState(() {
-                              _notifikasiAktivitasUser = value;
-                            });
-                          },
+                          value: _aktifkanNotifikasi && _notifikasiAktivitasUser,
+                          onChanged: _aktifkanNotifikasi
+                              ? (value) {
+                            _updatePrefs(
+                              aktifkanNotifikasi: _aktifkanNotifikasi,
+                              notifikasiAktivitasUser: value,
+                            );
+                          }
+                              : null,
                         ),
                       ],
                     ),
@@ -112,55 +154,59 @@ class _NotifikasiAplikasiAdminPageState
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required ValueChanged<bool>? onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(12),
+    final bool isEnabled = onChanged != null;
+    return Opacity(
+      opacity: isEnabled ? 1.0 : 0.55,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 21, color: iconColor),
             ),
-            child: Icon(icon, size: 21, color: iconColor),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF64748B),
-                    height: 1.3,
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      height: 1.3,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Switch(
-            value: value,
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF4F46E5),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: const Color(0xFFCBD5E1),
-            onChanged: onChanged,
-          ),
-        ],
+            const SizedBox(width: 8),
+            Switch(
+              value: value,
+              activeThumbColor: Colors.white,
+              activeTrackColor: const Color(0xFF4F46E5),
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: const Color(0xFFCBD5E1),
+              onChanged: onChanged,
+            ),
+          ],
+        ),
       ),
     );
   }
