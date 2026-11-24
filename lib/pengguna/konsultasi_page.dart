@@ -22,15 +22,20 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
     super.dispose();
   }
 
-  String _formatShiftText(int jamMulai, int jamSelesai) {
-    if (jamMulai == 0 && jamSelesai == 0) {
-      return 'Libur Hari Ini';
+  String _formatShiftText(Doctor doctor) {
+    if (!doctor.isShiftActiveToday ||
+        (doctor.jamMulai == 0 && doctor.jamSelesai == 0)) {
+      return 'Libur / Jadwal Tutup Hari Ini';
     }
 
-    final start = jamMulai.toString().padLeft(2, '0');
-    final end = jamSelesai.toString().padLeft(2, '0');
+    final start = doctor.jamMulai.toString().padLeft(2, '0');
+    final end = doctor.jamSelesai.toString().padLeft(2, '0');
+    final suffix = doctor.isPenggantiHariIni &&
+        doctor.menggantikanDokter.isNotEmpty
+        ? ' • Pengganti ${doctor.menggantikanDokter}'
+        : '';
 
-    return 'Jam Praktik ($start.00 - $end.00)';
+    return '${doctor.namaShiftHariIni} ($start.00 - $end.00)$suffix';
   }
 
   @override
@@ -48,7 +53,11 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
               padding: EdgeInsets.fromLTRB(16, topPadding, 16, 52),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF3B0066), Color(0xFF5B4AF4), Color(0xFF388BFF)],
+                  colors: [
+                    Color(0xFF3B0066),
+                    Color(0xFF5B4AF4),
+                    Color(0xFF388BFF)
+                  ],
                   stops: [0.0, 0.5, 1.0],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -57,7 +66,6 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // TULISAN KONSULTASI DI TENGAH MENGGUNAKAN STACK
                   SizedBox(
                     height: 36,
                     child: Stack(
@@ -90,7 +98,7 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // SEARCH BAR RAMPING & CAPSULE ESTETIK
+                  // SEARCH BAR
                   Container(
                     height: 40,
                     decoration: BoxDecoration(
@@ -121,7 +129,8 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                       decoration: const InputDecoration(
                         isDense: true,
                         hintText: 'Cari Dokter atau Spesialis ...',
-                        hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                        hintStyle:
+                        TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
                         prefixIcon: Icon(
                           Icons.search_rounded,
                           size: 18,
@@ -132,7 +141,8 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                           minHeight: 40,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                        contentPadding:
+                        EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                       ),
                     ),
                   ),
@@ -144,9 +154,8 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
           // STREAM BUILDER DATA DOKTER REAL-TIME DARI FIREBASE
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('doctors')
-                  .snapshots(),
+              stream:
+              FirebaseFirestore.instance.collection('doctors').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -169,6 +178,14 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                       doc.data() as Map<String, dynamic>, doc.id);
                 }).toList();
 
+                // Urutkan dokter yang aktif/online hari ini di bagian atas
+                doctorsList.sort((a, b) {
+                  if (a.isShiftActiveToday == b.isShiftActiveToday) {
+                    return a.id.compareTo(b.id);
+                  }
+                  return a.isShiftActiveToday ? -1 : 1;
+                });
+
                 if (_searchQuery.isNotEmpty) {
                   doctorsList = doctorsList.where((doc) {
                     return doc.nama.toLowerCase().contains(_searchQuery) ||
@@ -188,10 +205,9 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
                     itemBuilder: (context, index) {
                       final doctor = doctorsList[index];
 
-                      final bool isOnline = doctor.isOnline;
+                      final bool isOnline = doctor.isShiftActiveToday;
                       final bool isBusy = doctor.isBusyInChat;
-                      final String shiftText = _formatShiftText(
-                          doctor.jamMulai, doctor.jamSelesai);
+                      final String shiftText = _formatShiftText(doctor);
 
                       return Container(
                         decoration: BoxDecoration(
@@ -359,7 +375,6 @@ class _KonsultasiPageState extends State<KonsultasiPage> {
   }
 }
 
-// CUSTOM CLIPPER UNTUK EFEK GELOMBANG CAIRAN (LIQUID WAVE)
 class LiquidHeaderClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
