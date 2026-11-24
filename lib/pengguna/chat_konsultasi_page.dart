@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'doctor_model.dart';
 import 'konsultasi_selesai_page.dart';
 
@@ -44,8 +45,16 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     super.dispose();
   }
 
-  Future _ambilDataSkriningUser() async {
-    var hasilList = List.empty(growable: true);
+  String _extractDoctorIdFromRoom() {
+    final parts = widget.roomId.split('_');
+    if (parts.length >= 2 && parts[1].trim().isNotEmpty) {
+      return parts[1].trim();
+    }
+    return widget.dokterNama.trim();
+  }
+
+  Future<List<dynamic>> _ambilDataSkriningUser() async {
+    var hasilList = [];
 
     try {
       var queryAll = await FirebaseFirestore.instance
@@ -59,31 +68,24 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         var filteredDocs = queryAll.docs.where((doc) {
           final data = doc.data();
           final dbName = (data['nama'] ?? '').toString().trim().toLowerCase();
-
           if (dbName.isEmpty) return false;
-
-          bool isMatch = dbName == targetRaw ||
-              targetParts
-                  .any((part) => part.length > 2 && dbName.contains(part));
-          return isMatch;
+          return dbName == targetRaw ||
+              targetParts.any((part) => part.length > 2 && dbName.contains(part));
         }).toList();
 
         if (filteredDocs.isEmpty) {
           filteredDocs = queryAll.docs;
         }
 
-        hasilList = filteredDocs.map((d) => d.data()).toList();
+        for (var doc in filteredDocs) {
+          hasilList.add(doc.data());
+        }
       }
 
       if (hasilList.isNotEmpty) {
-        hasilList.sort((dataA, dataB) {
-          final dynamic tsA = dataA['created_at'] ??
-              dataA['timestamp'] ??
-              dataA['waktuSkrining'];
-          final dynamic tsB = dataB['created_at'] ??
-              dataB['timestamp'] ??
-              dataB['waktuSkrining'];
-          if (tsA == null || tsB == null) return 0;
+        hasilList.sort((a, b) {
+          final tsA = a['created_at'] ?? a['timestamp'] ?? a['waktuSkrining'];
+          final tsB = b['created_at'] ?? b['timestamp'] ?? b['waktuSkrining'];
           if (tsA is Timestamp && tsB is Timestamp) {
             return tsA.compareTo(tsB);
           }
@@ -91,7 +93,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         });
       }
     } catch (e) {
-      debugPrint('Error saat mengambil data skrining user: $e');
+      debugPrint('Error ambil data skrining user: $e');
     }
 
     return hasilList;
@@ -100,12 +102,14 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
   Future<void> _cekStatusSkrining() async {
     try {
       final listData = await _ambilDataSkriningUser();
+      if (!mounted) return;
       setState(() {
         _sudahSkrining = listData.isNotEmpty;
         _isLoadingSkrining = false;
       });
     } catch (e) {
       debugPrint('Gagal mengecek status skrining: $e');
+      if (!mounted) return;
       setState(() {
         _isLoadingSkrining = false;
         _sudahSkrining = true;
@@ -124,103 +128,105 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
       await chatRef.where('isScreeningSummary', isEqualTo: true).get();
 
       if (existingSummary.docs.isNotEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                Text('Dokumen PDF hasil skrining sudah dikirim sebelumnya.')),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dokumen PDF hasil skrining sudah dikirim sebelumnya.'),
+          ),
+        );
         return;
       }
 
       final listData = await _ambilDataSkriningUser();
-
       if (listData.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Belum ada data hasil skrining untuk akun Anda.')),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Belum ada data hasil skrining untuk akun Anda.'),
+          ),
+        );
         return;
       }
 
       final dataSkrining = listData.last as Map<String, dynamic>;
       final String nama =
       (dataSkrining['nama'] ?? widget.currentUserId).toString();
-      final String umur = (dataSkrining['umur'] ??
-          dataSkrining['usia'] ??
-          dataSkrining['age'] ??
-          '-')
-          .toString();
+      final String umur =
+      (dataSkrining['umur'] ?? dataSkrining['usia'] ?? '-').toString();
       final String jenisKelamin =
       (dataSkrining['jenisKelamin'] ?? dataSkrining['gender'] ?? '-')
           .toString();
-
       final String hasilPrediksi = (dataSkrining['hasilPrediksi'] ??
           dataSkrining['hasilprediksi'] ??
           dataSkrining['hasillprediksi'] ??
           dataSkrining['statusEvaluasi'] ??
-          'Positif Diabetes')
+          'Risiko Rendah')
           .toString();
 
-      final String bak = dataSkrining['seringBAK'] == true ? 'Ya' : 'Tidak';
-      final String haus = dataSkrining['seringHaus'] == true ? 'Ya' : 'Tidak';
-      final String lemas = dataSkrining['seringLemas'] == true ? 'Ya' : 'Tidak';
-      final String rambutRontok =
-      dataSkrining['rambutRontok'] == true ? 'Ya' : 'Tidak';
-      final String luka =
-      dataSkrining['lukaSulitSembuh'] == true ? 'Ya' : 'Tidak';
-      final String marah = dataSkrining['mudahMarah'] == true ? 'Ya' : 'Tidak';
-      final String kaku = dataSkrining['kakuOtot'] == true ? 'Ya' : 'Tidak';
-      final String obesitas = dataSkrining['obesitas'] == true ? 'Ya' : 'Tidak';
+      String fmtBool(List<String> keys) {
+        for (final k in keys) {
+          if (dataSkrining.containsKey(k)) {
+            return dataSkrining[k] == true ? 'Ya' : 'Tidak';
+          }
+        }
+        return 'Tidak';
+      }
 
-      String ringkasanDetail = 'LAPORAN HASIL SKRINING MANDIRI\n\n';
-      ringkasanDetail += '• Nama: $nama\n';
-      ringkasanDetail += '• Usia: $umur Tahun\n';
-      ringkasanDetail += '• Jenis Kelamin: $jenisKelamin\n';
-      ringkasanDetail += '• Status Evaluasi: $hasilPrediksi\n\n';
-      ringkasanDetail += 'Detail Jawaban Indikator:\n';
-      ringkasanDetail += '1. Sering buang air kecil (BAK): $bak\n';
-      ringkasanDetail += '2. Sering merasa haus / dahaga: $haus\n';
-      ringkasanDetail += '3. Sering merasa lemas / mudah lelah: $lemas\n';
-      ringkasanDetail += '4. Mengalami rambut rontok: $rambutRontok\n';
-      ringkasanDetail += '5. Memiliki luka sulit sembuh: $luka\n';
-      ringkasanDetail += '6. Mudah marah / emosional: $marah\n';
-      ringkasanDetail += '7. Sering mengalami kaku otot: $kaku\n';
-      ringkasanDetail += '8. Mengalami obesitas / kelebihan BB: $obesitas';
+      final String ringkasanDetail = [
+        'LAPORAN HASIL SKRINING MANDIRI',
+        '',
+        '• Nama: $nama',
+        '• Usia: $umur Tahun',
+        '• Jenis Kelamin: $jenisKelamin',
+        '• Status Evaluasi: $hasilPrediksi',
+        '',
+        'Detail Jawaban Indikator:',
+        '1. Haus berlebihan (Polidipsia): ${fmtBool(['seringHausBerlebihan', 'seringHaus'])}',
+        '2. Sering BAK / malam hari: ${fmtBool(['seringBAKMalamHari', 'seringBAK'])}',
+        '3. Cepat lapar: ${fmtBool(['cepatLapar'])}',
+        '4. Penurunan BB drastis: ${fmtBool(['penurunanBeratBadan'])}',
+        '5. Lemas / kurang berenergi: ${fmtBool(['lemasKurangBerenergi', 'seringLemas'])}',
+        '6. Penglihatan kabur: ${fmtBool(['penglihatanKabur'])}',
+        '7. Luka sulit sembuh: ${fmtBool(['lukaSulitSembuh'])}',
+        '8. Kesemutan / nyeri tangan-kaki: ${fmtBool(['kesemutanNyeri', 'kakuOtot'])}',
+        '9. Infeksi berulang: ${fmtBool(['infeksiBerulang'])}',
+        '10. Riwayat keluarga diabetes: ${fmtBool(['riwayatKeluarga'])}',
+        '11. Riwayat hipertensi: ${fmtBool(['riwayatHipertensi'])}',
+        '12. Jarang aktivitas fisik: ${fmtBool(['jarangAktivitasFisik'])}',
+        '13. Usia di atas 40 tahun: ${fmtBool(['usiaDiatas40'])}',
+        '14. Kolesterol tinggi / obesitas: ${fmtBool(['kolesterolTinggiObesitas', 'obesitas'])}',
+      ].join('\n');
 
       final String fileNamePdf =
           'Hasil_Skrining_Diabetes_${nama.replaceAll(' ', '_')}.pdf';
 
       await chatRef.add({
         'senderId': widget.currentUserId,
+        'doctor_id': _extractDoctorIdFromRoom(),
         'namaPasien': nama,
         'text': ringkasanDetail,
         'tingkatRisiko': hasilPrediksi,
         'fileName': fileNamePdf,
         'type': 'pdf',
+        'message_type': 'screening_attachment',
         'timestamp': FieldValue.serverTimestamp(),
         'isScreeningSummary': true,
         'isVerified': false,
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Dokumen $fileNamePdf berhasil dikirim ke dokter!'),
-            backgroundColor: const Color(0xFF059669),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Dokumen $fileNamePdf berhasil dikirim ke dokter!'),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
     } catch (e) {
       debugPrint('Gagal mengirim hasil skrining: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal melampirkan skrining: $e')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal melampirkan skrining: $e')),
+      );
     }
   }
 
@@ -259,7 +265,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
     }
   }
 
-  void _sendMessage() async {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
@@ -273,6 +279,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
         'text': text,
         'isEdited': true,
       });
+      if (!mounted) return;
       setState(() {
         _editingMessageId = null;
       });
@@ -1051,7 +1058,8 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           constraints: const BoxConstraints(),
                           icon: const Icon(Icons.attach_file_rounded,
                               color: Color(0xFF5B4AF4), size: 22),
-                          tooltip: 'Kirim Dokumen PDF Hasil Skrining',
+                          tooltip:
+                          'Kirim Dokumen PDF Hasil Skrining',
                           onPressed:
                           _tarikDanKirimHasilSkriningViaPenjepit,
                         ),
@@ -1087,8 +1095,7 @@ class _ChatKonsultasiPageState extends State<ChatKonsultasiPage> {
                           borderRadius: BorderRadius.circular(20),
                           child: CircleAvatar(
                             radius: 20,
-                            backgroundColor:
-                            _editingMessageId != null
+                            backgroundColor: _editingMessageId != null
                                 ? Colors.orange
                                 : const Color(0xFF5B4AF4),
                             child: Icon(
