@@ -323,7 +323,6 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
         )
             : Column(
           children: [
-            // 1. HEADER DENGAN JUDUL "Profil Admin" + FLOATING CARD
             Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
@@ -332,7 +331,7 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                     20,
-                    statusBarHeight + 64,
+                    statusBarHeight + 70,
                     20,
                     0,
                   ),
@@ -341,8 +340,6 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
               ],
             ),
             const SizedBox(height: 12),
-
-            // 2. PENGATURAN AKUN (4 KARTU BESAR & PENUH 1 LAYAR)
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 82),
@@ -453,12 +450,12 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
   }
 
   Widget _buildLiquidHeader(BuildContext context) {
-    final double topPadding = MediaQuery.of(context).padding.top + 14;
+    final double topPadding = MediaQuery.of(context).padding.top + 16;
 
     return Stack(
       children: [
         ClipPath(
-          clipper: _ProfilLiquidHeaderClipper(offsetY: 9),
+          clipper: _ProfilLiquidHeaderClipper(offsetY: 10),
           child: Container(
             width: double.infinity,
             height: topPadding + 154,
@@ -479,7 +476,7 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
           child: Container(
             width: double.infinity,
             height: topPadding + 144,
-            padding: EdgeInsets.fromLTRB(16, topPadding, 16, 16),
+            padding: EdgeInsets.fromLTRB(16, topPadding + 4, 16, 24),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -491,65 +488,25 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
                 end: Alignment.bottomRight,
               ),
             ),
-            child: Stack(
-              clipBehavior: Clip.none,
+            child: Column(
               children: [
-                Positioned(
-                  right: -35,
-                  top: -35,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.24),
-                            Colors.white.withValues(alpha: 0.0),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: -25,
-                  bottom: -20,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: 105,
-                      height: 105,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            const Color(0xFF38BDF8).withValues(alpha: 0.30),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 SizedBox(
                   width: double.infinity,
                   height: 36,
                   child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 36),
-                          child: Text(
-                            'Profil Admin',
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 36),
+                        child: Text(
+                          'Profil Admin',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -736,6 +693,7 @@ class _AdminProfilPageState extends State<AdminProfilPage> {
               width: size,
               height: size,
               fit: BoxFit.cover,
+              gaplessPlayback: true,
               errorBuilder: (context, error, stackTrace) =>
                   _buildInitialsAvatar(size),
             ),
