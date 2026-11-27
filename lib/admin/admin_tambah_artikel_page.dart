@@ -1,5 +1,3 @@
-// ignore_for_file: spelling, spell_check_on_only_sample_attachments, depend_on_referenced_packages
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +15,7 @@ class _RichArticleTextController extends TextEditingController {
   _RichArticleTextController({super.text});
 
   static final RegExp _tokenRegex = RegExp(
-    r'(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[^*\n]+?\*|<u>[\s\S]+?<\/u>)',
+    r'(\[\/?(?:CENTER|RIGHT|JUSTIFY|LEFT)\]|\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[^*\n]+?\*|<u>[\s\S]+?<\/u>)',
   );
 
   bool isSelectionFormatted(_TextFormatType type) {
@@ -59,6 +57,34 @@ class _RichArticleTextController extends TextEditingController {
     }
   }
 
+  TextAlign getSelectionAlignment() {
+    if (text.isEmpty || !selection.isValid || selection.baseOffset < 0) {
+      return TextAlign.left;
+    }
+    final cursor = selection.baseOffset.clamp(0, text.length);
+    final before = text.substring(0, cursor);
+
+    final lastOpenCenter = before.lastIndexOf('[CENTER]');
+    final lastCloseCenter = before.lastIndexOf('[/CENTER]');
+    if (lastOpenCenter != -1 && lastOpenCenter > lastCloseCenter) {
+      return TextAlign.center;
+    }
+
+    final lastOpenRight = before.lastIndexOf('[RIGHT]');
+    final lastCloseRight = before.lastIndexOf('[/RIGHT]');
+    if (lastOpenRight != -1 && lastOpenRight > lastCloseRight) {
+      return TextAlign.right;
+    }
+
+    final lastOpenJustify = before.lastIndexOf('[JUSTIFY]');
+    final lastCloseJustify = before.lastIndexOf('[/JUSTIFY]');
+    if (lastOpenJustify != -1 && lastOpenJustify > lastCloseJustify) {
+      return TextAlign.justify;
+    }
+
+    return TextAlign.left;
+  }
+
   TextSpan _parseStyledSpan(String source, TextStyle baseStyle) {
     final List<InlineSpan> children = [];
     int currentIndex = 0;
@@ -80,7 +106,10 @@ class _RichArticleTextController extends TextEditingController {
         letterSpacing: -1,
       );
 
-      if (fullToken.startsWith('***') &&
+      if (RegExp(r'^\[\/?(?:CENTER|RIGHT|JUSTIFY|LEFT)\]$')
+          .hasMatch(fullToken)) {
+        children.add(TextSpan(text: fullToken, style: hiddenMarkerStyle));
+      } else if (fullToken.startsWith('***') &&
           fullToken.endsWith('***') &&
           fullToken.length > 6) {
         final inner = fullToken.substring(3, fullToken.length - 3);
@@ -191,8 +220,6 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
 
   late String _status;
   bool _isLoading = false;
-
-  TextAlign _textAlign = TextAlign.left;
 
   String? _base64Thumbnail;
   String? _existingImageUrl;
@@ -325,7 +352,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Foto disisipkan sebagai $tag (akan tampil sebagai foto di pembaca).',
+                'Foto disisipkan sebagai $tag. Blok tag foto lalu pilih rata kiri/tengah/kanan jika ingin mengatur posisinya.',
               ),
               backgroundColor: const Color(0xFF0D9488),
             ),
@@ -340,7 +367,16 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
   void _removeInlineImage(String tag) {
     setState(() {
       _inlineImages.remove(tag);
-      _isiController.text = _isiController.text.replaceAll(tag, '').trim();
+      _isiController.text = _isiController.text
+          .replaceAll(
+        RegExp(
+          r'(\[(?:CENTER|RIGHT|JUSTIFY)\])?\s*' +
+              RegExp.escape(tag) +
+              r'\s*(\[\/(?:CENTER|RIGHT|JUSTIFY)\])?',
+        ),
+        '',
+      )
+          .trim();
     });
   }
 
@@ -361,6 +397,60 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       _isiController.selection =
           TextSelection.collapsed(offset: _isiController.text.length);
     }
+    _isiFocusNode.requestFocus();
+  }
+
+  void _applyBlockAlignment(String alignMode) {
+    final text = _isiController.text;
+    final selection = _isiController.selection;
+
+    if (!selection.isValid || selection.baseOffset < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ketuk atau blok bagian teks/foto yang ingin diatur perataannya.',
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      _isiFocusNode.requestFocus();
+      return;
+    }
+
+    int start = selection.start;
+    int end = selection.end;
+
+    if (start == end) {
+      final lineStart = text.lastIndexOf('\n', start > 0 ? start - 1 : 0);
+      start = lineStart == -1 ? 0 : lineStart + 1;
+      final lineEnd = text.indexOf('\n', end);
+      end = lineEnd == -1 ? text.length : lineEnd;
+    }
+
+    String target = text.substring(start, end).replaceAll(
+      RegExp(r'\[\/?(?:CENTER|RIGHT|JUSTIFY|LEFT)\]'),
+      '',
+    );
+
+    String wrapped;
+    if (alignMode == 'center') {
+      wrapped = '[CENTER]$target[/CENTER]';
+    } else if (alignMode == 'right') {
+      wrapped = '[RIGHT]$target[/RIGHT]';
+    } else if (alignMode == 'justify') {
+      wrapped = '[JUSTIFY]$target[/JUSTIFY]';
+    } else {
+      wrapped = target;
+    }
+
+    final newText = text.replaceRange(start, end, wrapped);
+    _isiController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection(
+        baseOffset: start,
+        extentOffset: start + wrapped.length,
+      ),
+    );
     _isiFocusNode.requestFocus();
   }
 
@@ -486,13 +576,22 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
       _applySelectionFormat(_TextFormatType.underline);
       return;
     }
-
-    setState(() {
-      if (action == 'align_left') _textAlign = TextAlign.left;
-      if (action == 'align_center') _textAlign = TextAlign.center;
-      if (action == 'align_right') _textAlign = TextAlign.right;
-      if (action == 'align_justify') _textAlign = TextAlign.justify;
-    });
+    if (action == 'align_left') {
+      _applyBlockAlignment('left');
+      return;
+    }
+    if (action == 'align_center') {
+      _applyBlockAlignment('center');
+      return;
+    }
+    if (action == 'align_right') {
+      _applyBlockAlignment('right');
+      return;
+    }
+    if (action == 'align_justify') {
+      _applyBlockAlignment('justify');
+      return;
+    }
 
     if (action == 'bullet') {
       _insertTextAtCursor('\n• ');
@@ -727,6 +826,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
     _isiController.isSelectionFormatted(_TextFormatType.italic);
     final bool isUnderlineActive =
     _isiController.isSelectionFormatted(_TextFormatType.underline);
+    final TextAlign currentAlign = _isiController.getSelectionAlignment();
 
     return Shortcuts(
       shortcuts: <ShortcutActivator, Intent>{
@@ -1012,26 +1112,30 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                             _buildToolbarButton(
                                               Icons.format_align_left,
                                               'align_left',
-                                              _textAlign == TextAlign.left,
-                                              tooltip: 'Rata Kiri',
+                                              currentAlign == TextAlign.left,
+                                              tooltip:
+                                              'Rata Kiri (Bagian Terpilih)',
                                             ),
                                             _buildToolbarButton(
                                               Icons.format_align_center,
                                               'align_center',
-                                              _textAlign == TextAlign.center,
-                                              tooltip: 'Rata Tengah',
+                                              currentAlign == TextAlign.center,
+                                              tooltip:
+                                              'Rata Tengah (Bagian Terpilih)',
                                             ),
                                             _buildToolbarButton(
                                               Icons.format_align_right,
                                               'align_right',
-                                              _textAlign == TextAlign.right,
-                                              tooltip: 'Rata Kanan',
+                                              currentAlign == TextAlign.right,
+                                              tooltip:
+                                              'Rata Kanan (Bagian Terpilih)',
                                             ),
                                             _buildToolbarButton(
                                               Icons.format_align_justify,
                                               'align_justify',
-                                              _textAlign == TextAlign.justify,
-                                              tooltip: 'Rata Kiri-Kanan',
+                                              currentAlign == TextAlign.justify,
+                                              tooltip:
+                                              'Rata Kiri-Kanan (Bagian Terpilih)',
                                             ),
                                             Container(
                                               height: 18,
@@ -1067,7 +1171,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                       focusNode: _isiFocusNode,
                                       maxLines: 14,
                                       minLines: 10,
-                                      textAlign: _textAlign,
+                                      textAlign: TextAlign.left,
                                       style: const TextStyle(
                                         fontSize: 14.5,
                                         color: Color(0xFF0F172A),
@@ -1076,7 +1180,7 @@ class _AdminTambahArtikelPageState extends State<AdminTambahArtikelPage>
                                       ),
                                       decoration: const InputDecoration(
                                         hintText:
-                                        'Tulis isi artikel edukasi kesehatan secara lengkap di sini...\n\nBlok kata/kalimat lalu tekan B, I, atau U untuk langsung menebalkan, memiringkan, atau menggarisbawahi.',
+                                        'Tulis isi artikel edukasi kesehatan di sini...\n\nBlok bagian tertentu (misal subjudul atau [FOTO_2]) lalu tekan tombol rata kiri/tengah/kanan agar hanya bagian tersebut yang berubah.',
                                         hintStyle: TextStyle(
                                           fontSize: 13.5,
                                           color: Color(0xFF94A3B8),
