@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+typedef SkriningDocMap = Map<String, dynamic>;
+
 class DokterSkriningPage extends StatefulWidget {
   final String? doctorId;
   final VoidCallback? onBackToHome;
@@ -24,7 +26,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
     final docId = _normalizedDoctorId;
     if (docId == null) return true;
 
-    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final data = doc.data() as SkriningDocMap? ?? {};
     final String fieldDoctorId =
     (data['doctor_id'] ?? data['doctorId'] ?? '').toString().trim();
     if (fieldDoctorId.isNotEmpty) {
@@ -38,7 +40,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
     return roomId.contains('_${docId}_') || roomId.endsWith('_$docId');
   }
 
-  bool _isDokumenPdfSkrining(Map<String, dynamic> data) {
+  bool _isDokumenPdfSkrining(SkriningDocMap data) {
     final bool isSummary = data['isScreeningSummary'] == true;
     final String messageType =
     (data['message_type'] ?? '').toString().toLowerCase();
@@ -66,7 +68,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
         text.contains('screening');
   }
 
-  String _extractLaporanText(Map<String, dynamic> data) {
+  String _extractLaporanText(SkriningDocMap data) {
     final raw = (data['text'] ?? data['message'] ?? '').toString().trim();
     if (raw.isNotEmpty) return raw;
     return 'Lampiran hasil skrining pasien';
@@ -79,7 +81,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
         gabungan.contains('berisiko');
   }
 
-  String _extractNamaPasien(Map<String, dynamic> data, String laporanText) {
+  String _extractNamaPasien(SkriningDocMap data, String laporanText) {
     for (final key in [
       'namaPasien',
       'patientName',
@@ -104,7 +106,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
     return 'Pasien Terdaftar';
   }
 
-  Timestamp? _extractTimestamp(Map<String, dynamic> data) {
+  Timestamp? _extractTimestamp(SkriningDocMap data) {
     final ts = data['timestamp'] ?? data['created_at'] ?? data['createdAt'];
     return ts is Timestamp ? ts : null;
   }
@@ -133,8 +135,8 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
   }
 
   int _compareDocTime(QueryDocumentSnapshot a, QueryDocumentSnapshot b) {
-    final dataA = a.data() as Map<String, dynamic>;
-    final dataB = b.data() as Map<String, dynamic>;
+    final dataA = a.data() as SkriningDocMap;
+    final dataB = b.data() as SkriningDocMap;
     final tsA = _extractTimestamp(dataA);
     final tsB = _extractTimestamp(dataB);
 
@@ -144,365 +146,30 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
     return tsB.compareTo(tsA);
   }
 
-  void _bukaPreviewDokumenPdf(
+  void _bukaHalamanDetailPdf(
       BuildContext context, {
         required DocumentReference docRef,
-        required Map<String, dynamic> data,
+        required SkriningDocMap data,
         required String namaPasien,
         required bool isPositif,
         required String tingkatRisiko,
         required String waktuKirim,
+        required String fileName,
       }) {
-    final String laporanText = _extractLaporanText(data);
-    final bool isVerified = data['isVerified'] == true;
-    final TextEditingController catatanController = TextEditingController(
-      text: (data['catatanVerifikasi'] ?? '').toString(),
-    );
-
-    final String fileName = (data['fileName'] ??
-        'Laporan_Skrining_${namaPasien.replaceAll(' ', '_')}.pdf')
-        .toString();
-
-    final List<String> barisLaporan = laporanText
-        .split('\n')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.55,
-          maxChildSize: 0.95,
-          builder: (_, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 14, 14, 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.picture_as_pdf_rounded,
-                            color: Colors.redAccent,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fileName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                waktuKirim,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF64748B),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(sheetContext),
-                          icon: const Icon(Icons.close_rounded,
-                              color: Color(0xFF64748B)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(20),
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'DIORA HEALTHCARE',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.1,
-                                          color: Color(0xFF4F46E5),
-                                        ),
-                                      ),
-                                      SizedBox(height: 2),
-                                      Text(
-                                        'Resume Hasil Skrining Diabetes',
-                                        style: TextStyle(
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w900,
-                                          color: Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: isPositif
-                                          ? const Color(0xFFFEE2E2)
-                                          : const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      isPositif
-                                          ? 'POSITIF / RISIKO TINGGI'
-                                          : 'NEGATIF / RISIKO RENDAH',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w900,
-                                        color: isPositif
-                                            ? const Color(0xFFB91C1C)
-                                            : const Color(0xFF15803D),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              const Divider(color: Color(0xFFF1F5F9)),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  const Icon(Icons.person_outline_rounded,
-                                      size: 16, color: Color(0xFF64748B)),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Pasien: $namaPasien',
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.analytics_outlined,
-                                      size: 16, color: Color(0xFF64748B)),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Klasifikasi Model: $tingkatRisiko',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isPositif
-                                          ? Colors.redAccent
-                                          : const Color(0xFF059669),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              const Text(
-                                'Rincian Parameter & Gejala Terlapor:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ...barisLaporan.map((baris) {
-                                final isBullet = baris.startsWith('•') ||
-                                    baris.startsWith('-');
-                                return Container(
-                                  width: double.infinity,
-                                  margin: const EdgeInsets.only(bottom: 6),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 7),
-                                  decoration: BoxDecoration(
-                                    color: isBullet
-                                        ? const Color(0xFFF8FAFC)
-                                        : const Color(0xFFEEF2FF),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    baris,
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: isBullet
-                                          ? FontWeight.w600
-                                          : FontWeight.w800,
-                                      color: const Color(0xFF1E293B),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Catatan Verifikasi & Tindak Lanjut Dokter',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: catatanController,
-                                maxLines: 2,
-                                readOnly: isVerified,
-                                decoration: InputDecoration(
-                                  hintText:
-                                  'Contoh: Dianjurkan cek HbA1c & GDP di fasyankes mitra Jember...',
-                                  hintStyle: const TextStyle(fontSize: 11.5),
-                                  filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                        color: Color(0xFFE2E8F0)),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: isVerified
-                                ? null
-                                : () async {
-                              await docRef.set({
-                                'isVerified': true,
-                                'catatanVerifikasi':
-                                catatanController.text.trim(),
-                                'verifiedAt':
-                                FieldValue.serverTimestamp(),
-                              }, SetOptions(merge: true));
-                              if (sheetContext.mounted) {
-                                Navigator.pop(sheetContext);
-                              }
-                              if (mounted) {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Dokumen PDF skrining berhasil diverifikasi.'),
-                                    backgroundColor: Color(0xFF059669),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
-                            icon: Icon(
-                              isVerified
-                                  ? Icons.verified_rounded
-                                  : Icons.check_circle_rounded,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            label: Text(
-                              isVerified
-                                  ? 'Dokumen Sudah Terverifikasi'
-                                  : 'Verifikasi Hasil Skrining Ini',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isVerified
-                                  ? const Color(0xFF059669)
-                                  : const Color(0xFF4F46E5),
-                              disabledBackgroundColor: const Color(0xFF10B981),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _DetailSkriningFullPage(
+          docRef: docRef,
+          data: data,
+          namaPasien: namaPasien,
+          isPositif: isPositif,
+          tingkatRisiko: tingkatRisiko,
+          waktuKirim: waktuKirim,
+          fileName: fileName,
+          laporanText: _extractLaporanText(data),
+        ),
+      ),
     );
   }
 
@@ -698,9 +365,8 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collectionGroup('messages')
-            .snapshots(),
+        stream:
+        FirebaseFirestore.instance.collectionGroup('messages').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
@@ -730,7 +396,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
 
           final List<QueryDocumentSnapshot> pdfDocs = allDocs.where((doc) {
             if (!_isMilikDokterAktif(doc)) return false;
-            final data = doc.data() as Map<String, dynamic>;
+            final data = doc.data() as SkriningDocMap;
             return _isDokumenPdfSkrining(data);
           }).toList();
 
@@ -741,7 +407,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
           int belumVerifikasi = 0;
 
           for (final doc in pdfDocs) {
-            final data = doc.data() as Map<String, dynamic>;
+            final data = doc.data() as SkriningDocMap;
             final String text = _extractLaporanText(data);
             final String risiko =
             (data['tingkatRisiko'] ?? 'Risiko Rendah').toString();
@@ -756,7 +422,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
           }
 
           final filteredDocs = pdfDocs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
+            final data = doc.data() as SkriningDocMap;
             final String text = _extractLaporanText(data);
             final String risiko =
             (data['tingkatRisiko'] ?? 'Risiko Rendah').toString();
@@ -844,7 +510,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                 )
               else
                 ...filteredDocs.map((docSnapshot) {
-                  final data = docSnapshot.data() as Map<String, dynamic>;
+                  final data = docSnapshot.data() as SkriningDocMap;
                   final String laporanText = _extractLaporanText(data);
                   final String tingkatRisiko =
                   (data['tingkatRisiko'] ?? 'Risiko Rendah').toString();
@@ -856,7 +522,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                   final bool isPositif =
                   _isPositiveResult(tingkatRisiko, laporanText);
                   final String fileName = (data['fileName'] ??
-                      'Skrining_${namaPasien.replaceAll(' ', '_')}.pdf')
+                      'Hasil_Skrining_${namaPasien.replaceAll(' ', '_')}.pdf')
                       .toString();
 
                   return Container(
@@ -936,6 +602,7 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                                 ],
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 9, vertical: 4),
@@ -981,34 +648,41 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  isVerified
-                                      ? Icons.verified_rounded
-                                      : Icons.pending_actions_rounded,
-                                  size: 14,
-                                  color: isVerified
-                                      ? const Color(0xFF059669)
-                                      : Colors.orange.shade700,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  isVerified
-                                      ? 'Terverifikasi Dokter'
-                                      : 'Menunggu Verifikasi',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isVerified
+                                        ? Icons.verified_rounded
+                                        : Icons.pending_actions_rounded,
+                                    size: 14,
                                     color: isVerified
                                         ? const Color(0xFF059669)
-                                        : Colors.orange.shade800,
+                                        : Colors.orange.shade700,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      isVerified
+                                          ? 'Terverifikasi Dokter'
+                                          : 'Menunggu Verifikasi',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: isVerified
+                                            ? const Color(0xFF059669)
+                                            : Colors.orange.shade800,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             ElevatedButton.icon(
-                              onPressed: () => _bukaPreviewDokumenPdf(
+                              onPressed: () => _bukaHalamanDetailPdf(
                                 context,
                                 docRef: docSnapshot.reference,
                                 data: data,
@@ -1016,8 +690,9 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
                                 isPositif: isPositif,
                                 tingkatRisiko: tingkatRisiko,
                                 waktuKirim: waktuKirim,
+                                fileName: fileName,
                               ),
-                              icon: const Icon(Icons.visibility_rounded,
+                              icon: const Icon(Icons.open_in_new_rounded,
                                   size: 15, color: Colors.white),
                               label: const Text(
                                 'Buka PDF',
@@ -1046,6 +721,439 @@ class _DokterSkriningPageState extends State<DokterSkriningPage> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _DetailSkriningFullPage extends StatefulWidget {
+  final DocumentReference docRef;
+  final SkriningDocMap data;
+  final String namaPasien;
+  final bool isPositif;
+  final String tingkatRisiko;
+  final String waktuKirim;
+  final String fileName;
+  final String laporanText;
+
+  const _DetailSkriningFullPage({
+    required this.docRef,
+    required this.data,
+    required this.namaPasien,
+    required this.isPositif,
+    required this.tingkatRisiko,
+    required this.waktuKirim,
+    required this.fileName,
+    required this.laporanText,
+  });
+
+  @override
+  State<_DetailSkriningFullPage> createState() => _DetailSkriningFullPageState();
+}
+
+class _DetailSkriningFullPageState extends State<_DetailSkriningFullPage> {
+  late final TextEditingController _catatanController;
+  late bool _isVerified;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _catatanController = TextEditingController(
+      text: (widget.data['catatanVerifikasi'] ?? '').toString(),
+    );
+    _isVerified = widget.data['isVerified'] == true;
+  }
+
+  @override
+  void dispose() {
+    _catatanController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verifikasiDokumen() async {
+    if (_isVerified || _isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      await widget.docRef.set({
+        'isVerified': true,
+        'catatanVerifikasi': _catatanController.text.trim(),
+        'verifiedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      setState(() {
+        _isVerified = true;
+        _isSaving = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dokumen PDF skrining berhasil diverifikasi.'),
+          backgroundColor: Color(0xFF059669),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memverifikasi: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> barisLaporan = widget.laporanText
+        .split('\n')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F5F9),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Detail Laporan Skrining PDF',
+              style: TextStyle(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            Text(
+              'Tinjauan lengkap hasil skrining & catatan klinis',
+              style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      ),
+      body: ListView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+        children: [
+          // Header Info File
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.picture_as_pdf_rounded,
+                    color: Colors.redAccent,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.fileName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.waktuKirim,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Kartu Utama Resume Skrining
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'DIORA HEALTHCARE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                              color: Color(0xFF4F46E5),
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Resume Hasil Skrining Diabetes',
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                              height: 1.25,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: widget.isPositif
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          widget.isPositif
+                              ? 'POSITIF / RISIKO TINGGI'
+                              : 'NEGATIF / RISIKO RENDAH',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            color: widget.isPositif
+                                ? const Color(0xFFB91C1C)
+                                : const Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const Divider(color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(Icons.person_outline_rounded,
+                        size: 17, color: Color(0xFF64748B)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Pasien: ${widget.namaPasien}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.analytics_outlined,
+                        size: 17, color: Color(0xFF64748B)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Klasifikasi Model: ${widget.tingkatRisiko}',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: widget.isPositif
+                              ? Colors.redAccent
+                              : const Color(0xFF059669),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Rincian Parameter & Gejala Terlapor:',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...barisLaporan.map((baris) {
+                  final isBullet =
+                      baris.startsWith('•') || baris.startsWith('-');
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 7),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: isBullet
+                          ? const Color(0xFFF8FAFC)
+                          : const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Text(
+                      baris,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight:
+                        isBullet ? FontWeight.w600 : FontWeight.w800,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Kartu Catatan Dokter
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Catatan Verifikasi & Tindak Lanjut Dokter',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _catatanController,
+                  maxLines: 3,
+                  readOnly: _isVerified,
+                  decoration: InputDecoration(
+                    hintText:
+                    'Contoh: Dianjurkan cek HbA1c & GDP di fasyankes mitra Jember...',
+                    hintStyle: const TextStyle(fontSize: 12),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: (_isVerified || _isSaving) ? null : _verifikasiDokumen,
+              icon: _isSaving
+                  ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+                  : Icon(
+                _isVerified
+                    ? Icons.verified_rounded
+                    : Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 19,
+              ),
+              label: Text(
+                _isVerified
+                    ? 'Dokumen Sudah Terverifikasi'
+                    : 'Verifikasi Hasil Skrining Ini',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isVerified
+                    ? const Color(0xFF059669)
+                    : const Color(0xFF4F46E5),
+                disabledBackgroundColor: const Color(0xFF10B981),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
