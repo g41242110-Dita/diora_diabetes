@@ -77,10 +77,21 @@ class _LoginDokterPageState extends State<LoginDokterPage> {
       debugPrint('Login dokter -> uid: $uid, role: $role');
 
       if (role == 'dokter') {
+        final String? mappedDoctorId =
+        (data?['doctorId'] ?? data?['doctor_id'] ?? data?['docId'])
+            ?.toString()
+            .trim();
+
         if (!mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const DokterBerandaPage()),
+          MaterialPageRoute(
+            builder: (context) => DokterBerandaPage(
+              doctorId: (mappedDoctorId != null && mappedDoctorId.isNotEmpty)
+                  ? mappedDoctorId
+                  : null,
+            ),
+          ),
               (route) => false,
         );
         return;
