@@ -446,8 +446,12 @@ class _DokterDashboardContentView extends StatelessWidget {
     (msgData['fileType'] ?? '').toString().toLowerCase();
     final String text =
     (msgData['text'] ?? msgData['message'] ?? '').toString().toLowerCase();
-    final String fileName =
-    (msgData['fileName'] ?? '').toString().toLowerCase();
+    final String fileName = (msgData['fileName'] ??
+        msgData['namaFile'] ??
+        msgData['pdfName'] ??
+        '')
+        .toString()
+        .toLowerCase();
     final String fileUrl = (msgData['fileUrl'] ??
         msgData['pdfUrl'] ??
         msgData['attachmentUrl'] ??
@@ -467,6 +471,42 @@ class _DokterDashboardContentView extends StatelessWidget {
         text.contains('screening');
   }
 
+  bool _isDokumenHariIni(
+      DocumentSnapshot doc,
+      BerandaMap msgData,
+      String tanggalHariIniIso,
+      ) {
+    // 1. Cek field tanggal eksplisit bila ada
+    final String explicitDate = (msgData['booking_date'] ??
+        msgData['tanggal'] ??
+        msgData['date'] ??
+        '')
+        .toString()
+        .trim();
+    if (explicitDate.isNotEmpty) {
+      return explicitDate.startsWith(tanggalHariIniIso);
+    }
+
+    // 2. Cek pola tanggal YYYY-MM-DD pada roomId (contoh: Dita_5_2026-11-27_13.00-13.20)
+    final String roomPath = doc.reference.parent.parent?.id ?? '';
+    if (roomPath.isNotEmpty) {
+      final dateMatch = RegExp(r'\d{4}-\d{2}-\d{2}').firstMatch(roomPath);
+      if (dateMatch != null) {
+        return dateMatch.group(0) == tanggalHariIniIso;
+      }
+    }
+
+    // 3. Cek timestamp / created_at / createdAt
+    final dynamic rawTs =
+        msgData['timestamp'] ?? msgData['created_at'] ?? msgData['createdAt'];
+    if (rawTs is Timestamp) {
+      return _formatDateIso(rawTs.toDate()) == tanggalHariIniIso;
+    }
+
+    // Jika tidak memiliki informasi tanggal sama sekali, anggap hari ini
+    return true;
+  }
+
   bool _isPesanMilikDokter(DocumentSnapshot doc) {
     final String docId = doctorId.trim();
     if (docId.isEmpty) return false;
@@ -479,7 +519,7 @@ class _DokterDashboardContentView extends StatelessWidget {
     }
 
     final String roomPath = doc.reference.parent.parent?.id ?? '';
-    if (roomPath.isEmpty) return false;
+    if (roomPath.isEmpty || !roomPath.contains('_')) return true;
     return roomPath.split('_').contains(docId);
   }
 
@@ -633,14 +673,15 @@ class _DokterDashboardContentView extends StatelessWidget {
                   .collectionGroup('messages')
                   .snapshots(),
               builder: (context, messageSnapshot) {
-                int totalPdfSkrining = 0;
+                int totalPdfSkriningHariIni = 0;
 
                 if (messageSnapshot.hasData) {
                   for (final doc in messageSnapshot.data!.docs) {
                     if (!_isPesanMilikDokter(doc)) continue;
                     final msgData = doc.data() as BerandaMap;
-                    if (_isDokumenPdfSkriningData(msgData)) {
-                      totalPdfSkrining++;
+                    if (_isDokumenPdfSkriningData(msgData) &&
+                        _isDokumenHariIni(doc, msgData, tanggalHariIniIso)) {
+                      totalPdfSkriningHariIni++;
                     }
                   }
                 }
@@ -923,8 +964,8 @@ class _DokterDashboardContentView extends StatelessWidget {
                                     const SizedBox(height: 4),
                                     Text(
                                       totalKonsulHariIni > 0
-                                          ? 'Terdapat $totalKonsulHariIni jadwal konsultasi pasien hari ini dan $totalPdfSkrining laporan PDF masuk.'
-                                          : 'Belum ada jadwal pasien masuk hari ini. Total $totalPdfSkrining laporan PDF skrining tersimpan.',
+                                          ? 'Terdapat $totalKonsulHariIni jadwal konsultasi pasien hari ini dan $totalPdfSkriningHariIni laporan PDF masuk hari ini.'
+                                          : 'Belum ada jadwal pasien masuk hari ini. Terdapat $totalPdfSkriningHariIni laporan PDF skrining hari ini.',
                                       style: const TextStyle(
                                         color: Color(0xFF94A3B8),
                                         fontSize: 11,
@@ -999,11 +1040,11 @@ class _DokterDashboardContentView extends StatelessWidget {
                                     icon: Icons.picture_as_pdf_rounded,
                                     primaryColor: const Color(0xFF8B5CF6),
                                     bgCardColor: const Color(0xFFF3E8FF),
-                                    metricValue: '$totalPdfSkrining',
+                                    metricValue: '$totalPdfSkriningHariIni',
                                     title: 'Verifikasi Medis',
-                                    subtitle: totalPdfSkrining > 0
-                                        ? '$totalPdfSkrining PDF Skrining'
-                                        : 'Belum Ada PDF',
+                                    subtitle: totalPdfSkriningHariIni > 0
+                                        ? '$totalPdfSkriningHariIni PDF Hari Ini'
+                                        : 'Belum Ada PDF Hari Ini',
                                   ),
                                 ),
                                 GestureDetector(
