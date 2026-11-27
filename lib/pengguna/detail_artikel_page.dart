@@ -262,6 +262,99 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     }
   }
 
+  TextSpan _buildFormattedTextSpan(String rawText, TextStyle baseStyle) {
+    final RegExp tokenRegex = RegExp(
+      r'(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[^*\n]+?\*|<u>[\s\S]+?<\/u>)',
+    );
+
+    final List<InlineSpan> spans = [];
+    int currentIndex = 0;
+
+    for (final match in tokenRegex.allMatches(rawText)) {
+      if (match.start > currentIndex) {
+        spans.add(
+          TextSpan(
+            text: rawText.substring(currentIndex, match.start),
+            style: baseStyle,
+          ),
+        );
+      }
+
+      final String token = match.group(0)!;
+
+      if (token.startsWith('***') &&
+          token.endsWith('***') &&
+          token.length > 6) {
+        final String inner = token.substring(3, token.length - 3);
+        spans.add(
+          _buildFormattedTextSpan(
+            inner,
+            baseStyle.copyWith(
+              fontWeight: FontWeight.bold,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
+      } else if (token.startsWith('**') &&
+          token.endsWith('**') &&
+          token.length > 4) {
+        final String inner = token.substring(2, token.length - 2);
+        spans.add(
+          _buildFormattedTextSpan(
+            inner,
+            baseStyle.copyWith(fontWeight: FontWeight.bold),
+          ),
+        );
+      } else if (token.startsWith('*') &&
+          token.endsWith('*') &&
+          token.length > 2) {
+        final String inner = token.substring(1, token.length - 1);
+        spans.add(
+          _buildFormattedTextSpan(
+            inner,
+            baseStyle.copyWith(fontStyle: FontStyle.italic),
+          ),
+        );
+      } else if (token.startsWith('<u>') &&
+          token.endsWith('</u>') &&
+          token.length > 7) {
+        final String inner = token.substring(3, token.length - 4);
+        spans.add(
+          _buildFormattedTextSpan(
+            inner,
+            baseStyle.copyWith(decoration: TextDecoration.underline),
+          ),
+        );
+      } else {
+        spans.add(TextSpan(text: token, style: baseStyle));
+      }
+
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < rawText.length) {
+      spans.add(
+        TextSpan(
+          text: rawText.substring(currentIndex),
+          style: baseStyle,
+        ),
+      );
+    }
+
+    return TextSpan(style: baseStyle, children: spans);
+  }
+
+  Widget _buildFormattedTextWidget(String text) {
+    final style = TextStyle(
+      fontSize: _fontSize,
+      color: const Color(0xFF334155),
+      height: 1.75,
+    );
+    return RichText(
+      text: _buildFormattedTextSpan(text, style),
+    );
+  }
+
   Widget _renderImageWidget(String imageSrc) {
     String cleanSrc = imageSrc.trim();
 
@@ -319,16 +412,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
         String textSegment =
         rawContent.substring(lastIndex, match.start).trim();
         if (textSegment.isNotEmpty) {
-          widgets.add(
-            Text(
-              textSegment,
-              style: TextStyle(
-                fontSize: _fontSize,
-                color: const Color(0xFF334155),
-                height: 1.75,
-              ),
-            ),
-          );
+          widgets.add(_buildFormattedTextWidget(textSegment));
           widgets.add(const SizedBox(height: 10));
         }
       }
@@ -346,16 +430,7 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
     if (lastIndex < rawContent.length) {
       String remainingText = rawContent.substring(lastIndex).trim();
       if (remainingText.isNotEmpty) {
-        widgets.add(
-          Text(
-            remainingText,
-            style: TextStyle(
-              fontSize: _fontSize,
-              color: const Color(0xFF334155),
-              height: 1.75,
-            ),
-          ),
-        );
+        widgets.add(_buildFormattedTextWidget(remainingText));
       }
     }
 
@@ -484,7 +559,6 @@ class _DetailArtikelPageState extends State<DetailArtikelPage> {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
