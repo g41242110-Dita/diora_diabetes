@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+typedef ShiftMap = Map<String, dynamic>;
+
 class DokterJadwalPraktikPage extends StatefulWidget {
   final String doctorId;
 
   const DokterJadwalPraktikPage({super.key, required this.doctorId});
 
   @override
-  State<DokterJadwalPraktikPage> createState() => _DokterJadwalPraktikPageState();
+  State<DokterJadwalPraktikPage> createState() =>
+      _DokterJadwalPraktikPageState();
 }
 
 class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
@@ -95,8 +98,118 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
     required String tanggalIso,
     required String labelTanggal,
     required bool newValue,
-    required Map<String, dynamic> shiftData,
+    required ShiftMap shiftData,
   }) async {
+    final bool isPengganti = shiftData['isPengganti'] == true;
+    final String dokterAsalId =
+    (shiftData['dokterAsalId'] ?? '').toString().trim();
+    final String menggantikanDokter =
+    (shiftData['menggantikanDokter'] ?? '').toString().trim();
+
+    // Jika dokter pengganti mematikan shift penggantinya, kembalikan status shift ke dokter asal
+    if (isPengganti && !newValue) {
+      final bool? batalGanti = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          title: const Text(
+            'Batalkan Penggantian Shift?',
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          content: Text(
+            'Shift hari $hari ($labelTanggal) yang menggantikan $menggantikanDokter akan dilepas dan dibuka kembali untuk dokter lain. Lanjutkan?',
+            style: const TextStyle(
+              fontSize: 12.5,
+              color: Color(0xFF475569),
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(
+                'Batal',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Ya, Lepas Shift',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (batalGanti != true) return;
+
+      final batch = FirebaseFirestore.instance.batch();
+      final doctorsRef = FirebaseFirestore.instance.collection('doctors');
+
+      batch.update(doctorsRef.doc(widget.doctorId), {
+        'jadwal_shift.$hari': FieldValue.delete(),
+      });
+
+      if (dokterAsalId.isNotEmpty) {
+        batch.update(doctorsRef.doc(dokterAsalId), {
+          'jadwal_shift.$hari.butuhPengganti': true,
+          'jadwal_shift.$hari.digantikanOleh': FieldValue.delete(),
+          'jadwal_shift.$hari.digantikanOlehId': FieldValue.delete(),
+        });
+      }
+
+      await batch.commit();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Shift pengganti hari $hari ($labelTanggal) dilepas & dibuka kembali.'),
+            backgroundColor: const Color(0xFF475569),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Cegah mengaktifkan ulang jika shift sudah diambil dokter pengganti
+    final String digantikanOleh =
+    (shiftData['digantikanOleh'] ?? '').toString().trim();
+    if (newValue && digantikanOleh.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Jadwal tidak dapat diaktifkan karena sudah digantikan oleh $digantikanOleh.'),
+            backgroundColor: Colors.orange.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     if (!newValue) {
       final int jumlahPasien = await _hitungPasienBookedPadaTanggal(tanggalIso);
 
@@ -109,7 +222,8 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
             ),
             title: const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 26),
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.orange, size: 26),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -124,7 +238,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
               ],
             ),
             content: Text(
-              'Pada hari $hari ($labelTanggal) terdapat$jumlahPasien pasien yang sudah booking konsultasi.\n\nJika shift dimatikan, slot baru akan ditutup dan jadwal dibuka agar bisa digantikan dokter lain. Tetap nonaktifkan?',
+              'Pada hari $hari ($labelTanggal) terdapat $jumlahPasien pasien yang sudah booking konsultasi.\n\nJika shift dimatikan, slot baru akan ditutup dan jadwal dibuka agar bisa digantikan dokter lain. Tetap nonaktifkan?',
               style: const TextStyle(
                 fontSize: 12.5,
                 color: Color(0xFF475569),
@@ -173,6 +287,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
         .update({
       'jadwal_shift.$hari.isActive': newValue,
       'jadwal_shift.$hari.butuhPengganti': !newValue,
+      if (newValue) 'jadwal_shift.$hari.digantikanOleh': FieldValue.delete(),
     });
 
     if (mounted) {
@@ -195,9 +310,10 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
   Future<void> _ambilShiftPengganti({
     required String dokterAsalId,
     required String namaDokterAsal,
+    required String namaDokterPengganti,
     required String hari,
     required String labelTanggal,
-    required Map<String, dynamic> shiftData,
+    required ShiftMap shiftData,
   }) async {
     final bool? konfirmasi = await showDialog<bool>(
       context: context,
@@ -212,7 +328,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
           ),
         ),
         content: Text(
-          'Anda akan menggantikan jadwal $namaDokterAsal pada hari$hari ($labelTanggal) •${shiftData['namaShift']} (${_formatJam(shiftData['jamMulai'])} -${_formatJam(shiftData['jamSelesai'])} WIB).\n\nLanjutkan mengambil shift ini?',
+          'Anda akan menggantikan jadwal $namaDokterAsal pada hari $hari ($labelTanggal) • ${shiftData['namaShift']} (${_formatJam(shiftData['jamMulai'])} - ${_formatJam(shiftData['jamSelesai'])} WIB).\n\nLanjutkan mengambil shift ini?',
           style: const TextStyle(
             fontSize: 12.5,
             color: Color(0xFF475569),
@@ -255,20 +371,45 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
 
     final batch = FirebaseFirestore.instance.batch();
     final doctorsRef = FirebaseFirestore.instance.collection('doctors');
+    final notifRef =
+    FirebaseFirestore.instance.collection('notifications').doc();
+
+    final String jamStr =
+        '${_formatJam(shiftData['jamMulai'])} - ${_formatJam(shiftData['jamSelesai'])} WIB';
+    final String namaShift =
+    (shiftData['namaShift'] ?? 'Shift Praktik').toString();
 
     batch.update(doctorsRef.doc(widget.doctorId), {
       'jadwal_shift.$hari': {
-        'namaShift': shiftData['namaShift'],
+        'namaShift': namaShift,
         'jamMulai': shiftData['jamMulai'],
         'jamSelesai': shiftData['jamSelesai'],
         'isActive': true,
         'isPengganti': true,
         'menggantikanDokter': namaDokterAsal,
+        'dokterAsalId': dokterAsalId,
       },
     });
 
     batch.update(doctorsRef.doc(dokterAsalId), {
       'jadwal_shift.$hari.butuhPengganti': false,
+      'jadwal_shift.$hari.digantikanOleh': namaDokterPengganti,
+      'jadwal_shift.$hari.digantikanOlehId': widget.doctorId,
+    });
+
+    batch.set(notifRef, {
+      'recipient_id': dokterAsalId,
+      'doctor_id': dokterAsalId,
+      'sender_id': widget.doctorId,
+      'sender_name': namaDokterPengganti,
+      'type': 'shift_replacement',
+      'title': 'Shift Digantikan Dokter Lain',
+      'message':
+      '$namaDokterPengganti telah mengambil alih jadwal $hari ($labelTanggal) • $namaShift ($jamStr).',
+      'hari': hari,
+      'label_tanggal': labelTanggal,
+      'is_read': false,
+      'created_at': FieldValue.serverTimestamp(),
     });
 
     await batch.commit();
@@ -319,7 +460,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
           }
 
           DocumentSnapshot? myDoc;
-          List shiftButuhPengganti = List.empty(growable: true);
+          final List<ShiftMap> shiftButuhPengganti = [];
 
           for (var doc in snapshot.data!.docs) {
             if (doc.id == widget.doctorId) {
@@ -331,19 +472,21 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
             return const Center(child: Text('Akun dokter tidak ditemukan.'));
           }
 
-          final myData = myDoc.data() as Map<String, dynamic>;
-          final Map<String, dynamic> myJadwalShift =
-              (myData['jadwal_shift'] as Map<String, dynamic>?) ?? {};
+          final myData = myDoc.data() as ShiftMap;
+          final String namaSaya =
+          (myData['nama'] ?? 'Dokter Pengganti').toString();
+          final ShiftMap myJadwalShift =
+              (myData['jadwal_shift'] as ShiftMap?) ?? {};
 
           for (var doc in snapshot.data!.docs) {
             if (doc.id == widget.doctorId) continue;
-            final otherData = doc.data() as Map<String, dynamic>;
+            final otherData = doc.data() as ShiftMap;
             final String namaDokterLain = otherData['nama'] ?? 'Dokter Lain';
-            final Map<String, dynamic> otherSchedule =
-                (otherData['jadwal_shift'] as Map<String, dynamic>?) ?? {};
+            final ShiftMap otherSchedule =
+                (otherData['jadwal_shift'] as ShiftMap?) ?? {};
 
             otherSchedule.forEach((hari, value) {
-              if (value is Map<String, dynamic>) {
+              if (value is ShiftMap) {
                 final bool isActive = value['isActive'] ?? true;
                 final bool butuhPengganti =
                     value['butuhPengganti'] ?? (!isActive);
@@ -423,7 +566,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                 )
               else
                 ...hariAktifDokter.map((hari) {
-                  final shiftData = myJadwalShift[hari] as Map<String, dynamic>;
+                  final shiftData = myJadwalShift[hari] as ShiftMap;
                   final String namaShift =
                       shiftData['namaShift'] ?? 'Shift Praktik';
                   final int jamMulai = (shiftData['jamMulai'] ?? 7) as int;
@@ -431,11 +574,33 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                   final bool isActive = shiftData['isActive'] ?? false;
                   final bool isPengganti = shiftData['isPengganti'] == true;
                   final String menggantikan =
-                      shiftData['menggantikanDokter'] ?? '';
+                  (shiftData['menggantikanDokter'] ?? '').toString().trim();
+                  final String digantikanOleh =
+                  (shiftData['digantikanOleh'] ?? '').toString().trim();
+
+                  // Kunci tombol switch jika jadwal sudah diambil dokter pengganti
+                  final bool terkunciDigantikan =
+                      !isActive && digantikanOleh.isNotEmpty;
 
                   final DateTime targetDate = _getTanggalTerdekat(hari);
                   final String tanggalIso = _formatDateIso(targetDate);
                   final String labelTanggal = _formatLabelTanggal(targetDate);
+
+                  String statusText;
+                  Color statusColor;
+                  if (isPengganti && menggantikan.isNotEmpty) {
+                    statusText = 'Menggantikan $menggantikan';
+                    statusColor = const Color(0xFF059669);
+                  } else if (isActive) {
+                    statusText = 'Slot terbuka untuk booking pasien';
+                    statusColor = const Color(0xFF059669);
+                  } else if (digantikanOleh.isNotEmpty) {
+                    statusText = 'Digantikan oleh $digantikanOleh (Terkunci)';
+                    statusColor = const Color(0xFF4338CA);
+                  } else {
+                    statusText = 'Jadwal ditutup (Menunggu pengganti / izin)';
+                    statusColor = const Color(0xFF94A3B8);
+                  }
 
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
@@ -510,6 +675,32 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                                         ),
                                       ),
                                     ),
+                                  if (terkunciDigantikan)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 7, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEEF2FF),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.lock_rounded,
+                                              size: 10,
+                                              color: Color(0xFF4338CA)),
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Sudah Digantikan',
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF4338CA),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                 ],
                               ),
                               const SizedBox(height: 6),
@@ -525,7 +716,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${_formatJam(jamMulai)} -${_formatJam(jamSelesai)} WIB',
+                                '${_formatJam(jamMulai)} - ${_formatJam(jamSelesai)} WIB',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w900,
@@ -537,17 +728,11 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                isPengganti && menggantikan.isNotEmpty
-                                    ? 'Menggantikan $menggantikan'
-                                    : (isActive
-                                    ? 'Slot terbuka untuk booking pasien'
-                                    : 'Jadwal ditutup (Menunggu pengganti / izin)'),
+                                statusText,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: isActive
-                                      ? const Color(0xFF059669)
-                                      : const Color(0xFF94A3B8),
+                                  color: statusColor,
                                 ),
                               ),
                             ],
@@ -557,7 +742,9 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                           value: isActive,
                           activeThumbColor: Colors.white,
                           activeTrackColor: const Color(0xFF059669),
-                          onChanged: (val) => _handleToggleShift(
+                          onChanged: terkunciDigantikan
+                              ? null
+                              : (val) => _handleToggleShift(
                             hari: hari,
                             tanggalIso: tanggalIso,
                             labelTanggal: labelTanggal,
@@ -593,7 +780,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                   final String hari = item['hari'];
                   final String namaDokterAsal = item['namaDokterAsal'];
                   final String dokterAsalId = item['dokterAsalId'];
-                  final Map<String, dynamic> shiftData = item['shiftData'];
+                  final ShiftMap shiftData = item['shiftData'];
                   final int jamMulai = (shiftData['jamMulai'] ?? 7) as int;
                   final int jamSelesai = (shiftData['jamSelesai'] ?? 15) as int;
                   final String labelTanggal =
@@ -617,7 +804,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '$hari ($labelTanggal) •${shiftData['namaShift']}',
+                                '$hari ($labelTanggal) • ${shiftData['namaShift']}',
                                 style: const TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w800,
@@ -626,7 +813,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${_formatJam(jamMulai)} -${_formatJam(jamSelesai)} WIB',
+                                '${_formatJam(jamMulai)} - ${_formatJam(jamSelesai)} WIB',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
@@ -649,6 +836,7 @@ class _DokterJadwalPraktikPageState extends State<DokterJadwalPraktikPage> {
                           onPressed: () => _ambilShiftPengganti(
                             dokterAsalId: dokterAsalId,
                             namaDokterAsal: namaDokterAsal,
+                            namaDokterPengganti: namaSaya,
                             hari: hari,
                             labelTanggal: labelTanggal,
                             shiftData: shiftData,

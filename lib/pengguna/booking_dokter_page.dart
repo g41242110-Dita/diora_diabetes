@@ -5,6 +5,8 @@ import 'doctor_model.dart';
 import 'notification_service.dart';
 import 'chat_konsultasi_page.dart';
 
+typedef BookingMap = Map<String, dynamic>;
+
 class BookingDokterPage extends StatefulWidget {
   final Doctor doctor;
   final String namaUser;
@@ -133,18 +135,18 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
     return '$h.$m';
   }
 
-  Map<String, dynamic>? _getDayScheduleMap(
+  BookingMap? _getDayScheduleMap(
       DocumentSnapshot? doctorDoc,
       DateTime date,
       ) {
     if (doctorDoc == null || !doctorDoc.exists) return null;
-    final rawData = doctorDoc.data() as Map<String, dynamic>?;
+    final rawData = doctorDoc.data() as BookingMap?;
     if (rawData == null) return null;
 
     final weekly = rawData['weeklySchedule'];
-    if (weekly is Map<String, dynamic>) {
+    if (weekly is BookingMap) {
       final entry = weekly[date.weekday.toString()];
-      if (entry is Map<String, dynamic>) {
+      if (entry is BookingMap) {
         return entry;
       }
     }
@@ -248,8 +250,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
         bStartHour != null && bEndHour != null && bStartHour >= 0 && bEndHour >= 0;
     final int breakStartMin = hasCustomBreak ? bStartHour * 60 : 18 * 60;
     final int breakEndMin = hasCustomBreak ? bEndHour * 60 : 19 * 60;
-    final bool checkBreak =
-    daySchedule != null ? hasCustomBreak : true;
+    final bool checkBreak = daySchedule != null ? hasCustomBreak : true;
 
     final int startTotalMin = startHour * 60;
     final int endTotalMin = endHour * 60;
@@ -396,7 +397,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
         final snapshot = await transaction.get(slotRef);
 
         if (snapshot.exists) {
-          final data = snapshot.data() as Map<String, dynamic>?;
+          final data = snapshot.data() as BookingMap?;
           if (data?['isBooked'] == true) {
             return false;
           }
@@ -406,6 +407,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
           'slotWaktu': _selectedSlot,
           'isBooked': true,
           'bookedByUserId': widget.namaUser,
+          'doctorId': liveDoctor.id,
           'tanggal': tanggalStr,
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -421,6 +423,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
               .collection('consultation_bookings')
               .add({
             'doctor_id': liveDoctor.id,
+            'doctorId': liveDoctor.id,
             'user_id': widget.namaUser,
             'booking_date': tanggalStr,
             'booking_time': _selectedSlot,
@@ -559,7 +562,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
 
         final Doctor liveDoctor = docSnap != null
             ? Doctor.fromFirestore(
-          docSnap.data() as Map<String, dynamic>,
+          docSnap.data() as BookingMap,
           docSnap.id,
         )
             : widget.doctor;
@@ -581,7 +584,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
           backgroundColor: const Color(0xFFF8FAFC),
           body: Column(
             children: [
-              // HEADER LIQUID WAVE
               ClipPath(
                 clipper: _BookingLiquidClipper(),
                 child: Container(
@@ -640,15 +642,12 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                   ),
                 ),
               ),
-
-              // KONTEN UTAMA
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // INFORMASI DOKTER RINGKAS
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -741,8 +740,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // PEMILIH TANGGAL MINGGUAN (1 MINGGU 1 MINGGU)
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -939,8 +936,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // STREAM BUILDER SLOT REAL-TIME UNTUK TANGGAL TERPILIH
                       Expanded(
                         child: StreamBuilder<QuerySnapshot>(
                           stream: FirebaseFirestore.instance
@@ -956,8 +951,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
 
                             if (snapshot.hasData) {
                               for (var doc in snapshot.data!.docs) {
-                                final data =
-                                doc.data() as Map<String, dynamic>;
+                                final data = doc.data() as BookingMap;
                                 final slotName =
                                 (data['booking_time'] ?? '').toString();
                                 if (slotName.isNotEmpty) {
@@ -992,7 +986,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // BANNER SHIFT & KUOTA DINAMIS
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
@@ -1074,8 +1067,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 14),
-
-                                // HEADER PILIH SESI + CHIP JAM SHIFT
                                 Row(
                                   mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
@@ -1110,8 +1101,6 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 10),
-
-                                // GRID SLOT KONSULTASI
                                 Expanded(
                                   child: daftarSlot.isEmpty
                                       ? Center(
@@ -1145,8 +1134,8 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                       if (chatSnapshot.hasData) {
                                         for (var doc
                                         in chatSnapshot.data!.docs) {
-                                          final data = doc.data()
-                                          as Map<String, dynamic>;
+                                          final data =
+                                          doc.data() as BookingMap;
                                           if (data['isEnded'] == true) {
                                             endedRoomIds.add(doc.id);
                                           }
@@ -1325,10 +1314,7 @@ class _BookingDokterPageState extends State<BookingDokterPage> {
                                     },
                                   ),
                                 ),
-
                                 const SizedBox(height: 8),
-
-                                // TOMBOL KONFIRMASI BOOKING / BUKA CHAT
                                 SizedBox(
                                   width: double.infinity,
                                   height: 48,

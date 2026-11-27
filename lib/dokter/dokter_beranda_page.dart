@@ -16,6 +16,8 @@ import 'dokter_room_chat_page.dart';
 import 'dokter_jadwal_praktik_page.dart';
 import 'dokter_notifikasi_page.dart';
 
+typedef BerandaMap = Map<String, dynamic>;
+
 class DokterBerandaPage extends StatefulWidget {
   final String? doctorId;
 
@@ -30,6 +32,7 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
   bool hasUnreadNotif = false;
   bool _isInitialBookingLoad = true;
   bool _isInitialChatLoad = true;
+  bool _isInitialShiftNotifLoad = true;
 
   final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
@@ -38,7 +41,7 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
   AndroidNotificationChannel(
     'diora_dokter_alerts_v1',
     'Notifikasi Pasien & Chat Dokter',
-    description: 'Pemberitahuan booking konsultasi dan pesan pasien baru',
+    description: 'Pemberitahuan booking konsultasi, pesan pasien, dan shift',
     importance: Importance.max,
     playSound: true,
     enableVibration: true,
@@ -48,14 +51,17 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
   String get _activeDoctorId =>
       (widget.doctorId != null && widget.doctorId!.trim().isNotEmpty)
           ? widget.doctorId!.trim()
-          : '1';
+          : '';
 
   @override
   void initState() {
     super.initState();
     _initLocalNotification();
-    _dengarkanBookingMasuk();
-    _dengarkanPesanChatMasuk();
+    if (_activeDoctorId.isNotEmpty) {
+      _dengarkanBookingMasuk();
+      _dengarkanPesanChatMasuk();
+      _dengarkanNotifikasiShift();
+    }
   }
 
   Future<void> _initLocalNotification() async {
@@ -108,6 +114,40 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
     );
   }
 
+  bool _isPesanMasukUntukDokter(DocumentSnapshot doc) {
+    final String docId = _activeDoctorId.trim();
+    if (docId.isEmpty) return false;
+
+    final data = doc.data() as BerandaMap? ?? {};
+
+    final String senderId =
+    (data['senderId'] ?? data['sender_id'] ?? '').toString().trim();
+    final String senderRole =
+    (data['senderRole'] ?? data['role'] ?? '').toString().toLowerCase();
+    if (senderId == docId || senderRole == 'dokter' || senderRole == 'doctor') {
+      return false;
+    }
+
+    final String fieldDocId = (data['doctor_id'] ??
+        data['doctorId'] ??
+        data['recipientId'] ??
+        data['targetDoctorId'] ??
+        '')
+        .toString()
+        .trim();
+    if (fieldDocId.isNotEmpty) {
+      return fieldDocId == docId;
+    }
+
+    final String roomPath = doc.reference.parent.parent?.id ?? '';
+    if (roomPath.isNotEmpty) {
+      final parts = roomPath.split('_');
+      return parts.contains(docId);
+    }
+
+    return false;
+  }
+
   void _dengarkanBookingMasuk() {
     FirebaseFirestore.instance
         .collection('consultation_bookings')
@@ -121,7 +161,7 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
 
       for (final change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
-          final data = change.doc.data() as Map<String, dynamic>? ?? {};
+          final data = change.doc.data() as BerandaMap? ?? {};
           final namaPasien = (data['user_id'] ??
               data['bookedByUserId'] ??
               data['patient_name'] ??
@@ -154,7 +194,6 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
   void _dengarkanPesanChatMasuk() {
     FirebaseFirestore.instance
         .collectionGroup('messages')
-        .where('senderId', isNotEqualTo: _activeDoctorId)
         .snapshots()
         .listen((snapshot) {
       if (_isInitialChatLoad) {
@@ -164,16 +203,12 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
 
       for (final change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.added) {
-          final String roomPath = change.doc.reference.parent.parent?.id ?? '';
-          final bool isRoomMilikDokter = roomPath.isEmpty ||
-              !roomPath.contains('_') ||
-              roomPath.contains('_${_activeDoctorId}_') ||
-              roomPath.endsWith('_$_activeDoctorId');
-          if (!isRoomMilikDokter) continue;
+          if (!_isPesanMasukUntukDokter(change.doc)) continue;
 
-          final data = change.doc.data() as Map<String, dynamic>? ?? {};
+          final data = change.doc.data() as BerandaMap? ?? {};
           final String pesanTeks =
-          (data['text'] ?? 'Mengirim pesan baru...').toString();
+          (data['text'] ?? data['message'] ?? 'Mengirim pesan baru...')
+              .toString();
           final bool isSummary = data['isScreeningSummary'] == true;
 
           if (!mounted) return;
@@ -184,6 +219,48 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
                 ? 'Laporan Skrining PDF dari Pasien'
                 : 'Pesan Baru dari Pasien',
             pesan: pesanTeks,
+          );
+        }
+      }
+    });
+  }
+
+  void _dengarkanNotifikasiShift() {
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('recipient_id', isEqualTo: _activeDoctorId)
+        .snapshots()
+        .listen((snapshot) {
+      final bool adaYangBelumDibaca = snapshot.docs.any((doc) {
+        final data = doc.data() as BerandaMap?;
+        return data?['is_read'] == false;
+      });
+
+      if (adaYangBelumDibaca && mounted && !hasUnreadNotif) {
+        setState(() => hasUnreadNotif = true);
+      }
+
+      if (_isInitialShiftNotifLoad) {
+        _isInitialShiftNotifLoad = false;
+        return;
+      }
+
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as BerandaMap?;
+          if (data == null) continue;
+          final String judul =
+          (data['title'] ?? 'Pemberitahuan Shift').toString();
+          final String pesan =
+          (data['message'] ?? 'Jadwal shift Anda telah digantikan.')
+              .toString();
+
+          if (!mounted) return;
+          setState(() => hasUnreadNotif = true);
+
+          _showHeadsUpNotification(
+            judul: judul,
+            pesan: pesan,
           );
         }
       }
@@ -212,6 +289,34 @@ class DokterBerandaPageState extends State<DokterBerandaPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_activeDoctorId.isEmpty) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 48,
+                  color: Colors.amber,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'ID Dokter belum terhubung pada akun ini. '
+                      'Pastikan field doctorId sudah diisi di Firestore users.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final List<Widget> pages = [
       _DokterDashboardContentView(
         doctorId: _activeDoctorId,
@@ -332,7 +437,7 @@ class _DokterDashboardContentView extends StatelessWidget {
     }
   }
 
-  bool _isDokumenPdfSkriningData(Map<String, dynamic> msgData) {
+  bool _isDokumenPdfSkriningData(BerandaMap msgData) {
     final bool isSummary = msgData['isScreeningSummary'] == true;
     final String messageType =
     (msgData['message_type'] ?? '').toString().toLowerCase();
@@ -364,9 +469,9 @@ class _DokterDashboardContentView extends StatelessWidget {
 
   bool _isPesanMilikDokter(DocumentSnapshot doc) {
     final String docId = doctorId.trim();
-    if (docId.isEmpty) return true;
+    if (docId.isEmpty) return false;
 
-    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final data = doc.data() as BerandaMap? ?? {};
     final String fieldDoctorId =
     (data['doctor_id'] ?? data['doctorId'] ?? '').toString().trim();
     if (fieldDoctorId.isNotEmpty) {
@@ -374,8 +479,8 @@ class _DokterDashboardContentView extends StatelessWidget {
     }
 
     final String roomPath = doc.reference.parent.parent?.id ?? '';
-    if (roomPath.isEmpty || !roomPath.contains('_')) return true;
-    return roomPath.contains('_${docId}_') || roomPath.endsWith('_$docId');
+    if (roomPath.isEmpty) return false;
+    return roomPath.split('_').contains(docId);
   }
 
   String _namaHari(int weekday) {
@@ -417,12 +522,12 @@ class _DokterDashboardContentView extends StatelessWidget {
     return '${_namaHari(date.weekday)}, ${date.day} ${bulanList[date.month]} ${date.year}';
   }
 
-  bool _cekSedangPraktik(Map<String, dynamic> jadwalShift) {
+  bool _cekSedangPraktik(BerandaMap jadwalShift) {
     final now = DateTime.now();
     final int jamSekarang = now.hour;
 
     final String hariIni = _namaHari(now.weekday);
-    final shiftHariIni = jadwalShift[hariIni] as Map<String, dynamic>?;
+    final shiftHariIni = jadwalShift[hariIni] as BerandaMap?;
     if (shiftHariIni != null && (shiftHariIni['isActive'] == true)) {
       final int mulai = (shiftHariIni['jamMulai'] ?? 7) as int;
       final int selesai = (shiftHariIni['jamSelesai'] ?? 15) as int;
@@ -436,7 +541,7 @@ class _DokterDashboardContentView extends StatelessWidget {
     if (jamSekarang < 7) {
       final kemarin = now.subtract(const Duration(days: 1));
       final String hariKemarin = _namaHari(kemarin.weekday);
-      final shiftKemarin = jadwalShift[hariKemarin] as Map<String, dynamic>?;
+      final shiftKemarin = jadwalShift[hariKemarin] as BerandaMap?;
       if (shiftKemarin != null && (shiftKemarin['isActive'] == true)) {
         final int mulai = (shiftKemarin['jamMulai'] ?? 0) as int;
         final int selesai = (shiftKemarin['jamSelesai'] ?? 0) as int;
@@ -447,10 +552,10 @@ class _DokterDashboardContentView extends StatelessWidget {
     return false;
   }
 
-  String _getKodeJamShiftHariIni(Map<String, dynamic> jadwalShift) {
+  String _getKodeJamShiftHariIni(BerandaMap jadwalShift) {
     final now = DateTime.now();
     final String hariIni = _namaHari(now.weekday);
-    final shiftHariIni = jadwalShift[hariIni] as Map<String, dynamic>?;
+    final shiftHariIni = jadwalShift[hariIni] as BerandaMap?;
 
     if (shiftHariIni != null && (shiftHariIni['isActive'] == true)) {
       final int mulai = (shiftHariIni['jamMulai'] ?? 7) as int;
@@ -460,10 +565,10 @@ class _DokterDashboardContentView extends StatelessWidget {
     return 'OFF';
   }
 
-  String _getSubtitelShiftHariIni(Map<String, dynamic> jadwalShift) {
+  String _getSubtitelShiftHariIni(BerandaMap jadwalShift) {
     final now = DateTime.now();
     final String hariIni = _namaHari(now.weekday);
-    final shiftHariIni = jadwalShift[hariIni] as Map<String, dynamic>?;
+    final shiftHariIni = jadwalShift[hariIni] as BerandaMap?;
 
     if (shiftHariIni != null && (shiftHariIni['isActive'] == true)) {
       return '${shiftHariIni['namaShift'] ?? 'Shift Aktif'} • WIB';
@@ -486,16 +591,15 @@ class _DokterDashboardContentView extends StatelessWidget {
         String namaDokter = 'dr. Spesialis';
         String spesialisasi = 'Dokter Spesialis Penyakit Dalam';
         bool sedangPraktik = false;
-        Map<String, dynamic> jadwalShift = {};
+        BerandaMap jadwalShift = {};
         Uint8List? photoBytes;
         String? photoUrl;
 
         if (doctorSnapshot.hasData && doctorSnapshot.data!.exists) {
-          final docData = doctorSnapshot.data!.data() as Map<String, dynamic>;
+          final docData = doctorSnapshot.data!.data() as BerandaMap;
           namaDokter = docData['nama'] ?? namaDokter;
           spesialisasi = docData['spesialis'] ?? spesialisasi;
-          jadwalShift =
-              (docData['jadwal_shift'] as Map<String, dynamic>?) ?? {};
+          jadwalShift = (docData['jadwal_shift'] as BerandaMap?) ?? {};
           sedangPraktik = _cekSedangPraktik(jadwalShift);
           photoBytes = _decodePhotoBytes(docData['photoBase64']);
           if (docData['photoUrl'] != null &&
@@ -534,7 +638,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                 if (messageSnapshot.hasData) {
                   for (final doc in messageSnapshot.data!.docs) {
                     if (!_isPesanMilikDokter(doc)) continue;
-                    final msgData = doc.data() as Map<String, dynamic>;
+                    final msgData = doc.data() as BerandaMap;
                     if (_isDokumenPdfSkriningData(msgData)) {
                       totalPdfSkrining++;
                     }
@@ -1005,8 +1109,7 @@ class _DokterDashboardContentView extends StatelessWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: bookingDocs.length,
                           itemBuilder: (context, index) {
-                            final data = bookingDocs[index].data()
-                            as Map<String, dynamic>;
+                            final data = bookingDocs[index].data() as BerandaMap;
                             final namaPasien = (data['user_id'] ??
                                 data['bookedByUserId'] ??
                                 'Pasien')
