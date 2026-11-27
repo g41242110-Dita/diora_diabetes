@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+typedef ChatDocMap = Map<String, dynamic>;
+
 class DokterRoomChatPage extends StatefulWidget {
   final String roomId;
   final String doctorId;
   final String namaPasien;
   final String genderAge;
   final String jamSesi;
+  final String? tanggalBooking;
 
   const DokterRoomChatPage({
     super.key,
@@ -15,6 +18,7 @@ class DokterRoomChatPage extends StatefulWidget {
     required this.namaPasien,
     required this.genderAge,
     required this.jamSesi,
+    this.tanggalBooking,
   });
 
   @override
@@ -26,6 +30,73 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
   final TextEditingController _catatanDokterController = TextEditingController();
   final TextEditingController _resepController = TextEditingController();
   final Set<String> _markedReadIds = {};
+  late String _resolvedRoomId;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolvedRoomId = _buildInitialRoomId();
+    _resolveExistingRoomIdFromFirestore();
+  }
+
+  String _buildInitialRoomId() {
+    final cleanJam = widget.jamSesi.replaceAll(' ', '');
+    final tgl = (widget.tanggalBooking ?? '').trim();
+    if (tgl.isNotEmpty && !widget.roomId.contains(tgl)) {
+      return '${widget.namaPasien.trim()}_${widget.doctorId.trim()}_${tgl}_$cleanJam';
+    }
+    return widget.roomId.trim();
+  }
+
+  Future<void> _resolveExistingRoomIdFromFirestore() async {
+    final String pasien = widget.namaPasien.trim();
+    final String docId = widget.doctorId.trim();
+    final String cleanJam = widget.jamSesi.replaceAll(' ', '');
+    final String tgl = (widget.tanggalBooking ?? '').trim();
+
+    final List<String> candidates = [
+      widget.roomId.trim(),
+      if (tgl.isNotEmpty) '${pasien}_${docId}_${tgl}_$cleanJam',
+      '${pasien}_${docId}_$cleanJam',
+    ].where((e) => e.isNotEmpty).toSet().toList();
+
+    try {
+      for (final candidate in candidates) {
+        final snap = await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(candidate)
+            .collection('messages')
+            .limit(1)
+            .get();
+        if (snap.docs.isNotEmpty) {
+          if (mounted && _resolvedRoomId != candidate) {
+            setState(() => _resolvedRoomId = candidate);
+          }
+          return;
+        }
+      }
+
+      // Fallback: cari dokumen room di koleksi chats yang cocok dengan pasien + dokter + jam
+      final allRooms =
+      await FirebaseFirestore.instance.collection('chats').limit(50).get();
+      for (final d in allRooms.docs) {
+        final id = d.id;
+        final bool matchPasien =
+            pasien.isEmpty || id.toLowerCase().startsWith(pasien.toLowerCase());
+        final bool matchDokter = id.split('_').contains(docId);
+        final bool matchJam = cleanJam.isEmpty || id.contains(cleanJam);
+        final bool matchTanggal = tgl.isEmpty || id.contains(tgl);
+        if (matchPasien && matchDokter && matchJam && matchTanggal) {
+          if (mounted && _resolvedRoomId != id) {
+            setState(() => _resolvedRoomId = id);
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Gagal mencocokkan roomId chat: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -44,14 +115,22 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
     return '${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')}';
   }
 
+  bool _isPesanDariDokter(ChatDocMap data) {
+    final String sender =
+    (data['senderId'] ?? data['sender_id'] ?? '').toString().trim();
+    final String role =
+    (data['senderRole'] ?? data['role'] ?? '').toString().toLowerCase();
+    return sender == widget.doctorId.trim() ||
+        role == 'dokter' ||
+        role == 'doctor';
+  }
+
   Future<void> _tandaiPesanPasienDibaca(List<QueryDocumentSnapshot> docs) async {
     for (final doc in docs) {
       if (_markedReadIds.contains(doc.id)) continue;
-      final data = doc.data() as Map<String, dynamic>? ?? {};
-      final String sender =
-      (data['senderId'] ?? data['sender_id'] ?? '').toString();
+      final data = doc.data() as ChatDocMap? ?? {};
       final bool isRead = data['isRead'] == true;
-      if (sender.isNotEmpty && sender != widget.doctorId && !isRead) {
+      if (!_isPesanDariDokter(data) && !isRead) {
         _markedReadIds.add(doc.id);
         try {
           await doc.reference.set({'isRead': true}, SetOptions(merge: true));
@@ -70,10 +149,13 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
     try {
       await FirebaseFirestore.instance
           .collection('chats')
-          .doc(widget.roomId)
+          .doc(_resolvedRoomId)
           .collection('messages')
           .add({
         'senderId': widget.doctorId,
+        'sender_id': widget.doctorId,
+        'doctorId': widget.doctorId,
+        'doctor_id': widget.doctorId,
         'text': text,
         'isRead': false,
         'timestamp': FieldValue.serverTimestamp(),
@@ -83,8 +165,7 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
     }
   }
 
-  void _showDetailLaporanDialog(
-      Map<String, dynamic> data, String timeFormatted) {
+  void _showDetailLaporanDialog(ChatDocMap data, String timeFormatted) {
     final String laporanText = (data['text'] ?? '').toString();
     final String tingkatRisiko =
     (data['tingkatRisiko'] ?? 'Hasil Skrining Pasien').toString();
@@ -218,7 +299,7 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
                 try {
                   await FirebaseFirestore.instance
                       .collection('chats')
-                      .doc(widget.roomId)
+                      .doc(_resolvedRoomId)
                       .set({
                     'isEnded': true,
                     'endedAt': FieldValue.serverTimestamp(),
@@ -291,7 +372,7 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
   }
 
   Widget _buildPdfScreeningBubble(
-      Map<String, dynamic> data, bool isDokter, String timeFormatted) {
+      ChatDocMap data, bool isDokter, String timeFormatted) {
     final String textContent = (data['text'] ?? '').toString();
     final String tingkatRisiko =
     (data['tingkatRisiko'] ?? 'Laporan Skrining').toString();
@@ -533,7 +614,7 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('chats')
-                  .doc(widget.roomId)
+                  .doc(_resolvedRoomId)
                   .collection('messages')
                   .orderBy('timestamp', descending: true)
                   .snapshots(),
@@ -566,8 +647,8 @@ class _DokterRoomChatPageState extends State<DokterRoomChatPage> {
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
-                    final data = docs[index].data() as Map<String, dynamic>;
-                    final bool isDokter = data['senderId'] == widget.doctorId;
+                    final data = docs[index].data() as ChatDocMap;
+                    final bool isDokter = _isPesanDariDokter(data);
                     final bool isRead = data['isRead'] == true;
                     final timeFormatted =
                     _formatjam(data['timestamp'] as Timestamp?);
