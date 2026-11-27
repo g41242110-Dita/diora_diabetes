@@ -5,6 +5,8 @@ import 'dokter_room_chat_page.dart';
 import 'dokter_riwayat_konsultasi_page.dart';
 import 'dokter_jadwal_praktik_page.dart';
 
+typedef KonsulDocMap = Map<String, dynamic>;
+
 class DokterKonsultasiPage extends StatefulWidget {
   final String doctorId;
   final VoidCallback? onBackToHome;
@@ -81,9 +83,9 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
   }
 
   int _getBreakHour(int jamMulai) {
-    if (jamMulai == 7) return 12; // Shift 1: 12.00 - 13.00 WIB
-    if (jamMulai == 15) return 18; // Shift 2: 18.00 - 19.00 WIB
-    if (jamMulai == 23) return 3; // Shift 3: 03.00 - 04.00 WIB
+    if (jamMulai == 7) return 12;
+    if (jamMulai == 15) return 18;
+    if (jamMulai == 23) return 3;
     return (jamMulai + 4) % 24;
   }
 
@@ -149,24 +151,28 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
     );
   }
 
-  void _openChat(String namaPasien, String jamSlot) {
+  void _openChat(String namaPasien, String jamSlot, String tanggalIso) {
+    final String cleanPasien = namaPasien.trim();
+    final String cleanJam = jamSlot.replaceAll(' ', '');
     final String roomId =
-        '${namaPasien}_${widget.doctorId}_${jamSlot.replaceAll(' ', '')}';
+        '${cleanPasien}_${widget.doctorId}_${tanggalIso}_$cleanJam';
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DokterRoomChatPage(
           roomId: roomId,
           doctorId: widget.doctorId,
-          namaPasien: namaPasien,
+          namaPasien: cleanPasien,
           genderAge: 'Pasien Terdaftar',
           jamSesi: jamSlot,
+          tanggalBooking: tanggalIso,
         ),
       ),
     );
   }
 
-  Widget _buildDateSelectorStrip(Map<String, dynamic> jadwalShift) {
+  Widget _buildDateSelectorStrip(KonsulDocMap jadwalShift) {
     final DateTime today = DateTime.now();
 
     return SizedBox(
@@ -183,7 +189,7 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
               date.day == _selectedDate.day;
 
           final String hariKey = _namaHari(date.weekday);
-          final shiftDay = jadwalShift[hariKey] as Map<String, dynamic>?;
+          final shiftDay = jadwalShift[hariKey] as KonsulDocMap?;
           final bool hasActiveShift =
               shiftDay != null && (shiftDay['isActive'] == true);
 
@@ -504,7 +510,7 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
   }
 
   Widget _buildBookedPatientCard(
-      String jamSlot, Map<String, dynamic> pasienData) {
+      String jamSlot, KonsulDocMap pasienData, String tanggalIso) {
     final String namaPasien =
     (pasienData['user_id'] ?? pasienData['bookedByUserId'] ?? 'Pasien')
         .toString();
@@ -591,7 +597,7 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
           ),
           const SizedBox(width: 8),
           ElevatedButton.icon(
-            onPressed: () => _openChat(namaPasien, jamSlot),
+            onPressed: () => _openChat(namaPasien, jamSlot, tanggalIso),
             icon: const Icon(Icons.chat_rounded, size: 15, color: Colors.white),
             label: const Text(
               'Chat',
@@ -814,12 +820,12 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
           }
 
           final doctorData =
-              doctorSnapshot.data!.data() as Map<String, dynamic>? ?? {};
-          final Map<String, dynamic> jadwalShift =
-              (doctorData['jadwal_shift'] as Map<String, dynamic>?) ?? {};
+              doctorSnapshot.data!.data() as KonsulDocMap? ?? {};
+          final KonsulDocMap jadwalShift =
+              (doctorData['jadwal_shift'] as KonsulDocMap?) ?? {};
 
           final shiftHariIni =
-          jadwalShift[hariDipilih] as Map<String, dynamic>?;
+          jadwalShift[hariDipilih] as KonsulDocMap?;
           final bool adaJadwalHariIni = shiftHariIni != null;
           final bool isShiftAktif =
               adaJadwalHariIni && (shiftHariIni['isActive'] == true);
@@ -862,10 +868,10 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
                           (shiftHariIni['jamSelesai'] as num?)?.toInt() ?? 15;
 
                       final bookingDocs = bookingSnapshot.data?.docs ?? [];
-                      final Map<String, Map<String, dynamic>> bookedMap = {};
+                      final Map<String, KonsulDocMap> bookedMap = {};
 
                       for (final doc in bookingDocs) {
-                        final data = doc.data() as Map<String, dynamic>;
+                        final data = doc.data() as KonsulDocMap;
                         final String slotWaktu =
                             data['booking_time']?.toString() ?? '';
                         if (slotWaktu.isNotEmpty) {
@@ -957,7 +963,7 @@ class _DokterKonsultasiPageState extends State<DokterKonsultasiPage> {
                               child: Column(
                                 children: bookedSlots
                                     .map((slot) => _buildBookedPatientCard(
-                                    slot, bookedMap[slot]!))
+                                    slot, bookedMap[slot]!, tanggalIso))
                                     .toList(),
                               ),
                             ),
